@@ -1,0 +1,386 @@
+// DM Environment file for .dme.
+// All manual changes should be made outside the BEGIN_ and END_ blocks.
+// New source code should be placed in .dm files: choose File/New --> Code File.
+
+//#define REWORK //Comment out to disable some of the rework test stuff
+#ifdef REWORK
+#warn Rework is enabled, which is a test feature.  Make sure to turn it off for release versions.
+#endif
+
+#define DEBUG
+#ifdef DEBUG
+#warn Debug mode is on.  Reminder to turn this off before releasing to the public.
+#endif
+
+#define CPU_WARN_THRESHOLD 80
+
+#define CHAT_OOC 1
+#define CHAT_IC 2
+#define ALL_CHAT 3
+
+// BEGIN_INTERNALS
+// END_INTERNALS
+
+// BEGIN_FILE_DIR
+#define FILE_DIR .
+// END_FILE_DIR
+
+// BEGIN_PREFERENCES
+// END_PREFERENCES
+
+#define AI_PATHNODE_LIMIT 300
+#define FOUR_SQUARE 1
+#define NINE_SQUARE 4
+#define TWO_TALL 2
+#define TWO_WIDE 3
+
+// BEGIN_PLANES
+#define REFLECTION_PLANE 1
+#define BACKDROP_PLANE 5
+#define MOVABLE_PLANE 10
+#define VFX_PLANE 15
+
+#define HUD_MAIN 1000
+#define HUD_BUILD 995
+#define HUD_TARGET 990
+#define HUD_PARTY 985
+#define HUD_EXP 980
+#define HUD_SENSE 950
+#define HUD_FALLING_TEXT 945
+#define HUD_FLOATING_TEXT 940
+#define HUD_TITLE 935
+// END_PLANES
+
+// BEGIN_LAYERS
+#define MAP_LAYER 5
+#define DECAL_LAYER 10
+#define MOVABLE_LAYER 15
+#define DECOR_LAYER 20
+#define FLYING_LAYER 25
+#define PROJECTILE_LAYER 30
+// END_LAYERS
+
+// BEGIN_CHATs
+#define CHAT_OUTPUT_ID "chat.output1"
+#define CHAT_GLOBAL 1
+#define CHAT_LOCAL 2
+#define CHAT_AREA 4
+#define CHAT_SYSTEM 8
+// END_CHATS
+
+//For BuildTab.dm
+#define BUILD_UNDEFINED 0
+#define BUILD_FLOOR 1
+#define BUILD_GROUND 2
+#define BUILD_ROOF 3
+#define BUILD_WALL 4
+#define BUILD_DECOR 5
+#define BUILD_TREES 6
+#define BUILD_CUSTOM 7
+
+//For Build Tools
+#define BUILD_PAINT "PAINT"
+#define BUILD_RECT "RECTANGLE"
+#define BUILD_RECT_HOLLOW "HOLLOW RECTANGLE"
+#define BUILD_LINE "LINE"
+#define BUILD_FILL "FILL"
+#define BUILD_ELLIPSE "ELLIPSE"
+#define BUILD_SELECT "SELECT"
+#define BUILD_PICK "PICK"
+
+#define BUILD_TURFS "Turfs"
+#define BUILD_OBJS "Map Objects"
+
+#define BUILD_MAX_DIM 50
+
+#define JOIN_NORTH 1
+#define JOIN_SOUTH 4
+#define JOIN_EAST 2
+#define JOIN_WEST 8
+
+//misc race stuff
+#define REP_SEXUAL 1
+#define REP_ASEXUAL 2
+#define REP_INFECTIOUS 3
+#define REP_INDETERMINATE 4
+
+//for the IconTooBig() proc. it returns one of these as the reason the icon failed to be approved
+#define NOT_AN_ICON 1
+#define DIMENSIONS 2
+#define FILE_SIZE 3
+
+// BEGIN_FILE_DIR
+#define FILE_DIR "Icons"
+#define FILE_DIR "Icons/Items"
+#define FILE_DIR "Icons/Map"
+#define FILE_DIR "Icons/Map New"
+#define FILE_DIR "Icons/Mobs"
+#define FILE_DIR "Icons/Overlays"
+#define FILE_DIR "Icons/Skills"
+#define FILE_DIR "Icons/UI"
+#define FILE_DIR "Icons/VFX"
+#define FILE_DIR "Sound"
+#define FILE_DIR "Sound/Music"
+#define FILE_DIR "Sound/Sound Effects"
+#define FILE_DIR "Sound/Sound Effects/Combat"
+#define FILE_DIR "Sound/Sound Effects/Guns"
+// END_FILE_DIR
+
+// BEGIN_INCLUDE
+#include "Code\Clickinz.dm"
+#include "Code\Collision Analogues.dm"
+#include "Code\_libs\absolutepositions\AbsolutePositions.dm"
+#include "Code\_libs\callback\Callback.dm"
+#include "Code\_libs\callback\Chain.dm"
+#include "Code\_libs\callback\Function.dm"
+#include "Code\_libs\callback\Method.dm"
+#include "Code\_libs\debug\Debug.dm"
+#include "Code\_libs\debug\Test.dm"
+#include "Code\_libs\iconprocs\IconProcs.dm"
+#include "Code\_libs\kii_lighting\_lighting.dm"
+#include "Code\_libs\kii_lighting\daynight.dm"
+#include "Code\_libs\kii_lighting\spotlight.dm"
+#include "Code\_libs\kii_maptext_inputs\enter submission.dm"
+#include "Code\_libs\kii_maptext_inputs\key tracking.dm"
+#include "Code\_libs\kii_maptext_inputs\maptext inputs.dm"
+#include "Code\_libs\kii_weather\despawn.dm"
+#include "Code\_libs\kii_weather\kiiWeather.dm"
+#include "Code\_libs\kii_weather\particles.dm"
+#include "Code\_libs\list\List.dm"
+#include "Code\_libs\math\Math.dm"
+#include "Code\_libs\pathfinder\pathfinder.dm"
+#include "Code\_libs\pathfinder\pathfinder_astar.dm"
+#include "Code\_libs\pathfinder\pathnode.dm"
+#include "Code\_libs\priorityqueue\PriorityQueue.dm"
+#include "Code\_libs\shapes\shapes.dm"
+#include "Code\_libs\texthandling\TextHandling.dm"
+#include "Code\_libs\time\Time.dm"
+#include "Code\_libs\upform\lib.dm"
+#include "Code\_libs\vectors\MatrixVectorSupport.dm"
+#include "Code\_libs\vectors\Vector.dm"
+#include "Code\Background Code\__Topic.dm"
+#include "Code\Background Code\_DEBUG.dm"
+#include "Code\Background Code\_DEFINE.dm"
+#include "Code\Background Code\Alt Rewards.dm"
+#include "Code\Background Code\bug logs.dm"
+#include "Code\Background Code\Javascript Resolution Checker.dm"
+#include "Code\Background Code\Mass Pay.dm"
+#include "Code\Background Code\Object Cache.dm"
+#include "Code\Background Code\playertracker.dm"
+#include "Code\Background Code\Special Announcements Loop.dm"
+#include "Code\Background Code\Stat Loop.dm"
+#include "Code\Background Code\overlay handling\___resource manager.dm"
+#include "Code\Background Code\overlay handling\__appearance_handler.dm"
+#include "Code\Background Code\overlay handling\character appearance.dm"
+#include "Code\Background Code\overlay handling\filter handling.dm"
+#include "Code\Background Code\overlay handling\icon lists.dm"
+#include "Code\Background Code\overlay handling\visual proxies.dm"
+#include "Code\Building\Build Palette.dm"
+#include "Code\Building\Build.dm"
+#include "Code\Building\Building Helper Procs.dm"
+#include "Code\Building\Connector Wires.dm"
+#include "Code\Building\Custom Icon Build Tab.dm"
+#include "Code\Building\Map Storage.dm"
+#include "Code\Building\New Build 2022.dm"
+#include "Code\Building\Quadrants.dm"
+#include "Code\Combat\Bleed Damage.dm"
+#include "Code\Combat\buffs.dm"
+#include "Code\Combat\Damage Handling.dm"
+#include "Code\Combat\Injuries.dm"
+#include "Code\Combat\Melee Core.dm"
+#include "Code\Combat\Melee Weapons.dm"
+#include "Code\Combat\Melee.dm"
+#include "Code\Combat\New Armor 2021.dm"
+#include "Code\Combat\Rare death effects.dm"
+#include "Code\Combat\Skills.dm"
+#include "Code\Combat\Split Forms.dm"
+#include "Code\Combat\Effects\Effect Areas.dm"
+#include "Code\Combat\Effects\Stun.dm"
+#include "Code\Combat\Skills\Ki\Death Ball 2017.dm"
+#include "Code\Combat\Skills\Ki\Final Explosion.dm"
+#include "Code\Combat\Skills\Ki\Hakai.dm"
+#include "Code\Combat\Skills\Ki\Kikoho 2016.dm"
+#include "Code\Combat\Skills\Ki\Solar Flare.dm"
+#include "Code\Combat\Skills\Ki\Spirit Bomb 2016.dm"
+#include "Code\Combat\Skills\Ki\Supernova.dm"
+#include "Code\Combat\Skills\Ki\Fusion\_AutoTimeoutDialogue.dm"
+#include "Code\Combat\Skills\Ki\Fusion\_duplicate.dm"
+#include "Code\Combat\Skills\Ki\Fusion\_Fusion.dm"
+#include "Code\Combat\Skills\Ki\Fusion\Metamoran Fusion.dm"
+#include "Code\Combat\Skills\Ki\Fusion\Potara_Fusion.dm"
+#include "Code\Combat\Skills\Ki\Sense 2017\dynamic sense arrows.dm"
+#include "Code\Combat\Skills\Ki\Sense 2017\Sense.dm"
+#include "Code\Combat\Skills\Melee\Dragon Rush.dm"
+#include "Code\Combat\Targeting\Targeting Wrappers.dm"
+#include "Code\Combat\Targeting\Targeting.dm"
+#include "Code\Communication\Admin Help.dm"
+#include "Code\Communication\Communication.dm"
+#include "Code\Communication\Floating Text.dm"
+#include "Code\Communication\Social.dm"
+#include "Code\Core Functions\aaa main vars.dm"
+#include "Code\Core Functions\Admin v2.dm"
+#include "Code\Core Functions\Admin.dm"
+#include "Code\Core Functions\List Sorting 2018.dm"
+#include "Code\Core Functions\Main - Creation.dm"
+#include "Code\Core Functions\Main - World.dm"
+#include "Code\Core Functions\Main.dm"
+#include "Code\Core Functions\Map 2022.dm"
+#include "Code\Core Functions\Map.dm"
+#include "Code\Core Functions\Monster AI revamp 2019.dm"
+#include "Code\Core Functions\Monsters 2019, AI etc.dm"
+#include "Code\Core Functions\pathfind test.dm"
+#include "Code\Core Functions\Pixel helpers.dm"
+#include "Code\Core Functions\Saving.dm"
+#include "Code\Core Functions\Security - Admin Banning.dm"
+#include "Code\Core Functions\Stat Points.dm"
+#include "Code\Core Functions\Statpanel Tabs.dm"
+#include "Code\Core Functions\Text Related.dm"
+#include "Code\Core Functions\Text.dm"
+#include "Code\Core Functions\Character Creation\Login.dm"
+#include "Code\Core Functions\Character Creation\Races\_race.dm"
+#include "Code\Core Functions\Character Creation\Races\hybrids.dm"
+#include "Code\Core Functions\Client Handling\Logout.dm"
+#include "Code\Core Functions\Configuration\__Config.dm"
+#include "Code\Core Functions\Configuration\Character Progression.dm"
+#include "Code\Core Functions\Configuration\Game Limits.dm"
+#include "Code\Core Functions\Configuration\General Mechanics.dm"
+#include "Code\Core Functions\Configuration\Social Mechanics.dm"
+#include "Code\Map Code\Ambient Occlusion.dm"
+#include "Code\Map Code\Auto Edge.dm"
+#include "Code\Map Code\Enemy Waves Chamber.dm"
+#include "Code\Map Code\Quadrant Generator.dm"
+#include "Code\Misc\_vfx.dm"
+#include "Code\Misc\all icons to grayscale.dm"
+#include "Code\Misc\Trolls 2.dm"
+#include "Code\Misc\Trolls.dm"
+#include "Code\Misc\Unsorted 2.dm"
+#include "Code\Misc\Unsorted.dm"
+#include "Code\Misc\Utilities.dm"
+#include "Code\Movement\Cross.dm"
+#include "Code\Movement\Double Tap Warp.dm"
+#include "Code\Movement\MapScrolling.dm"
+#include "Code\Movement\Move Delay.dm"
+#include "Code\Movement\Move Macros.dm"
+#include "Code\Movement\Move.dm"
+#include "Code\Movement\Pixel Moving.dm"
+#include "Code\Planet Specifics\Hell Effects.dm"
+#include "Code\Planet Specifics\Mining Cave.dm"
+#include "Code\Planet Specifics\Planet Vegeta Fitness.dm"
+#include "Code\Planet Specifics\Prison.dm"
+#include "Code\Planet Specifics\time chamber.dm"
+#include "Code\Player Mechanics\_content handling.dm"
+#include "Code\Player Mechanics\aging.dm"
+#include "Code\Player Mechanics\Ascension.dm"
+#include "Code\Player Mechanics\Clothes.dm"
+#include "Code\Player Mechanics\Cooking.dm"
+#include "Code\Player Mechanics\Crandal.dm"
+#include "Code\Player Mechanics\Customize.dm"
+#include "Code\Player Mechanics\death.dm"
+#include "Code\Player Mechanics\Debuffs.dm"
+#include "Code\Player Mechanics\Feats.dm"
+#include "Code\Player Mechanics\Grabbing.dm"
+#include "Code\Player Mechanics\Inventory.dm"
+#include "Code\Player Mechanics\Learn.dm"
+#include "Code\Player Mechanics\Old_Ranks.dm"
+#include "Code\Player Mechanics\Ranks.dm"
+#include "Code\Player Mechanics\Reincarnation.dm"
+#include "Code\Player Mechanics\spawns.dm"
+#include "Code\Player Mechanics\Teach.dm"
+#include "Code\Player Mechanics\Train New 2021.dm"
+#include "Code\Player Mechanics\Train.dm"
+#include "Code\Player Mechanics\Voting.dm"
+#include "Code\Player Mechanics\2021+ New\AFK Protection.dm"
+#include "Code\Player Mechanics\2021+ New\BP Tiers.dm"
+#include "Code\Player Mechanics\2021+ New\Currency.dm"
+#include "Code\Player Mechanics\2021+ New\Leagues System.dm"
+#include "Code\Player Mechanics\2021+ New\Party System.dm"
+#include "Code\Player Mechanics\2021+ New\Power Roll.dm"
+#include "Code\Player Mechanics\2021+ New\Rage.dm"
+#include "Code\Player Mechanics\2021+ New\Skills.dm"
+#include "Code\Player Mechanics\2021+ New\Traits.dm"
+#include "Code\Player Mechanics\2021+ New\HUD Stuff\Build HUD.dm"
+#include "Code\Player Mechanics\2021+ New\HUD Stuff\Exp Bar.dm"
+#include "Code\Player Mechanics\2021+ New\HUD Stuff\Party Bars.dm"
+#include "Code\Player Mechanics\2021+ New\HUD Stuff\Resource Bars.dm"
+#include "Code\Player Mechanics\2021+ New\HUD Stuff\Sense HUD.dm"
+#include "Code\Player Mechanics\2021+ New\HUD Stuff\Waiting Screen.dm"
+#include "Code\Player Mechanics\2021+ New\HUD Stuff\type defines\HUD Bars.dm"
+#include "Code\Player Mechanics\2021+ New\HUD Stuff\type defines\HUD Buttons.dm"
+#include "Code\Player Mechanics\2021+ New\HUD Stuff\type defines\HUD Panels.dm"
+#include "Code\Player Mechanics\2021+ New\HUD Stuff\type defines\Maptext Holder.dm"
+#include "Code\Player Mechanics\2021+ New\HUD Stuff\type defines\Screen Object.dm"
+#include "Code\Player Mechanics\2021+ New\HUD Stuff\type defines\Title Display.dm"
+#include "Code\Player Mechanics\2021+ New\New Injuries\Afflictions.dm"
+#include "Code\Player Mechanics\2021+ New\New Injuries\Injuries.dm"
+#include "Code\Player Mechanics\2021+ New\Traits\Alien.dm"
+#include "Code\Player Mechanics\2021+ New\Traits\Bios.dm"
+#include "Code\Player Mechanics\2021+ New\Traits\Changeling.dm"
+#include "Code\Player Mechanics\2021+ New\Traits\Demigod.dm"
+#include "Code\Player Mechanics\2021+ New\Traits\Demon.dm"
+#include "Code\Player Mechanics\2021+ New\Traits\Human.dm"
+#include "Code\Player Mechanics\2021+ New\Traits\Kai.dm"
+#include "Code\Player Mechanics\2021+ New\Traits\Majin.dm"
+#include "Code\Player Mechanics\2021+ New\Traits\makyo.dm"
+#include "Code\Player Mechanics\2021+ New\Traits\Namek.dm"
+#include "Code\Player Mechanics\2021+ New\Traits\Yasai.dm"
+#include "Code\Projectile System\Beam Core.dm"
+#include "Code\Projectile System\Beams.dm"
+#include "Code\Projectile System\Blasts.dm"
+#include "Code\Projectile System\Projectile Core.dm"
+#include "Code\Projectile System\Projectiles.dm"
+#include "Code\Projectile System\New 2021\Beams.dm"
+#include "Code\Projectile System\New 2021\Projectiles.dm"
+#include "Code\Races\Alien Starter Moves.dm"
+#include "Code\Races\Nameks.dm"
+#include "Code\Races\Oozaru.dm"
+#include "Code\Races\Ultra Instinct.dm"
+#include "Code\Races\Bio Android\Bios.dm"
+#include "Code\Races\Majins\Goo Trap.dm"
+#include "Code\Technology\Body Swap.dm"
+#include "Code\Technology\Bombs.dm"
+#include "Code\Technology\Cyber Drones.dm"
+#include "Code\Technology\Cybernetics.dm"
+#include "Code\Technology\Gun Customization.dm"
+#include "Code\Technology\Guns.dm"
+#include "Code\Technology\Land Mine.dm"
+#include "Code\Technology\new drones.dm"
+#include "Code\Technology\Shurikens.dm"
+#include "Code\Technology\Smoke Bomb.dm"
+#include "Code\Technology\T-Injection.dm"
+#include "Code\Technology\Technology.dm"
+#include "Code\Technology\Vampires.dm"
+#include "Code\Transformations\Afterlife.dm"
+#include "Code\Transformations\Android.dm"
+#include "Code\Transformations\Global.dm"
+#include "Code\Transformations\Icer.dm"
+#include "Code\Transformations\Kaioken.dm"
+#include "Code\Transformations\New Transformations.dm"
+#include "Code\Transformations\Yasai.dm"
+#include "Code\UI\Guide.dm"
+#include "Code\UI\Hotkeys.dm"
+#include "Code\UI\RP Window.dm"
+#include "Code\UI\save player settings.dm"
+#include "Code\UI\UI Stuff.dm"
+#include "Code\UI\DU.dmf"
+#include "Code\UI\Tabs 2017\BuildTab.dm"
+#include "Code\Visual Effects\Big Rocks.dm"
+#include "Code\Visual Effects\rising rocks 2019.dm"
+#include "Code\World Mechanics\DeadZone.dm"
+#include "Code\World Mechanics\Dragon Balls.dm"
+#include "Code\World Mechanics\Gravity.dm"
+#include "Code\World Mechanics\Orbiting Planet.dm"
+#include "Code\World Mechanics\planet destroy.dm"
+#include "Code\World Mechanics\Space.dm"
+#include "Code\World Mechanics\Years.dm"
+#include "Code\World Mechanics\Tournaments 2022\Tournament Areas.dm"
+#include "Code\World Mechanics\Tournaments 2022\Tournament Brackets.dm"
+#include "Code\World Mechanics\Tournaments 2022\Tournament Fights.dm"
+#include "Code\World Mechanics\Tournaments 2022\Tournament Helpers.dm"
+#include "Code\World Mechanics\Tournaments 2022\Tournaments.dm"
+#include "Code\World Mechanics\Weather Day Night\Areas.dm"
+#include "Code\World Mechanics\Weather Day Night\DayNight.dm"
+#include "Code\World Mechanics\Weather Day Night\Fireflies.dm"
+#include "Code\World Mechanics\Weather Day Night\Lighting.dm"
+#include "Maps\_Map 2022.dmm"
+#include "Maps\_Space 2022.dmm"
+// END_INCLUDE

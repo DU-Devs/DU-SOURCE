@@ -1,0 +1,89 @@
+# Extension-less #
+##################
+*
+!/**/
+!*.*
+
+# Specific Files#
+#################
+Bugs
+
+# Compiled source #
+###################
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+*.dmb
+*.rsc
+*.lk
+*.code-workspace
+
+# Packages #
+############
+# it's better to unpack these files and commit the raw source
+# git has its own built in compression methods
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Logs and databases #
+######################
+*.log
+*.sql
+*.sqlite
+*.int
+*.sav
+*.json
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Folders #
+###########
+Logs/
+Feats/
+HotkeyBackups/
+Save/
+.vscode/
+debug/
+configs/
+archives/
+Maps/backup
+Icons/zzzzzzzzGrayscaled
+Icons/Grayscaled
+configs/Social Mechanics.json
+configs/General Mechanics.json
+configs/Game Limitations.json
+configs/Character Progression.json
+
+# Specific Files #
+map output.txt
+Code/_libs/kii_lighting/DEMO/_demo.dm
+Code/_libs/kii_lighting/DEMO/demo.dmm
+Code/_libs/kii_lighting/DEMO/eyeglow_mob.dmi
+Code/_libs/kii_lighting/DEMO/fire_mask_emit.dmi
+Code/_libs/kii_lighting/DEMO/fire.dmi
+Code/_libs/kii_lighting/DEMO/mob.dmi
+Code/_libs/kii_lighting/DEMO/tree.dmi
+Code/_libs/kii_lighting/DEMO/turf.dmi
+Code/_libs/kii_lighting/kii_lighting.dme
+Code/_libs/kii_maptext_inputs/maptext inputs.dme
+Code/_libs/kii_maptext_inputs/DEMO/_demo.dm
+Code/_libs/kii_maptext_inputs/DEMO/box.dmi
+Code/_libs/kii_maptext_inputs/DEMO/demo.dmm
+Code/_libs/kii_maptext_inputs/DEMO/turf.dmi

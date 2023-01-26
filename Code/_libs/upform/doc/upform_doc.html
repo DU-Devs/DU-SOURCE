@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>upForm Library Documentation</title>
+	<link rel="stylesheet" href="upform_doc.css" type="text/css" />
+</head>
+
+<body>
+
+<div class="title">
+<h1>upForm Library Documentation</h1>
+<i>by Wen-Hao Lue (Unknown Person), Version 1.3 rev 4</i>
+</div>
+
+<div class="contents">
+	<h2>Table of Contents</h2>
+	<ul>
+		<li><a href="#gstart">Getting Started</a></li>
+		<ul>
+			<li><a href="#gstart_s1">Defining and Displaying Pages		</a></li>
+			<li><a href="#gstart_s2">Form Types							</a></li>
+			<li><a href="#gstart_s3">Link Handling						</a></li>
+			<li><a href="#gstart_s4">Targets, Owners and Hosts			</a></li>
+			<li><a href="#gstart_s5">CSS and JavaScript					</a></li>
+		</ul>
+		<li><a href="#feat">Features</a></li>
+		<ul>
+			<li><a href="#feat_s1">Resource Handling					</a></li>
+			<li><a href="#feat_s2">Viewer Control						</a></li>
+			<li><a href="#feat_s3">Multi-Viewer Interfaces				</a></li>
+			<li><a href="#feat_s4">Global Interfaces					</a></li>
+			<li><a href="#feat_s5">HTML Form Handling					</a></li>
+			<li><a href="#feat_s6">Timers								</a></li>
+			<li><a href="#feat_s7">Miscellaneous						</a></li>
+			</ul>
+		<li><a href="#ref">Reference</a></li>
+		<ul>
+			<li><a href="#ref_s1">User-Defined Variables				</a></li>
+			<li><a href="#ref_s2">Constants								</a></li>
+			<li><a href="#ref_s3">Global Procs							</a></li>
+			<li><a href="#ref_s4"><tt>/upForm</tt> Vars					</a></li>
+			<li><a href="#ref_s5"><tt>/upForm</tt> Procs				</a></li>
+			<li><a href="#ref_s6">Predefined JavaScript Functions		</a></li>
+		</ul>
+	</ul>
+
+	<p align="center"><a href="http://developer.byond.com/hub/UnknownPerson/upForm">
+	  Download upForm Library</a>
+	</p>
+</div>
+
+<h3><a name="gstart">Getting Started</a></h3>
+
+<p>Browser interfaces have been a fundamental aspect of BYOND for quite a while, but the idea 
+of using HTML to enhance a program's interface has not been commonly executed in BYOND 
+games.  This library will let you create and design behaviour for HTML interfaces in your project
+without having to re-invent the wheel every time you write some browser interface code.</p> 
+
+<h4><a name="gstart_s1">Defining and Displaying Pages</a></h4>
+
+<p>To define a form, all you need to do is define a child type from the datum <tt>/upForm</tt> 
+and define some variables and procs.  Here is a simple definition of a form that would display 
+"hello" to the user's default browser.</p>
+
+<xmp class="code">upForm/mypage
+  GenerateBody()
+    UpdatePage("Hello")
+</xmp>
+
+<p>The proc <tt>GenerateBody()</tt> is where you should write your code to generate the body of 
+the page, implied by the name.  <tt>GenerateBody()</tt> should always call <tt>UpdatePage()</tt> 
+with the body text of the page being sent through the parameter.  This proc must be implemented 
+in any form you wish to define.</p>
+
+<p>The above code won't do anything, since it's just a declaration of a new form. We can do 
+something with this datum by using the <tt>upForm()</tt> proc defined in the library.  This proc 
+essentially creates and handles a form for you. It is the hub of all form instantiation.  To 
+create an instance of a form, call <tt>upForm()</tt>, sending the required data through the args.  
+The following will display the form we defined above when the player logs in.</p>
+
+<xmp class="code">mob/Login()
+  ..()
+  upForm(src, /upForm/mypage)
+</xmp>
+
+<p>There are four to use <tt>upForm()</tt>, but the most common method is to specify the 
+target of the form (a mob, or a client) as the first arg, and then the path of the form (such as 
+/upForm/mypage) as the second arg.  You may call <tt>upForm()</tt> as many times as you want
+with the limitation that another page will not be interrupted.</p>
+
+<p>On another note, <tt>upForm()</tt> returns the reference of the newly instantiated form.  
+Therefore, you can store this elsewhere to handle it, such as the case if you want to externally 
+close the form.  To close a form, the most simple way is to delete the instance.  Deleting it 
+handles all of the final closing code.  More of this will be explained in the next sections.</p>
+
+<xmp class="code">mob/Login()
+  ..()
+  // store the instance of the form object returned by upForm()
+  var/upForm/mypage/F = upForm(src, /upForm/mypage)
+  spawn(50)
+    // Close the form externally by deleting it after 5 seconds
+    if(F) del(F)
+</xmp>
+
+<h4><a name="gstart_s2">Form Types</a></h4>
+
+<p>There are a total of four types of forms you may define with the <tt>/upForm</tt> datum.  
+This is determined by what the value of the <tt>/upForm</tt> variable <tt>form_type</tt> is.  
+The variable may be one of the four constants:</p>
+
+<dl class="ref">
+<dt>UPFORM_BROWSER</dt>
+<dd>The default value.  The page will be displayed to the user's default form.  If no 
+interface has been defined for your program, then it will display to the browser tab.
+</dd>
+<dt>UPFORM_INTERFACE</dt>
+<dd>The page will be displayed to a specified interface, which should be defined in the 
+	form's <tt>form_name</tt> variable.
+</dd>
+<dt>UPFORM_WINDOW</dt>
+<dd>The page will be displayed in a unique window.  The window's settings are defined 
+	through various <tt>/upForm</tt> variables prefixed with <tt>window</tt>.
+</dd>
+<dt>UPFORM_CLOSEWINDOW</dt>
+<dd>The page will be displayed in a unique window with the purpose of being manually 
+	Xed out by the user.  This setting is fundamentally the same as <tt>UPFORM_WINDOW</tt> 
+	with the exception that the form instance is deleted right after the page is displayed 
+	to the viewers.
+</dd>
+</dl>
+
+<p>The default value for <tt>form_type</tt> is <tt>UPFORM_BROWSER</tt>, so if it is not 
+specified, the form will display the page to the default browser of the user's interface.  
+The example in the previous section displays the page to the user's default interface.  The 
+only difference between <tt>UPFORM_BROWSER</tt> and <tt>UPFORM_INTERFACE</tt> is that you 
+specify the interface control's name to output to using the <tt>form_name</tt> variable.</p>
+
+<p>Windows are a fairly common way of displaying data, because you can have as many windows 
+as you want on the screen, and they have the flexibility of being resizable, movable, and 
+closable.  To create a windowed form, set the <tt>form_type</tt> of the form to 
+<tt>UPFORM_WINDOW</tt>.</p>
+
+<xmp class="code">upForm/mywindow
+  form_type = UPFORM_WINDOW
+  GenerateBody()
+    UpdatePage("This is a window")
+
+mob/Login()
+  ..()
+  // display an unclosable window
+  upForm(src, /upForm/mywindow)
+</xmp>
+
+<p>Windows also have other important settings that you may want to configure.  The three 
+variables used to configure window settings are <tt>window_title</tt>, <tt>window_size</tt>, 
+and <tt>window_params</tt>.  The <tt>window_title</tt> variable is what will be displayed 
+as the title of the window.  <tt>window_size</tt> is the size of the window using a 
+"[width]x[height]" format.  <tt>window_params</tt> is a variable that takes flags as settings 
+that determine the nature of the window.  The variable may take the following flags: 
+<tt>UPFORM_CANNOT_CLOSE</tt>, <tt>UPFORM_CANNOT_RESIZE</tt>, <tt>UPFORM_CANNOT_MINIMIZE</tt>, 
+and <tt>UPFORM_NO_TITLEBAR</tt>.</p>
+
+<p>Because there is no way to catch the event that a window has been closed by the client, 
+two form types have been defined for you.  If you want the user to have the ability to keep 
+the window up for as long as he or she wants, then you should define the form as a 
+<tt>UPFORM_CLOSEWINDOW</tt>.  By defining a window as a regular <tt>UPFORM_WINDOW</tt>, then 
+you will need to handle the closing yourself, either by external or internal means. Close 
+Windows are deleted right after their pages are displayed, so <tt>upForm()</tt> will return 
+null.</p>
+
+<h4><a name="gstart_s3">Link Handling</a></h4>
+
+<p>The upForm datum handles all of the link handling for you in <tt>Topic()</tt>.  You will 
+not and should not touch the <tt>Topic()</tt> proc.  The library has defined a <tt>Link()</tt> 
+proc for you to handle communication from the player to the form.  Its usage is similar to 
+how you would override <tt>Topic()</tt> if you were to handle your own communication.  Here is 
+a simple example showing how you could have a window have a close link.</p>
+
+<xmp class="code">upForm/mywindow
+  form_type = UPFORM_WINDOW
+  
+  Link(list/href_list, client/C)
+    // if a close link was sent
+    if(href_list["action"] == "close")
+      // close the form by deleting it
+      del(src)
+
+  GenerateBody()
+    var/page = {"
+      This is a window that can be closed. <br />
+      <br />
+      <a href="byond://?src=\ref[src]&action=close">Close Window</a>
+    "}
+    UpdatePage(page)
+
+mob/Login()
+  ..()
+  upForm(src, /upForm/mywindow)
+</xmp>
+
+<p><tt>Link()</tt> has two args, one that is actively demonstrated.  The <tt>href_list</tt> 
+var is an associative list holding a name=value list of the params sent through the link.  The 
+second arg is the client who sent the link, so it is possible to have distinct behaviour of your 
+forms depending on who sent it.</p>
+
+<p>The great thing about the library is that it handles all automated verification for you.  
+The client sent through <tt>Link()</tt> is guaranteed to be valid, as it is verified by the form 
+datum.  Nothing will happen if an unauthorized user attempts to send a link to a form that the 
+user is not viewing.</p>
+
+<h4><a name="gstart_s4">Targets, Owners, and Hosts</a></h4>
+
+<p>Because of the numerous ways that you can represent a form's purpose and functionality, this 
+library has defined a few variables for you to utilize externally from the form.  When you call 
+<tt>upForm()</tt>, the first arg of the proc is always the <i>target</i> of the form.  The target 
+can either be a client, or a list of clients (if a mob or list of clients or mobs is sent in a 
+list, they will be automatically converted if possible).  The target of a form is essentially 
+the client or clients that the form will be directed at.  Therefore, you can send an instance of 
+a form to the screen of many clients if you want them all to view and control the same thing.  
+More information about multi-viewer forms is discussed in the next section.</p>
+
+<p>If the target of an owner is an individual client or mob, then a form's <tt>owner</tt> is 
+set to that client.  By defining <tt>owner</tt> for form objects, we can identify internally 
+who the form belongs to.  There is no owner if the target is a list of clients.</p>
+
+<p>Another concept of forms is the <tt>host</tt>.  The host of a form is what the form is about, 
+or what the form is modifying.  The <tt>host</tt> variable holds any type of datum, and is 
+completely optional. The variable should be specified in the arg after the owner when calling 
+<tt>upForm()</tt>.  The purpose of defining <tt>host</tt> is if you want convenient and reliable 
+access to a certain object that the form will commonly use.  For example, if you want to create 
+a browser interface that reads or modifies a certain object, such as another character in your 
+game, then you will want to send the character reference through the second arg of <tt>upForm()</tt>.  
+The following is an example on how you would use the host variable to view the health of another 
+player.</p>
+
+<xmp class="code">upForm/viewhealth
+  form_type = UPFORM_CLOSEWINDOW
+  window_size = "200x80"
+  
+  GenerateBody()
+    // use getHost() to get the reference of a form's host
+    var/mob/M = src.getHost()
+    
+    var/page = {"
+      [M.name]'s health: <br />
+      [M.health] / [M.maxhealth]
+    "}
+    
+    UpdatePage(page)
+
+mob
+  var
+    health = 100
+    maxhealth = 100
+
+  verb
+    view_health(mob/M in world)
+      // display a form to src to view M's health
+      // src is the target, while M is the host
+      upForm(src, M, /upForm/viewhealth)
+</xmp>
+
+<p>Notice how the verb calls <tt>upForm()</tt> with three arguments instead of two.  If you want a 
+host to be specified, then the second arg should be the reference of a host.  For easy reference, 
+here are the two main ways to call <tt>upForm()</tt>:</p>
+
+<dl class="ref">
+<dt>upForm(target, form_path)</dt>
+<dt>upForm(target, host, form_path)</dt>
+</dl>
+
+<p>When you are trying to access the host or the owner of a form, you should use <tt>getOwner()</tt> 
+and <tt>getHost()</tt> respectively.  You should use these procs to ensure that you are not going 
+to access something that does not exist.  If you did not specify a host (or in the case of multi-
+viewer forms or global forms, an owner), then you should not be calling <tt>getHost()</tt>.  However, 
+in the case the host is deleted while the form is running, you will want to manually check the 
+<tt>host</tt> variable before calling <tt>getHost()</tt>, as the proc will call an assertion if a 
+host does not exist.  You will have to handle the possibility of the host being deleted while the 
+form is still running.</p>
+
+<h4><a name="gstart_s5">CSS and JavaScript</a></h4>
+
+<p>You can enhance your interface by including CSS and JavaScript.  All forms have the variables 
+<tt>page_css</tt> and <tt>page_js</tt>.  Respectively, they represent the CSS code and JavaScript 
+code that will be displayed in that form.  The upForm Library defines a predefined set of commonly 
+used JavaScript functions, all prefixed with <tt>upForm_</tt>.  Refer to the Reference at the end of 
+this documentation for information about the predefined JavaScript functions.  JavaScript can also 
+be written by sending text through the second arg of <tt>UpdatePage()</tt>.  When you generate your 
+page, you may want in a certain case to send JavaScript code.</p>
+
+<p>If you want all of your pages to look similar, you can define a global CSS by defining the 
+<tt>global_css</tt> var belonging to the <tt>/upForm</tt> datum.</tt>  The below example shows 
+the usage of <tt>global_css</tt>, <tt>page_css</tt>, <tt>page_js</tt>, and sending JavaScript code 
+through <tt>UpdatePage()</tt></p>
+
+<xmp class="code">upForm/global_css = "body { background-color: #000000; color: #ffffff }"
+// all pages have black background and white text
+
+upForm/mypage
+  page_css = "span.big { font-size: 16pt }"
+  page_js = {"function myFunction() { 
+    alert("This is a JavaScript function called from UpdatePage()"); }
+  "}
+  
+  GenerateBody()
+    var/page = {"<span class="big">Big Text</span> <br /> Regular Text"
+    UpdatePage(page, "myFunction();")
+</xmp>
+
+<h3><a name="feat">Library Features</a></h3>
+
+<p>upForm not only easily lets us define and associate forms, but it has some unique features 
+unheard of from other browser or html libraries on BYOND.  These features include easy support 
+for resource handling, multiple viewers, form handling, and timers.</p>
+
+<h4><a name="feat_s1">Resource Handling</a></h4>
+
+<p>Another convenient feature in the library is the ability to easily handle and send resources 
+such as images and sounds to the client.  The <tt>resources</tt> associative list defined in 
+the datum is a list of runtime resources you want the form to send to the user when it is created.  
+The key of the list is the resource, while the association is an optional name for the file you 
+want to send.</p>
+
+<p>You are also able to dynamically send resources to the viewers of a form.  If you have a 
+dynamically generated resource such as a custom icon, then you can use the <tt>LoadResource()</tt> 
+proc defined in the form to send a resource that you could not send through the resources list.  
+The first mandatory arg for the proc is the resource itself, and the second optional arg is the 
+name of the resource.  You should specify the name of the resource if it is dynamically generated.  
+The following is a form demonstrating both predefined and dynamic resource handling methods.</p>
+
+<xmp class="code">upForm/myresources
+  resources = list(icon('graphics.dmi', "star")="star.png", 'banner.png')
+
+  GenerateBody()
+    var/icon/I = new('stickman.dmi')
+    I.SwapColor(rgb(255,255,255), rgb(rand(0,255),rand(0,255),rand(0,255)))
+    LoadResource(I, "dynamic.png")
+
+    var/page = {"
+      <img src="star.png" /> <img src="dynamic.png" /> <img src="star.png"> <br />
+      <img src="banner.png" />
+    "}
+
+    UpdatePage(page)
+</xmp>
+
+<p>The above example shows how you could use a combination of predefined and dynamic resources to 
+display a dynamic image between two star icons on top of a banner png.  <tt>LoadResource()</tt> 
+can be called anywhere.  However, it is up to you to decide when it is appropriate to call it and 
+to think ahead of the necessity of sending the resource.</p>
+
+<h4><a name="feat_s2">Viewer Control</a></h4>
+
+<p>The upForm Library gives you a fairly good amount of control over the creation and display 
+of the form objects.  For example, if a certain form could not be sent to a client, then 
+<tt>upForm()</tt> will return null.  Knowing this, we can handle the case where a form could not 
+be sent to a user, such as the attempt to send a Battle Challenge page to a player who is already 
+in a Battle.  In this case, you could store the return value of <tt>upForm()</tt>, and check whether 
+a form was returned by checking if a reference was sent.  If it wasn't, then the form was not able 
+to be sent to that client.</p>
+
+<xmp class="code">mob/verb/challenge(mob/M in world)
+  // src challenges M to a battle.  send form to M
+  var/form/F = upForm(M, src, /upForm/challenge)
+  if(!F)
+    src << "Your battle challenge request could not be met."
+</xmp>
+
+<p>But wait, how do we know whether a form can or can't be sent to a client?  By default, an 
+interface that displays to the same interface control in the client's form list, and a browser 
+interface that is being sent when another browser interface is being displayed will not be allowed 
+to display the form to that client.  A form can't be sent if it interrupts another form object.  This 
+prevents the output coming from another form from being interrupted by a new form.</p>
+
+<p>If you want to define your own conditions, such as the incomplete battle challenge request page, 
+then you will need to override the existing <tt>canDisplayForm()</tt> proc.  This proc belongs to 
+the <tt>/upForm</tt> datum, and the arg is the client whom the form is being sent to.  Here is how you 
+could disallow a battle challenge to be sent if the player is currently in a battle:</p>
+
+<xmp class="code">upForm/challenge 
+  canDisplayForm(client/C) // can this form be displayed to C?
+    . = ..() // still consider the predefined behaviour ...
+    // ... yet add your own conditions!     
+    var/mob/M = C.mob
+    if(M.inBattle())
+      // disallow the form to be displayed if the player is in a battle 
+      . = 0
+  
+  Link(list/href_list)
+    var/client/C = src.getOwner()
+    var/mob/M = C.mob
+    
+    switch(href_list["action"])
+      if("accept")
+        M.AcceptChallenge()
+        del(src)
+      if("decline")
+        M.DeclineChallenge()
+        del(src)
+  
+  GenerateBody()
+    var/mob/M = src.getHost()
+    var/page = {"
+      [M.name] would like to challenge you to a battle to 
+      the death.  Accept or Decline? <br />
+      <br />
+      <p align="center">
+        <a href="byond://?src=\ref[src]&action=accept">  \[Accept\]  
+        <a href="byond://?src=\ref[src]&action=decline"> \[Decline\]
+      </p>
+    "}
+    
+    UpdatePage(page)  
+</xmp>
+
+<p>The important part of the code is the implementation of <tt>canDisplayForm()</tt> in the above 
+example.  Notice how the proc calls and sets the default return value to <tt>.</tt> to further 
+extend the behaviour of the original functionality.  That way, we do not overwrite the original 
+library functionality that prevents forms from interrupting other forms.  Using this method, you can 
+easily add more and more conditions to whether a form can be displayed.</p>
+
+<p>Most commonly, you will want not want two windows of the same type to be displayed to the player.  
+The library defines a client proc, <tt>upForm_isViewingForm()</tt> to easily check whether a certain 
+player is viewing a certain form, or type of form.  The arg for the proc accepts either an instance, a
+path, or a tag.  It will return true a valid instance is found in the list.  A window that should 
+not be displayed more than once to the user at one given time would use this proc to check if any 
+instances of the same type of the window we are trying to send is in the client's form list (to be 
+explained in the next section).  A definition of a window of such would look like this:</p>
+
+<xmp class="code">upForm/mygenericwindow
+  form_type = UPFORM_WINDOW
+
+  canDisplayForm(client/C)
+    . = ..()
+    if(C.upForm_isViewingForm(src.type))
+      // disallow the form to be displayed if the client is viewing 
+      // another instance of the same form type 
+      . = 0
+  
+  GenerateBody()
+    UpdatePage("You cannot have two of these forms up at once!")
+</xmp>
+
+<h4><a name="feat_s3">Multi-Viewer Interfaces</a></h4>
+
+<p>There may be several cases when you will want to have many players be viewing the same page.  
+With this in mind, the library has support for multiple viewers.  To display a form to many players, 
+you will want to specify the target when you call <tt>upForm()</tt> as a list of clients and/or 
+mobs.  When you send a list, the library will know whether to display the form to one or many 
+players.  Here's a small example on how to display "Hello" to everyone in the world.</p>
+
+<xmp class="code">upForm/helloworld
+  form_type = UPFORM_CLOSEWINDOW
+  GenerateBody()
+    UpdatePage("Hello world!")
+
+mob/verb/hello()
+  var/list/L = list()
+  for(var/client/C)
+    L += C
+  upForm(L, /upForm/helloworld)
+</xmp>
+
+<p>Fundamentally, the only difference between having a form that is only displayable to one player 
+opposed to many players is that you will need to handle the case when a page is not successfully 
+sent to a set of clients.  The library makes it as easy as possible to catch these types of errors.  
+When a form has failed to be sent to a client, then it will not be inside the <tt>upForms</tt> client 
+variable.  <tt>upForms</tt> is a list that contains all of the instances of forms that the client is 
+currently viewing.  To catch any cases where a form is incorrectly sent, you can loop through the 
+list of clients you generated to check whether the form instance is located in the list by using 
+the <tt>upForm_isViewingForm()</tt> proc, and sending the reference of the stored form through the 
+arg.</p>
+
+<xmp class="code">mob/verb/testform()
+  var/list/L = list()
+  for(var/client/C)
+    L += C
+  var/form/F = upForm(L, /upForm/testform)
+  if(!F) 
+    // no players could succesfully receive the form
+    src << "Nobody could view the form"
+  else
+    for(var/client/C in L)
+      if(!C.upForm_isViewingForm(F))
+        src << "[C.key] could not view the form"
+</xmp>
+
+<p>The code above displays the clients who would not have that form displayed to their screens.  
+You can use this to handle the case when a form is not possible to be displayed to a client's screen.  
+By default, a client can't have an interface that interrupts an existing interface that is on the 
+client's screen.  For example, you cannot have two form objects that display to the same browser 
+interfaces.</p>
+
+<p>There are many ways to handle multiple viewers, and incorporate it with what the body displays.  
+The <tt>/upForm</tt> datum stores the viewers in the <tt>viewers</tt> list variable.  By looping 
+through the list, you can create a form that will display all of the viewers currently viewing the 
+form.</p>
+
+<xmp class="code">upForm/viewlist
+  GenerateBody()
+    var/page = "<b>People Viewing this Page</b> <br />"
+    for(var/client/C in src.viewers)
+      page += "[C.key] <br />"
+    UpdatePage(page)
+</xmp>
+
+<h4><a name="feat_s4">Global Interfaces</a></h4>
+
+<p>Global interfaces are a fancy way of saying a type of interface that would be shared by many 
+viewers, yet will still exist when there are no viewers.  These types of forms are created with 
+the purpose that viewers will be freely added or removed from the form at a later time.</p>
+
+<p>To create a global interface, you must: define the <tt>UPFORM_SET_SHARED</tt> flag in the 
+<tt>settings</tt> var of the form definition, and call <tt>upForm()</tt> with a null target.  
+Here is how you would define a global interface that displays "Hello world" by adding the 
+player to the viewer list.</p>
+
+<xmp class="code">// store the global interface in a global variable for easy access
+var/upForm/globalhelloworld/helloworld
+
+world/New()
+  ..()
+  // create the form by calling upForm with a null target
+  helloworld = upForm(null, /upForm/globalhelloworld)
+
+upForm/globalhelloworld
+  form_type = UPFORM_WINDOW
+  settings = UPFORM_SET_GLOBAL
+  
+  Link(list/href_list, client/C)
+    if(href_list["action"] == "close")
+      // remove the client as a viewer to "close" the window
+      src.RemoveViewer(C)
+  
+  GenerateBody()
+    var/page = {"
+      Hello world! <br />
+      <br />
+      <a href="byond://?src=\ref[src]&action=close">\[Close\]</a>
+    "}
+    UpdatePage(page)
+
+mob/Login()
+  ..()
+  // display window by adding the player to the form's viewer list
+  helloworld.AddViewer(src)
+</xmp>
+
+<p>Note that the way that we are handling the form is by calling <tt>AddViewer()</tt> and 
+<tt>RemoveViewer()</tt> respectively to display and close the form for the viewer.  Although this is not 
+a practical usage of a shared interface, you could use this model for something much more usable, such 
+as a player list that updates when a player logs in or out.  If you want the page to regenerate when a viewer 
+is added or removed, then you will want to turn on the <tt>UPFORM_SET_RELOAD_ON_VIEWER_UPDATE</tt> flag.  
+This example does not need it because it displays a constant message, but a dynamic player list 
+interface would definitely want to be updated.</p>
+
+<h4><a name="feat_s5">HTML Form Handling</a></h4>
+
+<p>Handling HTML forms is the main purpose of this library, hence its name.  HTML forms are commonly used in 
+websites that allow you to enter a set of information, and process it all at one time.  The <tt>upForm</tt> 
+datum gives you a plethora of functions and resources to make form handling as easy and intuitive as 
+possible.  There are three procs that you must implement when handling forms: <tt>FormInitTempVars()</tt>, 
+<tt>FormSetTempVars()</tt>, and <tt>ProcessVariable()</tt>.</p>
+
+<p>To tell the datum that you want it to handle forms for you, you will have to turn on the 
+<tt>UPFORM_SET_HANDLE_FORMS</tt> flag in the <tt>settings</tt> var.  When the flag is on, the form object will 
+know to separately handle any form data through its form functions.  Next, you will have to implement the
+<tt>FormInitTempVars()</tt> proc.  This proc uses the <tt>initFormVar()</tt> proc to set the initial values of 
+the entries of a form control that you will eventually define in the body of your page.  <tt>initFormVar()</tt> 
+takes three args in this order: the form name, the variable name, and the value of the variable.  For every 
+single form, and form input, you will have to call <tt>initFormVar()</tt> to initialize and declare the value 
+of the input of a certain form.  Internally, this creates indexes for the values of a form to be recalled 
+later.  The form stores all of the values, whether they are valid or invalid, for future reference.</p>
+
+<p>You also will have to implement the mirrored function, <tt>FormSetTempVars()</tt>.  Opposed to the above 
+proc that was explained, this proc gets called when a form is successfully submitted, and you want to set 
+the variables that were submitted, or perform some other action.  The argument that is sent through the proc 
+is the name of the form that was submitted, so you can set the correct values of the variables.  To get the 
+values of the internally-stored variables, you must use the proc <tt>getFormVar()</tt>, which takes the form 
+name and input name as the args, respectively.  The proc returns the value of the input control, given the 
+form name and input name that you have sent through the args.  In <tt>FormSetTempVars()</tt>, you will set 
+the variables that you intended to change using the HTML form.  <tt>getFormVar()</tt> is also used when you 
+write the HTML code for your form.  You use this proc to get the value of the control in the page.</p>
+
+<p>The other main proc that you will need to override is <tt>ProcessVariable()</tt>.  This proc gets called 
+when a form is submitted, and variables need to be processed.  It is called for every single input that 
+you have defined in your form.  The proc's args hold three variables: the form name, the input name, and 
+the value of the variable as a text string.  You are expected to set the value of the input that was sent 
+by using the <tt>setFormVar()</tt> proc, which also requires the same 3 args.  If the variable is not valid, 
+you must return a text string with the error, which you may choose to display on the screen.</p>
+
+<p>When handling forms, <tt>GeneratePage()</tt> will have a list sent to it if there are errors in the page.  
+This list is an associative list containing the values for the name of the input, and the error associated 
+with the input which was returned by <tt>ProcessVariable()</tt>.  This gives you the option of displaying 
+an error on a screen for a particular variable such as the case of having too many characters in your 
+name, or if you attempt to write a negative number for your age.</p>
+
+<p>Writing an HTML form is not simple, so here is a relatively simple example for a page that has a form 
+that will accept a name and a password.</p>
+
+<xmp class="code">upForm/register
+  settings = UPFORM_SET_HANDLE_FORMS
+
+  Link(list/href_list)
+    if(href_list["action"] == "close")
+      del(src)
+
+  FormInitTempVars()
+    var/mob/M = src.getHost()
+    // initialize each form var to the default values
+    initFormVar("reg", "uname", M.username)
+    initFormVar("reg", "pass", M.password)
+
+  FormSetTempVars(fname)
+    var/mob/M = src.getHost()
+    if(fname == "reg")
+      // set each form var to the successfully submitted value
+      M.username = getFormVar("reg", "uname")
+      M.password = getFormVar("reg", "pass")
+
+  ProcessVariable(fname, name, value)
+    if(fname == "reg")
+      switch(name)
+        if("uname")
+          setFormVar(fname, name, value)
+          // verify and return an error message if something is wrong
+          if(length(value) > 25 || length(value) < 3)
+            return "Username must be between 3 and 25 characters long"
+        if("pass")
+          setFormVar(fname, name, value)
+          if(length(value) <= 5)
+            return "Password must be longer than 5 characters"
+    return null
+
+  FormSubmitSuccess(fname, client/C)
+    var/mob/M = src.getHost()
+    C << "Success!  Your username is [M.username] and your password is [M.password]"
+    del(src)
+    // register success!  delete form
+
+  GenerateBody(list/errors=list())
+    var/page = {"
+    <form name="reg" action="byond://" method="get">
+      <input type="hidden" name="src" value="\ref[src]" />
+      <input type="hidden" name="form" value="reg" />
+
+      Username: <input type="text" name="uname" value="[getFormVar("reg","uname")]" /> 
+      [errors["uname"]]<br />
+      Password: <input type="password" name="pass" value="[getFormVar("reg","pass")]" />
+      [errors["pass"]]<br />
+      
+      <input type="submit" value="Register" />
+      <input type="reset" value="Reset" />
+    </form>
+    "}
+
+    UpdatePage(page)
+
+mob
+  var
+    username = ""
+    password = ""
+
+  verb/register()
+    upForm(src, src, /upForm/register)
+</xmp>  
+
+<p>There are some things you may have noticed in the above example.  When you are generating a page with 
+an HTML form, you must have two hidden inputs sending information about the form reference, and the 
+name of the form.  This will allow the HTML form to be handled by the form functions rather than 
+<tt>Link()</tt>.  A generic form would look like this:</p>
+
+<xmp class="code"><form name="reg" action="byond://" method="get">
+  <input type="hidden" name="src" value="\ref[src]" />
+  <input type="hidden" name="form" value="reg" />
+  
+  ...
+  
+  <input type="submit" value="Submit" />
+</form>
+</xmp>
+
+<p>Another thing you may have noticed is that we can override the <tt>FormSubmitSuccess()</tt> proc to 
+do something on the event of a successful form submission.  The name of the form is sent through the 
+arg.  By default, it reloads the page.  In the above example, we close the form when the submission is 
+successful.  There is also the <tt>FormSubmitError()</tt> proc, which is called when a form with a 
+validation error is sent.  By default, it reloads the page with the errors.  The form name and list of 
+error is sent through the args.</p>
+
+<p>HTML forms are a useful and powerful tool to quickly submit and review information all at one go.  
+The library can support as many forms as you like, but you will have to specify the form values for 
+each of them.</p>
+
+<h4><a name="feat_s6">Timers</a></h4>
+
+<p>Timers are a simple yet useful feature for forms, and have been supported in this library due to the 
+convenience of having an internal timer rather than having to manually implement timing or handling 
+the time externally.  Time is mainly handled with the <tt>time_left</tt> variable.  This is the time 
+(measured in ticks) left that until the page will be deleted.  If you define an upForm datum with the 
+time being a positive non-zero integer, then the form will be deleted in that duration.</p>
+
+<xmp class="code">upForm/timedpage
+  time_left = 50
+  GenerateBody()
+    UpdatePage("This page will close in 5 seconds")
+</xmp>
+
+<p>This is the most common usage of a timed interface, which closes the page after a certain time.  If you 
+want finer control over the time, then you can modify the <tt>time_interval</tt> variable.  By default, it 
+is 10 ticks, which means that the timer will update every 10 ticks.  This variable usually does not need 
+to be changed, but if you want the form to be deleted in an interval of less than 10 ticks, then you will 
+want to modify this number so <tt>time_left % time_interval = 0</tt>.</p>
+
+<p>However, the main purpose of the <tt>time_interval</tt> variable is to control the refresh rate of a 
+timed form that you want updated within the interval you defined.  If the <tt>time_update</tt> variable is 
+1, then the page will be regenerated once per <tt>time_interval</tt> ticks.  This is useful if you want the 
+viewers to know the value of the counter.  Below is an example showing a countdown from 10 to 0.</p>
+
+<xmp class="code">upForm/timebomb
+  time_left = 100
+  time_update = 1
+  
+  Link(list/href_list)
+    if(href_list["action"] == "close")
+      del(src)
+  
+  GenerateBody()
+    var/page
+    if(hasTimeStarted())
+      page = "You have [time_left / 10] seconds to live."
+    else
+      page = "Boom!  You died.  \
+        <a href=\"byond://?src=\ref[src]&action=close\">\[Close\]</a>"
+    
+    UpdatePage(page)
+  
+  TimeUp()
+    // override to stop the default behaviour of form deletion 
+    // when the time runs out    
+
+mob/Login()
+  ..()
+  upForm(src, /upForm/timebomb)
+</xmp>
+
+<p>The above example uses two new procs: <tt>TimeUp()</tt> and <tt>hasTimeStarted()</tt>.  As the names 
+of the procs imply, <tt>TimeUp()</tt> is called when the timer reaches zero.  By default, it will delete 
+the form when the time runs out.  The time bomb example overrides the functionality to prevent the timer 
+from deleting the form so a message could instead be displayed.  <tt>hasTimeStarted()</tt> returns true 
+if the timer is running.  This proc is useful if you want to display something different when the timer 
+is running.</p>
+
+<p>Two other procs exist for timers.  <tt>TimeStarted()</tt>, similar to <tt>TimeUp()</tt> is called when 
+the timer is started.  If <tt>time_left</tt> is defined in the form definition, then it will be called 
+when the form is created.  If you don't want the timer to start when the form is created, then you can call 
+<tt>StartTimer()</tt> manually, submitting the time in ticks through the arg.  This will manually start the 
+timer if it hasn't started already.  <tt>StartTimer()</tt> will not sleep, so you do not need to call 
+<tt>spawn()</tt>.</p>
+
+<h4><a name="feat_s7">Miscellaneous</a></h4>
+
+<p>The features explained in this section do not require as much depth as the above features, and are 
+mainly used for convenience.</p>
+
+<p>The <tt>interface_bgstyle</tt> variable is used for the specific case of an form with the <tt>form_type</tt> 
+of <tt>UPFORM_INTERFACE</tt> or <TT>UPFORM_BROWSER</tt>.  By default, when a form is closed, it will remove 
+all of the text from the browser control.  BYOND will display a blank white screen.  In the case that you 
+don't want a white background to be displayed, <tt>interface_bgstyle</tt> is used to display an empty page 
+with a custom CSS definition.  So if your game has a dark background, then you may want to define the variable 
+as a dark grey background for the blank page.</p>
+
+<xmp class="code">upForm/myinterface
+  form_type = UPFORM_INTERFACE
+  form_name = "myinterface"
+  page_css = "body { background-color: #222222; color: #ffffff }"
+  interface_bgstyle = "body { background-color: #222222 }"
+  
+  GenerateBody()
+    UpdatePage("When this page is deleted, it will display a dark grey \
+	  background rather than an ugly white background.")
+</xmp>
+
+<h3><a name="ref">Reference</a></h3>
+
+<h4><a name="ref_s1">User-Defined Variables</a></h4>
+
+<dl class="ref">
+<dt>/upForm/global_css</dt>
+<dd>The CSS code that will be displayed on every single upForm instance.  Defined when all forms should 
+	look similar.  Default value is null.
+</dd>
+</dl>
+
+<h4><a name="ref_s2">Constants</a></h4>
+
+<tt>form_type</tt> var settings:
+
+<dl class="ref">
+<dt>UPFORM_BROWSER</dt>
+<dd>The default value.  The page will be displayed to the user's default form.  If no 
+	interface has been defined for your program, then it will display to the browser tab.
+</dd>
+<dt>UPFORM_INTERFACE</dt>
+<dd>The page will be displayed to a specified interface, which should be defined in the 
+	form's <tt>form_name</tt> variable.
+</dd>
+<dt>UPFORM_WINDOW</dt>
+<dd>The page will be displayed in a unique window.  The window's settings are defined 
+	through various <tt>/upForm</tt> variables prefixed with <tt>window</tt>.
+</dd>
+<dt>UPFORM_CLOSEWINDOW</dt>
+<dd>The page will be displayed in a unique window with the purpose of being manually 
+	Xed out by the user.  This setting is fundamentally the same as <tt>UPFORM_WINDOW</tt> 
+	with the exception that the form instance is deleted right after the page is displayed 
+	to the viewers.
+</dd>
+</dl>
+
+<tt>setting</tt> var flags:
+
+<dl class="ref">
+<dt>UPFORM_SET_HANDLE_FORMS</dt>
+<dd>The upForm object should handle the supported form functions when this flag is on.  Form 
+	procs must be implemented.
+</dd>
+<dt>UPFORM_SET_GLOBAL</dt>
+<dd>The upForm object is shared and will not be deleted when the viewer list is empty.  Global 
+	interfaces should be created via <tt>upForm()</tt> with a null <tt>target</tt>.
+</dd>
+<dt>UPFORM_SET_RELOAD_ON_VIEWER_UPDATE</dt>
+<dd>The upForm object's body is regenerated when a client is added or removed from the viewer 
+	list.
+</dd>
+<dt>UPFORM_SET_SELF_REFERENCE</dt>
+<dd>When this flag is on, the form will self reference itself to prevent the garbage collector 
+	from collecting the unreferenced form.  Only turn on this flag when it is properly tagged, 
+	yet does not have an external reference.  In almost all cases, this flag is not necessary.
+</dd>
+</dl>
+
+<tt>window_params</tt> var flags:
+
+<dl class="ref">
+<dt>UPFORM_CANNOT_CLOSE</dt>
+<dd>The window will not be able to be closed from being Xed out when this flag is on.  This 
+	flag is automatically turned on for <tt>UPFORM_WINDOW</tt> forms.
+</dd>
+<dt>UPFORM_CANNOT_RESIZE</dt>
+<dd>The window will not be resizable when this flag is on.
+</dd>
+<dt>UPFORM_CANNOT_MINIMIZE</dt>
+<dd>The window will not be minimizable when this flag is on.
+</dd>
+<dt>UPFORM_NO_TITLEBAR</dt>
+<dd>The window will have no titlebar, and will not be closable nor minimizable.
+</dd>
+</dl>
+
+<h4><a name="ref_s3">Global Procs</a></h4>
+
+<dl class="ref">
+<dt>upForm(target, form_path[, tag])</dt> 
+<dt>upForm(target, host, form_path[, tag])</dt>
+<dd>This function is the hub of all form creation.  The <tt>target</tt> may be a client, mob, or a list.  
+	If a list is sent, then the form will have no <tt>owner</tt>.  If <tt>null</tt> is sent, then the 
+	form will be created as a global interface.  If the second arg is an instance of a datum, then the 
+	proc will set the host for the form to the datum.  The arg after will be the path of the form that 
+	will be created.  An optional last arg is a text string containing the form's tag, which can be later 
+	used to locate a form via <tt>locate()</tt> and other upForm functions that allow it.
+</dd>
+<dt>upForm_UpdateForms(form)</dt>
+<dd>Given a reference, string, or path, this proc regenerates the page for the given target.  If a 
+	reference is sent, it will regenerate that reference.  If a string is sent, it will attempt to 
+	locate the form and refresh the located instance.  Otherwise if a path is sent, it will refresh all 
+	instances of the given path type.  If the arg is invalid, it will throw an assertion.
+</dd>
+<dt>upForm_isValidHost(datum/host)</dt> 
+<dd>Returns 1 if <tt>host</tt> is a valid host for a <tt>/upForm</tt> object.  Otherwise, 0.  A valid host 
+	is a datum.  Used internally.
+</dd>
+<dt>upForm_isValidFormPath(path)</dt> 
+<dd>Returns 1 if <tt>path</tt> is a valid form path, being a type of <tt>/upForm</tt> path.  Otherwise, 0.
+	Used internally.
+</dd>
+<dt>upForm_getClientTarget(target)</dt>
+<dd>Returns a client derived from the target (ie. the client of a mob).  If a client could not 
+	be found, it returns null.  Used internally.
+</dd>
+<dt>upForm_formatViewerList(list/viewers)</dt>
+<dd>Modifies an existing list of clients and/or mobs to list only clients derived from the mobs.  Returns 
+	1 if a successful format was made, otherwise 0.  Used internally.
+</dl>
+
+<h4><a name="ref_s4"><tt>/upForm</tt> Vars</a></h4>
+
+<dl class="ref">
+<dt>/upForm/form_name = ""</dt> 
+<dd>Name of the browser control on the client's interface where the page will be displayed to.  This variable 
+	is only used when <tt>form_type</tt> is <tt>UPFORM_INTERFACE</tt>.
+</dd>
+<dt>/upForm/form_type = UPFORM_BROWSER</dt> 
+<dd>The medium in which the page is displayed.  Possible values are <tt>UPFORM_BROWSER</tt>, 
+	<tt>UPFORM_INTERFACE</tt>, <tt>UPFORM_WINDOW</tt>, and <tt>UPFORM_CLOSEWINDOW</tt>.
+</dd>
+<dt>/upForm/settings = 0</dt>
+<dd>A flag variable that determines general boolean settings for the form object.  May contain 
+	<tt>UPFORM_SET_HANDLE_FORMS</tt>, <tt>UPFORM_SET_GLOBAL</tt>, <TT>UPFORM_SET_RELOAD_ON_VIEWER_UPDATE</tt>, 
+	and <TT>UPFORM_SET_SELF_REFERENCE</tt>.
+</dd>
+<dt>/upForm/window_title = [world.name]</dt>
+<dd>Determines the title of the window that the form displays its body to.  Is not applicable if a form 
+	has no titlebar, or if it is not a window.  Default to the world's name.
+</dd>
+<dt>/upForm/window_size = "300x300"</dt>
+<dd>Determines the initial size of a window.  Is only applicable for windows that are resizable.
+</dd>
+<dt>/upForm/window_params = 0</dt>
+<dd>A flag variable that determines the setting for a window form.  May contain <tt>UPFORM_CANNOT_CLOSE</tt>,
+	<tt>UPFORM_CANNOT_RESIZE</tt>, <tt>UPFORM_CANNOT_MINIMIZE</tt>, and <tt>UPFORM_NO_TITLEBAR</tt>.
+</dd>
+<dt>/upForm/page_css = ""</dt>
+<dd>Determines the CSS code for the page.
+</dd>
+<dt>/upForm/page_js = ""</dt>
+<dd>Determines the JavaScript code for the page.
+</dd>
+<dt>/upForm/time_left = -1</dt>
+<dd>The amount of time left until the timer ends.  When var reaches 0, calls <tt>TimeUp()</tt>.  Read only, 
+	do not modify.  To start timer after form initialization, call <tt>StartTimer()</tt>.
+</dd>
+<dt>/upForm/time_interval = 10</dt>
+<dd>The interval between potential refreshes.  Do not modify in runtime.
+</dd>
+<dt>/upForm/time_update = 0</dt>
+<dd>If 1, the page will be regenerated every <tt>time_interval</tt> ticks.
+</dd>
+<dt>/upForm/list/resources = null</dt>
+<dd>If instantiated as an associative list, it will send all the resources to the viewers.
+</dd>
+<dt>/upForm/client/owner = null</dt>
+<dd>The client who is considered the owner of the form object.  The owner is set if a single target 
+	is submitted when <tt>upForm()</tt> is called to create the form object.  Use <tt>getOwner()</tt> 
+	to read.  May be null.  Should not be touched.
+</dd>
+<dt>/upForm/datum/host = null</dt>
+<dd>An optional datum whose purpose is to access external information.  Use <tt>getHost()</tt> to 
+	read.  May be null.  Should not be accessed directly.
+</dd>
+<dt>/upForm/list/viewers</dt>
+<dd>A list of clients who are currently viewing the form object.  Read only.
+</dd>
+<dt>/upForm/body</dt>
+<dd>The HTML content of the page being sent.  Use <tt>UpdatePage()</tt> to modify the body.  Should 
+	not be modified.
+</dd>
+<dt>/upForm/window_params_text = ""</dt>
+<dd>Used internally to define the second arg for <tt>browse()</tt> when sending a window.  Do not touch.
+</dd>
+<dt>/upForm/self</dt>
+<dd>Reference of self if self referencing.  Do not touch.
+</dd>
+<dt>/upForm/predef_js</dd>
+<dd>Code for the predefined JavaScript functions placed in every form.  Generated at runtime.  Do not touch.
+</dd>
+<dt>/upForm/global/refcount</dt>
+<dd>Internal refcount.  Do not touch.
+</dd>
+<dt>/upForm/refnum</dt>
+<dd>internal refnum.  Do not touch.
+</dd>
+<dt>/upForm/list/form_vars</dt>
+<dd>Internal two-dimensional associative array used to store keys and values of form names, inputs, 
+	and values.  Hands off.
+</dl>
+
+<h4><a name="ref_s5"><tt>/upForm</tt> Procs</a></h4>
+
+<dl class="ref">
+<dt>/upForm/getOwner()</tt>
+<dd>Returns the reference of the owner of the form, if it exists.  If there is no owner, throws 
+	an upForm assertion.  The programmer should know whether a form will be created without an 
+	owner, so using said proc instead of directly accessing the owner variable will verify that 
+	knowledge.
+</dd>
+<dt>/upForm/getHost()</tt>
+<dd>Returns the reference of the host.  May return null.
+</dd>
+<dt>/upForm/isViewer(client/C)</dt>
+<dd>Returns 1 if <tt>C</tt> is a viewer of the form, otherwise 0.
+</dd>
+<dt>/upForm/canBeViewer(client/C)</dt>
+<dd>Returns 1 if <tt>C</tt> would be able to be added to the viewers list, otherwise 0.
+</dd>
+<dt>/upForm/canDisplayForm(client/C)</dt>
+<dd>Proc overridden to determine if the form should be able to display the page to <tt>C</tt>.  
+	Ensure you consider the default behaviour by setting <tt>.</tt> to <tt>..()</tt>.
+</dd>
+<dt>/upForm/PreSettings()</dt>
+<dd>Called right before the page is displayed for the first time.  Overridable for the programmer 
+	to adjust any last-minute variables such as <tt>window_name</tt>.
+</dd>
+<dt>/upForm/hasTimeStarted()</dt>
+<dd>Returns 1 if the timer is running, otherwise 0.
+</dd>
+<dt>/upForm/InitTimer()</dt>
+<dd>Initializes the timer, and starts it if an initial time value has been defined.  Do not touch.
+</dd>
+<dt>/upForm/StartTimer(time)</dt>
+<dd>Call when the time should be started.  May be called at any time if the timer hasn't already 
+	been started.
+</dd>
+<dt>/upForm/TimeStarted(time)</dt>
+<dd>Called when the time has started.  <tt>time</tt> is the starting amount of time for the form 
+	object.
+</dd>
+<dt>/upForm/TimeUp()</dt>
+<dd>Called when the time has reached zero.  Deletes the form object by default.
+</dd>
+<dt>/upForm/SendResources(target, rsc, rsc_name)
+<dd>Sends the resource <tt>rsc</tt> to <tt>target</tt> with the name <tt>rsc_name</tt>.  Used internally.
+	Call <tt>LoadResource()</tt> if you want to dynamically load resources to the viewers.
+</dd>
+<dt>/upForm/LoadResources(rsc, rsc_name)</dt>
+<dd>Sends the resource <tt>rsc</tt> to all of the viewers of the page with the name <tt>rsc_name</tt>.
+
+<dt>/upForm/Link(list/href_list, client/C)</tt>
+<dd>Called by <tt>/upForm/Topic()</tt> on the event a link was sent to the form object.  Data is guaranteed 
+	to be valid.  Overridable for the programmer to write functionality when a link is sent.
+</dd>
+<dt>/upForm/isValidForm(fname)</dt>
+<dd>Returns 1 if <tt>fname</tt> is a valid form for the form object.  Used internally.
+</dd>
+<dt>/upForm/isValidFormVar(fname, fvar)</dt>
+<dd>Returns 1 if <tt>fname</tt> and <tt>fvar</tt> are valid forms and input control names.  Used 
+	internally.
+</dd>
+<dt>/upForm/getFormVar(fname, fvar)</dt>
+<dd>Returns the value of the input submitted or initialized by the form.  Use this when you need to access 
+	any submitted form information.
+</dd>
+<dt>/upForm/setFormVar(fname, fvar, fval)</dt>
+<dd>Sets the value for an input control given the form name and form variable name.  Use when processing a 
+	variable via <tt>ProcessVariable()</tt>.
+</dd>
+<dt>/upForm/initFormVar(fname, fvar, fval)</dt>
+<dd>Initializes a form variable to a certain value.  Use in <tt>FormInitTempVars()</tt> when initializing 
+	forms and form variables to their starting values.
+</dd>
+<dt>/upForm/FormSubmitSuccess(fname, client/C)</tt>
+<dd>Called on a successful submission of form <tt>fname</tt> by <tt>C</tt>.  Reloads the page by default.
+</dd>
+<dt>/upForm/FormSubmitError(fname, list/errors, client/C)</tt>
+<dd>Called on an unsuccessful submission of form <tt>fname</tt> by <tt>C</tt> given errors <tt>errors</tt>.
+	Reloads the page with the generated errors by default.
+</dd>
+<dt>/upForm/FormInitTempVars()</tt>
+<dd>Defined for the programmer to implement and initialize the initial values for the temorarily stored 
+	variables for the forms.  Call <tt>initFormVar()</tt> for each form variable.
+</dd>
+<dt>/upForm/FormSetTempVars(fname)</dt>
+<dd>Defined for the programmer to implement the successful submission.  Sets the values of the validated 
+	form variables.  Use <tt>getFormVar()</tt> to get the verified form variable.
+</dd>
+<dt>/upForm/ProcessVariable(fname, name, value, client/C)
+<dd>Defined for the programmer to set and return an error if applicable.  Use <tt>setFormVar()</tt> to 
+	set the formatted value <tt>value</tt>.  <tt>value</tt> is either a text string, or list of name=value 
+	parameters to be processed.
+</dd>
+<dt>/upForm/AddViewer(client/C)</dt>
+<dd>Adds a new viewer to a multiple viewer form.  Arg may accept a mob or a client.
+</dd>
+<dt>/upForm/RemoveViewer(client/C)</dt>
+<dd>Removes an existing mob or client from the viewer list.
+</dt>
+<dt>/upForm/GenerateBody(list/errors)</dt>
+<dd>Implemented for the programmer to write the code that generates the body of the HTML page to be displayed 
+	to the viewers.  Must call <tt>UpdatePage()</tt> with the body (or optionally the javascript code) of 
+	the HTML.  If a form has been submitted with errors, a list will be sent through <tt>errors</tt> containing 
+	an associative name=value list for each input control in the form with an error returned by 
+	<tt>ProcessVariable()</tt>
+</dd>
+<dt>/upForm/RefreshPage(list/errors)</dt>
+<dd>Reloads and displays the page to all viewers.
+</dd>
+<dt>/upForm/DisplayPage()</dt>
+<dd>Displays the already generated body to the viewers.</dd>
+<dt>/upForm/UpdatePage(bodyText, jsText)</dt>
+<dd>Generates the HTML for the page of the form object, given the contents of the body and the optional 
+	JavaScript code.  Predefined CSS and JS elements are put into the HTML code.  Should be called by 
+	<tt>GenerateBody()</tt>.  Do not modify.
+</dd>
+<dt>/upForm/DeleteForm()</dt>
+<dd>Deletes the form, and closes the page for every viewer.
+</dd>
+<dt>/upForm/InitPredefinedScript()</tt>
+<dd>Internally initializes the predefined JavaScript code for the form.  Do not touch.
+</dd>
+<dt>/upForm/InitViewers(list/viewer_list)</dt>
+<dd>Initializes the internally inputed viewer list.  Do not touch.
+</dd>
+<dt>/upForm/SetViewer(client/C)</dt>
+<dd>Internally used to instantiate a viewer.  Do not touch.
+</dd>
+</dd>
+<dt>/upForm/InitResources(target)</tt>
+<dd>Sends all predefined resources to <tt>target</tt>.  Used internally, do not touch.
+</dd>
+<dt>/upForm/HandleFormLinks(list/params, client/C)
+<dd>Internally called when a form submission has been sent.  Do not touch.
+</dd>
+<dt>/upForm/ProcessForm(fname, list/params, client/C)
+<dd>Internally called when a form needs to be processed.  Do not touch.
+</dd>
+<dt>/upForm/DisplayBrowserText(text, target)</dt>
+<dd>Displays <tt>text</tt> to the browser output control to <tt>target</tt>.  Internally used to handle 
+	output to the client.  Do not touch.
+</dd>
+<dt>/upForm/RemovePage(client/C)</dt>
+<dd>Removes the page from <tt>C</tt>.  Used internally, as a page should only be removed if the 
+	player is removed from the viewers list, or if the form is deleted.
+</dd>
+<dt>/upForm/ClosePages()</dt>
+<dd>Removes the page for all of the clients in the viewer list.  Used internally.
+</dd>
+</dl>
+
+<h4><a name="ref_s6">Predefined JavaScript Functions</a></h4>
+
+The following functions are JavaScript functions, and are not called by DM code.
+
+<dl class="ref">
+<dt>function upF_sendData(data)</dt>
+<dd>Sends <tt>data</tt> in a BYOND URL to the form:	"byond://?src=[refcode]&[data]"</dd>
+<dt>function upF_action(action)</dt>
+<dd>Sends <tt>action</tt> as the value for the action param: "byond://?src=[refcode]&action=[action]"</dd>
+<dt>function upF_sAction(action, value)</dt>
+<dd>Sends <tt>action</tt> and <tt>value</tt> as values for the params: "byond://?src=[refcode]&action=[action]&value=[value]"</dd>
+<dt>function upF_send(name, value)</dt>
+<dd>Sends a name=value pair through the link to the form: "byond://?src=[refcode]&[name]=[value]"</dd>
+<dt>function upF_set(input)</dt>
+<dd>Sends the name and value in two pair for an input control: 
+	"byond://?src=[refcode]&name=[input.name]&value=[input.value]"</dd>
+<dt>function upF_check(input)</dt>
+<dd>Given a checkmark input control, returns the state of the checkmark as "true" or "false":
+	"byond://?src=[refcode]&name=[input.name]&value=[input.checked]"
+</dd>
+</dl>
+
+</body>
+</html>
