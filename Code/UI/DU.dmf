@@ -1,21 +1,3 @@
-macro "keytracking"
-	elem 
-		name = "Return"
-	elem 
-		name = "Any"
-		command = "key-down [[*]]"
-	elem 
-		name = "Any+UP"
-		command = "key-up [[*]]"
-
-macro "newmacros"
-	elem 
-		name = "Any"
-		command = "KeyDown [[*]]"
-	elem 
-		name = "Any+UP"
-		command = "KeyUp [[*]]"
-
 macro "macro"
 	elem 
 		name = "Tab"
@@ -390,10 +372,9 @@ window "Bars"
 		type = MAIN
 		pos = -6,0
 		size = 200x80
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		background-color = #000000
-		is-visible = false
 		border = line
 		saved-params = "pos;size;is-minimized;is-maximized"
 		titlebar = false
@@ -402,14 +383,12 @@ window "Bars"
 		can-minimize = false
 		can-resize = false
 		macro = "macro"
-		outer-size = 220x100
-		inner-size = 200x80
 	elem "zanzo_bar"
 		type = BAR
 		pos = 0,40
 		size = 200x15
 		anchor1 = 0,0
-		anchor2 = -1,-1
+		anchor2 = none
 		background-color = #000000
 		saved-params = ""
 		bar-color = #ffff00
@@ -422,7 +401,7 @@ window "Bars"
 		pos = 56,55
 		size = 144x25
 		anchor1 = 0,0
-		anchor2 = -1,-1
+		anchor2 = none
 		font-size = 8
 		font-style = "bold"
 		text-color = #ffffff
@@ -435,7 +414,7 @@ window "Bars"
 		pos = 0,20
 		size = 200x20
 		anchor1 = 0,0
-		anchor2 = -1,-1
+		anchor2 = none
 		background-color = #000000
 		saved-params = ""
 		bar-color = #00ffff
@@ -448,7 +427,7 @@ window "Bars"
 		pos = 0,0
 		size = 200x20
 		anchor1 = 0,0
-		anchor2 = -1,-1
+		anchor2 = none
 		background-color = #000000
 		saved-params = ""
 		bar-color = #ff0000
@@ -457,13 +436,39 @@ window "Bars"
 		dir = east
 		value = 100
 
+window "DBCharacterMenu"
+	elem "DBCharacterMenu"
+		type = MAIN
+		pos = 597,212
+		size = 640x480
+		anchor1 = none
+		anchor2 = none
+		is-visible = false
+		saved-params = "pos;size;is-minimized;is-maximized"
+		title = "Choose a Character (Blank if All Being Played)"
+		statusbar = false
+		can-close = false
+		can-minimize = false
+	elem "grid1"
+		type = GRID
+		pos = 0,0
+		size = 640x480
+		anchor1 = 0,0
+		anchor2 = 100,100
+		saved-params = ""
+		cells = 1x0
+		current-cell = 1,1
+		show-lines = none
+		highlight-color = #000000
+		is-list = true
+
 window "InvisBrowser"
 	elem "InvisBrowser"
 		type = MAIN
 		pos = 281,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		is-visible = false
 		saved-params = "pos;size;is-minimized;is-maximized"
 		titlebar = false
@@ -475,8 +480,8 @@ window "InvisBrowser"
 		type = BROWSER
 		pos = 192,152
 		size = 200x200
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		is-visible = false
 		saved-params = ""
 
@@ -485,9 +490,8 @@ window "TabBuildCustom"
 		type = MAIN
 		pos = 281,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = none
+		anchor1 = none
+		anchor2 = none
 		saved-params = "pos;size;is-minimized;is-maximized"
 		title = "Custom"
 		titlebar = false
@@ -496,23 +500,18 @@ window "TabBuildCustom"
 		can-minimize = false
 		can-resize = false
 		is-pane = true
-		is-visible = false
-		outer-size = 660x500
 	elem "grid1"
 		type = GRID
 		pos = 0,0
 		size = 640x480
 		anchor1 = 0,0
 		anchor2 = 100,100
-		text-color = #ffffff
-		background-color = #000000
 		saved-params = ""
 		cells = 1x0
 		current-cell = 1,1
 		show-lines = none
 		show-names = false
-		line-color = #eaeaea
-		highlight-color = #f8f8f8
+		highlight-color = #000000
 		is-list = true
 
 window "TabBuildDecor"
@@ -520,9 +519,8 @@ window "TabBuildDecor"
 		type = MAIN
 		pos = 281,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = none
+		anchor1 = none
+		anchor2 = none
 		saved-params = "pos;size;is-minimized;is-maximized"
 		title = "Decor"
 		titlebar = false
@@ -531,22 +529,18 @@ window "TabBuildDecor"
 		can-minimize = false
 		can-resize = false
 		is-pane = true
-		outer-size = 660x500
 	elem "grid1"
 		type = GRID
 		pos = 0,0
 		size = 640x480
 		anchor1 = 0,0
 		anchor2 = 100,100
-		text-color = #ffffff
-		background-color = #000000
 		saved-params = ""
 		cells = 1x0
 		current-cell = 1,1
 		show-lines = none
 		show-names = false
-		line-color = #eaeaea
-		highlight-color = #f8f8f8
+		highlight-color = #000000
 		is-list = true
 
 window "TabBuildFloors"
@@ -554,9 +548,8 @@ window "TabBuildFloors"
 		type = MAIN
 		pos = 281,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = none
+		anchor1 = none
+		anchor2 = none
 		saved-params = "pos;size;is-minimized;is-maximized"
 		title = "Floors"
 		titlebar = false
@@ -565,32 +558,27 @@ window "TabBuildFloors"
 		can-minimize = false
 		can-resize = false
 		is-pane = true
-		outer-size = 660x500
 	elem "grid1"
 		type = GRID
 		pos = 0,0
 		size = 640x480
 		anchor1 = 0,0
 		anchor2 = 100,100
-		text-color = #ffffff
-		background-color = #000000
 		saved-params = ""
 		cells = 1x0
 		current-cell = 1,1
 		show-lines = none
 		show-names = false
-		line-color = #eaeaea
-		highlight-color = #f8f8f8
+		highlight-color = #000000
 		is-list = true
 
 window "TabBuildGround"
 	elem "TabBuildGround"
 		type = MAIN
-		pos = 418,0
+		pos = 281,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = none
+		anchor1 = none
+		anchor2 = none
 		saved-params = "pos;size;is-minimized;is-maximized"
 		title = "Ground"
 		titlebar = false
@@ -599,32 +587,27 @@ window "TabBuildGround"
 		can-minimize = false
 		can-resize = false
 		is-pane = true
-		outer-size = 660x500
 	elem "grid1"
 		type = GRID
 		pos = 0,0
 		size = 640x480
 		anchor1 = 0,0
 		anchor2 = 100,100
-		text-color = #ffffff
-		background-color = #000000
 		saved-params = ""
 		cells = 1x0
 		current-cell = 1,1
 		show-lines = none
 		show-names = false
-		line-color = #eaeaea
-		highlight-color = #f8f8f8
+		highlight-color = #000000
 		is-list = true
 
 window "TabBuildOther"
 	elem "TabBuildOther"
 		type = MAIN
-		pos = 418,0
+		pos = 281,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = none
+		anchor1 = none
+		anchor2 = none
 		saved-params = "pos;size;is-minimized;is-maximized"
 		title = "Other"
 		titlebar = false
@@ -633,32 +616,27 @@ window "TabBuildOther"
 		can-minimize = false
 		can-resize = false
 		is-pane = true
-		outer-size = 660x500
 	elem "grid1"
 		type = GRID
 		pos = 0,0
 		size = 640x480
 		anchor1 = 0,0
 		anchor2 = 100,100
-		text-color = #ffffff
-		background-color = #000000
 		saved-params = ""
 		cells = 1x0
 		current-cell = 1,1
 		show-lines = none
 		show-names = false
-		line-color = #eaeaea
-		highlight-color = #f8f8f8
+		highlight-color = #000000
 		is-list = true
 
 window "TabBuildRoofs"
 	elem "TabBuildRoofs"
 		type = MAIN
-		pos = 418,0
+		pos = 281,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = none
+		anchor1 = none
+		anchor2 = none
 		saved-params = "pos;size;is-minimized;is-maximized"
 		title = "Roofs"
 		titlebar = false
@@ -667,32 +645,27 @@ window "TabBuildRoofs"
 		can-minimize = false
 		can-resize = false
 		is-pane = true
-		outer-size = 660x500
 	elem "grid1"
 		type = GRID
 		pos = 0,0
 		size = 640x480
 		anchor1 = 0,0
 		anchor2 = 100,100
-		text-color = #ffffff
-		background-color = #000000
 		saved-params = ""
 		cells = 1x0
 		current-cell = 1,1
 		show-lines = none
 		show-names = false
-		line-color = #eaeaea
-		highlight-color = #f8f8f8
+		highlight-color = #000000
 		is-list = true
 
 window "TabBuildTrees"
 	elem "TabBuildTrees"
 		type = MAIN
-		pos = 418,0
+		pos = 281,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = none
+		anchor1 = none
+		anchor2 = none
 		saved-params = "pos;size;is-minimized;is-maximized"
 		title = "Trees"
 		titlebar = false
@@ -701,32 +674,27 @@ window "TabBuildTrees"
 		can-minimize = false
 		can-resize = false
 		is-pane = true
-		outer-size = 660x500
 	elem "grid1"
 		type = GRID
 		pos = 0,0
 		size = 640x480
 		anchor1 = 0,0
 		anchor2 = 100,100
-		text-color = #ffffff
-		background-color = #000000
 		saved-params = ""
 		cells = 1x0
 		current-cell = 1,1
 		show-lines = none
 		show-names = false
-		line-color = #eaeaea
-		highlight-color = #f8f8f8
+		highlight-color = #000000
 		is-list = true
 
 window "TabBuildWalls"
 	elem "TabBuildWalls"
 		type = MAIN
-		pos = 418,0
+		pos = 281,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = none
+		anchor1 = none
+		anchor2 = none
 		saved-params = "pos;size;is-minimized;is-maximized"
 		title = "Walls"
 		titlebar = false
@@ -735,22 +703,18 @@ window "TabBuildWalls"
 		can-minimize = false
 		can-resize = false
 		is-pane = true
-		outer-size = 660x500
 	elem "grid1"
 		type = GRID
 		pos = 0,0
 		size = 640x480
 		anchor1 = 0,0
 		anchor2 = 100,100
-		text-color = #ffffff
-		background-color = #000000
 		saved-params = ""
 		cells = 1x0
 		current-cell = 1,1
 		show-lines = none
 		show-names = false
-		line-color = #eaeaea
-		highlight-color = #f8f8f8
+		highlight-color = #000000
 		is-list = true
 
 window "TabHolder"
@@ -758,11 +722,11 @@ window "TabHolder"
 		type = MAIN
 		pos = 684,208
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		is-visible = false
 		saved-params = "pos;size;is-minimized;is-maximized"
-		title = "Science Tabs"
+		title = "Build Tabs"
 		macro = "macro"
 	elem "tab1"
 		type = TAB
@@ -772,46 +736,15 @@ window "TabHolder"
 		anchor2 = 100,100
 		background-color = #ffffff
 		saved-params = ""
-		tabs = "TabScience,TabBuildCustom"
-
-window "BuildTabHolder"
-	elem "BuildTabHolder"
-		type = MAIN
-		pos = 418,0
-		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = none
-		is-visible = false
-		saved-params = "pos;size;is-minimized;is-maximized"
-		title = "Build Tabs"
-		titlebar = false
-		statusbar = false
-		can-close = false
-		can-minimize = false
-		can-resize = false
-		is-pane = true
-		macro = "macro"
-		outer-size = 660x500
-	elem "buildTab1"
-		type = TAB
-		pos = 0,0
-		size = 640x480
-		anchor1 = 0,0
-		anchor2 = 100,100
-		text-color = #ffffff
-		background-color = #000000
-		saved-params = ""
 		tabs = "TabBuildFloors,TabBuildGround"
 
 window "TabScience"
 	elem "TabScience"
 		type = MAIN
-		pos = 418,0
+		pos = 281,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = none
+		anchor1 = none
+		anchor2 = none
 		saved-params = "pos;size;is-minimized;is-maximized"
 		title = "Science"
 		titlebar = false
@@ -820,285 +753,27 @@ window "TabScience"
 		can-minimize = false
 		can-resize = false
 		is-pane = true
-		outer-size = 660x500
 	elem "grid1"
 		type = GRID
 		pos = 0,0
 		size = 640x480
 		anchor1 = 0,0
 		anchor2 = 100,100
-		text-color = #ffffff
-		background-color = #000000
 		saved-params = ""
 		cells = 1x0
 		current-cell = 1,1
 		show-lines = none
 		show-names = false
-		line-color = #eaeaea
-		highlight-color = #f8f8f8
-		is-list = true
-
-window "all-chat"
-	elem "all-chat"
-		type = MAIN
-		pos = 281,0
-		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		saved-params = "pos;size;is-minimized;is-maximized"
-		title = "All"
-		statusbar = false
-		is-pane = true
-	elem "all_output"
-		type = OUTPUT
-		pos = 0,0
-		size = 638x480
-		anchor1 = 0,0
-		anchor2 = 100,100
-		font-family = "sans-serif"
-		text-color = #c0c0c0
-		background-color = #000000
-		is-default = true
-		saved-params = "max-lines"
-		link-color = #80ffff
-		visited-color = #008080
-		style = ".system {color:#FFFFFF;}"
-		enable-http-images = true
-		max-lines = 600
-
-window "appList"
-	elem "appList"
-		type = MAIN
-		pos = 281,0
-		size = 304x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		is-visible = false
-		saved-params = "pos;size;is-minimized;is-maximized"
-		title = "Applications"
-		statusbar = false
-		can-minimize = false
-		can-resize = false
-	elem "appGrid"
-		type = GRID
-		pos = 0,0
-		size = 304x480
-		anchor1 = 0,0
-		anchor2 = 100,100
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		saved-params = ""
-		cells = 1x0
-		current-cell = 1,1
 		highlight-color = #000000
 		is-list = true
-
-window "appWindow"
-	elem "appWindow"
-		type = MAIN
-		pos = 281,0
-		size = 543x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = #000000
-		is-visible = false
-		saved-params = "pos;size;is-minimized;is-maximized"
-		title = "Application"
-		statusbar = false
-		can-close = false
-		can-minimize = false
-		can-resize = false
-	elem "appGrade"
-		type = LABEL
-		pos = 472,165
-		size = 60x20
-		anchor1 = 87,34
-		anchor2 = 98,39
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "N/A"
-	elem "appGradeLabel"
-		type = LABEL
-		pos = 400,165
-		size = 60x20
-		anchor1 = 74,34
-		anchor2 = 85,39
-		text-color = #ffffff
-		background-color = #000000
-		is-transparent = true
-		border = line
-		saved-params = ""
-		text = "Grade:"
-	elem "gradeApp"
-		type = BUTTON
-		pos = 395,395
-		size = 144x36
-		anchor1 = 73,82
-		anchor2 = 99,90
-		text-color = #ffffff
-		background-color = #000000
-		is-visible = false
-		saved-params = "is-checked"
-		text = "Grade"
-		command = "Grade-Application"
-	elem "deleteApp"
-		type = BUTTON
-		pos = 395,440
-		size = 144x36
-		anchor1 = 73,92
-		anchor2 = 99,99
-		text-color = #c64e2a
-		background-color = #31110f
-		saved-params = "is-checked"
-		text = "Delete"
-		command = "Delete-Application"
-	elem "cancelApp"
-		type = BUTTON
-		pos = 390,0
-		size = 74x32
-		anchor1 = 72,0
-		anchor2 = 85,7
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = "Cancel"
-		command = "Cancel-Application"
-	elem "saveApp"
-		type = BUTTON
-		pos = 464,0
-		size = 78x32
-		anchor1 = 85,0
-		anchor2 = 100,7
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = "Save"
-		command = "Save-Application"
-	elem "charName"
-		type = LABEL
-		pos = 472,75
-		size = 60x20
-		anchor1 = 87,16
-		anchor2 = 98,20
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "N/A"
-	elem "charNameLabel"
-		type = LABEL
-		pos = 400,75
-		size = 60x20
-		anchor1 = 74,16
-		anchor2 = 85,20
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "Name:"
-	elem "charKey"
-		type = LABEL
-		pos = 472,45
-		size = 60x20
-		anchor1 = 87,9
-		anchor2 = 98,14
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "N/A"
-	elem "charAge"
-		type = LABEL
-		pos = 472,105
-		size = 60x20
-		anchor1 = 87,22
-		anchor2 = 98,26
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "N/A"
-	elem "charRace"
-		type = LABEL
-		pos = 472,135
-		size = 60x20
-		anchor1 = 87,28
-		anchor2 = 98,32
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "N/A"
-	elem "charRaceLabel"
-		type = LABEL
-		pos = 400,135
-		size = 60x20
-		anchor1 = 74,28
-		anchor2 = 85,32
-		text-color = #ffffff
-		background-color = #000000
-		is-transparent = true
-		border = line
-		saved-params = ""
-		text = "Race:"
-	elem "charAgeLabel"
-		type = LABEL
-		pos = 400,105
-		size = 60x20
-		anchor1 = 74,22
-		anchor2 = 85,26
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "Age:"
-	elem "charKeyLabel"
-		type = LABEL
-		pos = 400,45
-		size = 60x20
-		anchor1 = 74,9
-		anchor2 = 85,14
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "Key:"
-	elem "appText"
-		type = INPUT
-		pos = 0,32
-		size = 392x448
-		anchor1 = 0,7
-		anchor2 = 72,100
-		text-color = #d2ebfa
-		background-color = #151537
-		border = sunken
-		saved-params = ""
-		multi-line = true
-		no-command = true
-	elem "appTarget"
-		type = LABEL
-		pos = 0,0
-		size = 136x32
-		anchor1 = 0,0
-		anchor2 = 25,7
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "N/A"
 
 window "buffstats"
 	elem "buffstats"
 		type = MAIN
-		pos = 281,0
+		pos = 840,292
 		size = 248x292
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		background-color = #000000
 		is-visible = false
 		saved-params = "pos;size;is-minimized;is-maximized"
@@ -1111,8 +786,8 @@ window "buffstats"
 		type = LABEL
 		pos = 179,52
 		size = 69x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1125,8 +800,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 150,52
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1139,8 +814,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 0,52
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1153,8 +828,8 @@ window "buffstats"
 		type = LABEL
 		pos = 30,52
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1165,8 +840,8 @@ window "buffstats"
 		type = LABEL
 		pos = 180,72
 		size = 68x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1179,8 +854,8 @@ window "buffstats"
 		type = LABEL
 		pos = 180,92
 		size = 68x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1193,8 +868,8 @@ window "buffstats"
 		type = LABEL
 		pos = 180,112
 		size = 68x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1207,8 +882,8 @@ window "buffstats"
 		type = LABEL
 		pos = 180,132
 		size = 68x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1221,8 +896,8 @@ window "buffstats"
 		type = LABEL
 		pos = 180,152
 		size = 68x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1235,8 +910,8 @@ window "buffstats"
 		type = LABEL
 		pos = 180,172
 		size = 68x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1249,8 +924,8 @@ window "buffstats"
 		type = LABEL
 		pos = 180,192
 		size = 68x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1263,8 +938,8 @@ window "buffstats"
 		type = LABEL
 		pos = 180,212
 		size = 68x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1277,8 +952,8 @@ window "buffstats"
 		type = LABEL
 		pos = 180,232
 		size = 68x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1291,8 +966,8 @@ window "buffstats"
 		type = LABEL
 		pos = 179,252
 		size = 69x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1305,8 +980,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 179,272
 		size = 69x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1319,8 +994,8 @@ window "buffstats"
 		type = LABEL
 		pos = 0,272
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1332,8 +1007,8 @@ window "buffstats"
 		type = LABEL
 		pos = 120,272
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1344,8 +1019,8 @@ window "buffstats"
 		type = LABEL
 		pos = 30,252
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1356,8 +1031,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 150,252
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1370,8 +1045,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 0,252
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1384,8 +1059,8 @@ window "buffstats"
 		type = LABEL
 		pos = 30,232
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1396,8 +1071,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 150,232
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1410,8 +1085,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 0,232
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1424,8 +1099,8 @@ window "buffstats"
 		type = LABEL
 		pos = 30,212
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1436,8 +1111,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 150,212
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1450,8 +1125,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 0,212
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1464,8 +1139,8 @@ window "buffstats"
 		type = LABEL
 		pos = 30,192
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1476,8 +1151,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 150,192
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1490,8 +1165,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 0,192
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1504,8 +1179,8 @@ window "buffstats"
 		type = LABEL
 		pos = 30,172
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1516,8 +1191,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 150,172
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1530,8 +1205,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 0,172
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1544,8 +1219,8 @@ window "buffstats"
 		type = LABEL
 		pos = 30,152
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1556,8 +1231,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 150,152
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1570,8 +1245,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 0,152
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1584,8 +1259,8 @@ window "buffstats"
 		type = LABEL
 		pos = 30,132
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1596,8 +1271,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 150,132
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1610,8 +1285,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 0,132
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1624,8 +1299,8 @@ window "buffstats"
 		type = LABEL
 		pos = 30,112
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1636,8 +1311,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 150,112
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1650,8 +1325,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 0,112
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1664,8 +1339,8 @@ window "buffstats"
 		type = LABEL
 		pos = 30,92
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1676,8 +1351,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 150,92
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1690,8 +1365,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 0,92
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1704,8 +1379,8 @@ window "buffstats"
 		type = LABEL
 		pos = 30,72
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1716,8 +1391,8 @@ window "buffstats"
 		type = LABEL
 		pos = 0,0
 		size = 224x48
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1731,8 +1406,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 150,72
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1745,8 +1420,8 @@ window "buffstats"
 		type = BUTTON
 		pos = 0,72
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1756,32 +1431,13 @@ window "buffstats"
 		text = "<"
 		command = ".buff_point \"-1\" \"buff_ki\""
 
-window "edit_config"
-	elem "edit_config"
-		type = MAIN
-		pos = 418,0
-		size = 900x1000
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		is-visible = false
-		saved-params = "pos;size;is-minimized;is-maximized"
-		statusbar = false
-	elem "config_browser"
-		type = BROWSER
-		pos = 0,0
-		size = 900x1000
-		anchor1 = 0,0
-		anchor2 = 100,100
-		background-color = #000000
-		saved-params = ""
-
 window "gunstats"
 	elem "gunstats"
 		type = MAIN
 		pos = 802,175
 		size = 378x558
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		background-color = #000000
 		is-visible = false
 		saved-params = "pos;size;is-minimized;is-maximized"
@@ -1794,8 +1450,8 @@ window "gunstats"
 		type = LABEL
 		pos = 320,314
 		size = 42x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1808,8 +1464,8 @@ window "gunstats"
 		type = LABEL
 		pos = 320,282
 		size = 42x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1822,8 +1478,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 288,314
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -1836,8 +1492,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 288,282
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -1850,8 +1506,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 16,314
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -1864,8 +1520,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 16,282
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -1878,8 +1534,8 @@ window "gunstats"
 		type = LABEL
 		pos = 51,314
 		size = 229x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1891,8 +1547,8 @@ window "gunstats"
 		type = LABEL
 		pos = 51,282
 		size = 229x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1904,8 +1560,8 @@ window "gunstats"
 		type = LABEL
 		pos = 320,346
 		size = 42x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1918,8 +1574,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 288,346
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -1932,8 +1588,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 16,346
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -1946,8 +1602,8 @@ window "gunstats"
 		type = LABEL
 		pos = 51,346
 		size = 229x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -1959,8 +1615,8 @@ window "gunstats"
 		type = LABEL
 		pos = 320,26
 		size = 42x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1973,8 +1629,8 @@ window "gunstats"
 		type = LABEL
 		pos = 320,58
 		size = 42x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -1987,8 +1643,8 @@ window "gunstats"
 		type = LABEL
 		pos = 320,90
 		size = 42x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -2001,8 +1657,8 @@ window "gunstats"
 		type = LABEL
 		pos = 320,122
 		size = 42x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -2015,8 +1671,8 @@ window "gunstats"
 		type = LABEL
 		pos = 320,154
 		size = 42x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -2029,8 +1685,8 @@ window "gunstats"
 		type = LABEL
 		pos = 320,186
 		size = 42x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -2043,8 +1699,8 @@ window "gunstats"
 		type = LABEL
 		pos = 320,218
 		size = 42x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -2057,8 +1713,8 @@ window "gunstats"
 		type = LABEL
 		pos = 320,250
 		size = 42x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -2071,8 +1727,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 256,528
 		size = 122x32
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 15
 		font-style = "bold"
@@ -2085,8 +1741,8 @@ window "gunstats"
 		type = LABEL
 		pos = 0,528
 		size = 144x28
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -2098,8 +1754,8 @@ window "gunstats"
 		type = LABEL
 		pos = 146,528
 		size = 62x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -2111,8 +1767,8 @@ window "gunstats"
 		type = LABEL
 		pos = 3,490
 		size = 229x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -2124,8 +1780,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 234,490
 		size = 80x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 10
 		font-style = "bold"
@@ -2138,8 +1794,8 @@ window "gunstats"
 		type = LABEL
 		pos = 51,250
 		size = 229x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -2151,8 +1807,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 288,250
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2165,8 +1821,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 16,250
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2179,8 +1835,8 @@ window "gunstats"
 		type = LABEL
 		pos = 51,218
 		size = 229x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -2192,8 +1848,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 288,218
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2206,8 +1862,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 16,218
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2220,8 +1876,8 @@ window "gunstats"
 		type = LABEL
 		pos = 51,186
 		size = 229x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -2233,8 +1889,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 288,186
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2247,8 +1903,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 16,186
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2261,8 +1917,8 @@ window "gunstats"
 		type = LABEL
 		pos = 51,154
 		size = 229x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -2274,8 +1930,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 288,154
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2288,8 +1944,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 16,154
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2302,8 +1958,8 @@ window "gunstats"
 		type = LABEL
 		pos = 51,122
 		size = 229x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -2315,8 +1971,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 288,122
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2329,8 +1985,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 16,122
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2343,8 +1999,8 @@ window "gunstats"
 		type = LABEL
 		pos = 51,90
 		size = 229x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -2356,8 +2012,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 288,90
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2370,8 +2026,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 16,90
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2384,8 +2040,8 @@ window "gunstats"
 		type = LABEL
 		pos = 51,58
 		size = 229x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -2397,8 +2053,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 288,58
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2411,8 +2067,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 16,58
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2425,8 +2081,8 @@ window "gunstats"
 		type = LABEL
 		pos = 51,26
 		size = 229x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -2438,8 +2094,8 @@ window "gunstats"
 		type = LABEL
 		pos = 0,0
 		size = 378x24
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -2452,8 +2108,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 288,26
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2466,8 +2122,8 @@ window "gunstats"
 		type = BUTTON
 		pos = 16,26
 		size = 30x30
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial Black"
 		font-size = 20
 		font-style = "bold"
@@ -2482,8 +2138,8 @@ window "hotbar"
 		type = MAIN
 		pos = 688,129
 		size = 640x600
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		background-color = #000000
 		is-visible = false
 		saved-params = "pos;size;is-minimized;is-maximized"
@@ -2559,45 +2215,19 @@ window "hotbar"
 		current-cell = 1,1
 		highlight-color = #000000
 
-window "ic-chat"
-	elem "ic-chat"
-		type = MAIN
-		pos = 281,0
-		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		saved-params = "pos;size;is-minimized;is-maximized"
-		title = "IC"
-		statusbar = false
-		is-pane = true
-	elem "ic_output"
-		type = OUTPUT
-		pos = 0,0
-		size = 640x480
-		anchor1 = 0,0
-		anchor2 = 100,100
-		font-family = "sans-serif"
-		text-color = #c0c0c0
-		background-color = #000000
-		saved-params = "max-lines"
-		link-color = #80ffff
-		visited-color = #008080
-		style = ".system {color:#FFFFFF;}\nBODY {background: #000000; color: #CCCCCC; font-size: 2; font-weight: bold}"
-		enable-http-images = true
-		max-lines = 600
-
 window "mainwindow"
 	elem "mainwindow"
 		type = MAIN
-		pos = 281,0
+		pos = 512,162
 		size = 1007x628
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		background-color = #000000
 		is-default = true
 		saved-params = "pos;size;is-maximized"
 		title = "Dragon Universe"
 		statusbar = false
+		icon = 'slime 64.png'
 		macro = "macro"
 		menu = "menu"
 	elem "mainvsplit"
@@ -2612,14 +2242,29 @@ window "mainwindow"
 		right = "rpane"
 		is-vert = true
 		splitter = 80
+	elem "helpAlert"
+		type = BUTTON
+		pos = 0,240
+		size = 1008x160
+		anchor1 = 0,50
+		anchor2 = 100,50
+		font-family = "sans-serif"
+		font-size = 13
+		font-style = "bold"
+		text-color = #ffffff
+		background-color = #000000
+		saved-params = "is-checked"
+		text = "Help Text"
+		command = ""
+		is-flat = true
 
 window "mapwindow"
 	elem "mapwindow"
 		type = MAIN
 		pos = 281,0
 		size = 800x600
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		background-color = #000000
 		saved-params = "pos;size;is-maximized"
 		title = "Dragon Universe"
@@ -2643,42 +2288,16 @@ window "mapwindow"
 		on-show = ".winset\"mainwindow.mainvsplit.left=mapwindow\""
 		on-hide = ".winset\"mainwindow.mainvsplit.left=\""
 
-window "ooc-chat"
-	elem "ooc-chat"
-		type = MAIN
-		pos = 281,0
-		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		saved-params = "pos;size;is-minimized;is-maximized"
-		title = "OOC"
-		statusbar = false
-		is-pane = true
-	elem "ooc_output"
-		type = OUTPUT
-		pos = 0,0
-		size = 640x480
-		anchor1 = 0,0
-		anchor2 = 100,100
-		font-family = "sans-serif"
-		text-color = #c0c0c0
-		background-color = #000000
-		saved-params = "max-lines"
-		link-color = #80ffff
-		visited-color = #008080
-		style = ".system {color:#FFFFFF;}\nBODY {background: #000000; color: #CCCCCC; font-size: 2; font-weight: bold}"
-		enable-http-images = true
-		max-lines = 600
-
 window "outputwindow"
 	elem "outputwindow"
 		type = MAIN
 		pos = 281,0
-		size = 669x457
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = #000000
-		saved-params = "pos;size;is-minimized;is-maximized"
+		size = 640x480
+		anchor1 = none
+		anchor2 = none
+		background-color = #c0c0c0
+		is-visible = false
+		saved-params = "pos;size;is-maximized"
 		titlebar = false
 		statusbar = false
 		can-close = false
@@ -2687,561 +2306,39 @@ window "outputwindow"
 		is-pane = true
 	elem "input1"
 		type = INPUT
-		pos = 0,434
-		size = 669x19
-		anchor1 = 0,95
-		anchor2 = 100,99
+		pos = 0,456
+		size = 640x20
+		anchor1 = 0,100
+		anchor2 = 100,100
 		text-color = #ffffff
 		background-color = #000000
 		is-default = true
 		border = line
 		saved-params = ""
-	elem "output-tabs"
-		type = TAB
+	elem "output"
+		type = OUTPUT
 		pos = 0,0
-		size = 669x428
+		size = 640x456
 		anchor1 = 0,0
-		anchor2 = 100,94
-		text-color = #ffffff
-		background-color = #000000
-		saved-params = ""
-		tabs = "all-chat,ooc-chat,ic-chat"
-		multi-line = false
-
-window "rankItems"
-	elem "rankItems"
-		type = MAIN
-		pos = 281,0
-		size = 417x257
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = #000000
-		is-visible = false
-		saved-params = "pos;size;is-minimized;is-maximized"
-		title = "Rank Items"
-		statusbar = false
-		can-minimize = false
-		can-resize = false
-		is-pane = true
-		can-scroll = vertical
-	elem "selectedItem"
-		type = LABEL
-		pos = 167,18
-		size = 82x30
-		anchor1 = 40,7
-		anchor2 = 60,19
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "N/A"
-	elem "removeItem"
-		type = BUTTON
-		pos = 167,141
-		size = 82x29
-		anchor1 = 40,55
-		anchor2 = 60,66
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = " < < "
-		command = "Remove-Item-From-Rank"
-	elem "addItem"
-		type = BUTTON
-		pos = 167,103
-		size = 82x30
-		anchor1 = 40,40
-		anchor2 = 60,52
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = " > > "
-		command = "Add-Item-To-Rank"
-	elem "rankItemsList"
-		type = GRID
-		pos = 254,0
-		size = 163x257
-		anchor1 = 61,0
 		anchor2 = 100,100
-		text-color = #ffffff
+		text-color = #c0c0c0
 		background-color = #000000
+		is-default = true
 		border = sunken
-		drop-zone = false
-		saved-params = ""
-		cells = 1x0
-		current-cell = 1,1
-		highlight-color = #000000
-		is-list = true
-	elem "allItemsList"
-		type = GRID
-		pos = 0,0
-		size = 163x257
-		anchor1 = 0,0
-		anchor2 = 39,100
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		drop-zone = false
-		saved-params = ""
-		cells = 1x0
-		current-cell = 1,0
-		highlight-color = #000000
-		is-list = true
-
-window "rankPanel"
-	elem "rankPanel"
-		type = MAIN
-		pos = 281,0
-		size = 482x622
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = #000000
-		is-visible = false
-		saved-params = "pos;size;is-minimized;is-maximized"
-		title = "Ranks Manager"
-		statusbar = false
-		can-minimize = false
-		can-resize = false
-		on-close = "Close-Rank-Menu"
-	elem "selectedRank"
-		type = LABEL
-		pos = 342,128
-		size = 130x24
-		anchor1 = 71,21
-		anchor2 = 98,24
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "N/A"
-	elem "deleteRank"
-		type = BUTTON
-		pos = 342,86
-		size = 130x32
-		anchor1 = 71,14
-		anchor2 = 98,19
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = "Delete"
-		command = "Delete-Rank"
-	elem "editRank"
-		type = BUTTON
-		pos = 342,46
-		size = 130x32
-		anchor1 = 71,7
-		anchor2 = 98,13
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = "Edit"
-		command = "Edit-Rank"
-	elem "createRank"
-		type = BUTTON
-		pos = 342,8
-		size = 130x32
-		anchor1 = 71,1
-		anchor2 = 98,6
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = "Create"
-		command = "Create-Rank"
-	elem "rankGrid"
-		type = GRID
-		pos = 0,0
-		size = 337x622
-		anchor1 = 0,0
-		anchor2 = 70,100
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		drop-zone = false
-		saved-params = ""
-		cells = 1x0
-		current-cell = 1,1
-		show-lines = horizontal
-		highlight-color = #000000
-		is-list = true
-
-window "rankParentWindow"
-	elem "rankParentWindow"
-		type = MAIN
-		pos = 281,0
-		size = 827x783
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = #000000
-		is-visible = false
-		saved-params = "pos;size;is-minimized;is-maximized"
-		title = "Rank Panel"
-		statusbar = false
-		can-close = false
-		can-minimize = false
-		can-resize = false
-	elem "rankName"
-		type = INPUT
-		pos = 104,0
-		size = 319x33
-		anchor1 = 13,0
-		anchor2 = 51,4
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		no-command = true
-	elem "spAddInput"
-		type = INPUT
-		pos = 728,516
-		size = 92x20
-		anchor1 = 88,66
-		anchor2 = 99,68
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		saved-params = ""
-		no-command = true
-	elem "spAddLabel"
-		type = LABEL
-		pos = 644,516
-		size = 68x20
-		anchor1 = 78,66
-		anchor2 = 86,68
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "SP Add"
-	elem "spMinInput"
-		type = INPUT
-		pos = 728,486
-		size = 92x20
-		anchor1 = 88,62
-		anchor2 = 99,65
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		saved-params = ""
-		no-command = true
-	elem "spMinLabel"
-		type = LABEL
-		pos = 644,486
-		size = 68x20
-		anchor1 = 78,62
-		anchor2 = 86,65
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "Min SP"
-	elem "kiAddInput"
-		type = INPUT
-		pos = 728,456
-		size = 92x20
-		anchor1 = 88,58
-		anchor2 = 99,61
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		saved-params = ""
-		no-command = true
-	elem "kiAddLabel"
-		type = LABEL
-		pos = 644,456
-		size = 68x20
-		anchor1 = 78,58
-		anchor2 = 86,61
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "Ki Add"
-	elem "kiMinInput"
-		type = INPUT
-		pos = 728,426
-		size = 92x20
-		anchor1 = 88,54
-		anchor2 = 99,57
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		saved-params = ""
-		no-command = true
-	elem "kiMinLabel"
-		type = LABEL
-		pos = 644,426
-		size = 68x20
-		anchor1 = 78,54
-		anchor2 = 86,57
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "Min Ki"
-	elem "multAddInput"
-		type = INPUT
-		pos = 728,396
-		size = 92x20
-		anchor1 = 88,51
-		anchor2 = 99,53
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		saved-params = ""
-		no-command = true
-	elem "multAddLabel"
-		type = LABEL
-		pos = 644,396
-		size = 68x20
-		anchor1 = 78,51
-		anchor2 = 86,53
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "BP Mult Add"
-	elem "cyberAddInput"
-		type = INPUT
-		pos = 728,366
-		size = 92x20
-		anchor1 = 88,47
-		anchor2 = 99,49
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		saved-params = ""
-		no-command = true
-	elem "cyberAddLabel"
-		type = LABEL
-		pos = 644,366
-		size = 68x20
-		anchor1 = 78,47
-		anchor2 = 86,49
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "Cyber Add"
-	elem "cyberMinInput"
-		type = INPUT
-		pos = 728,336
-		size = 92x20
-		anchor1 = 88,43
-		anchor2 = 99,45
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		saved-params = ""
-		no-command = true
-	elem "cyberMinLabel"
-		type = LABEL
-		pos = 644,336
-		size = 68x20
-		anchor1 = 78,43
-		anchor2 = 86,45
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "Min Cyber"
-	elem "hbtcAddInput"
-		type = INPUT
-		pos = 728,306
-		size = 92x20
-		anchor1 = 88,39
-		anchor2 = 99,42
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		saved-params = ""
-		no-command = true
-	elem "hbtcAddLabel"
-		type = LABEL
-		pos = 644,306
-		size = 68x20
-		anchor1 = 78,39
-		anchor2 = 86,42
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "HBTC Add"
-	elem "bpAddInput"
-		type = INPUT
-		pos = 728,276
-		size = 92x20
-		anchor1 = 88,35
-		anchor2 = 99,38
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		saved-params = ""
-		no-command = true
-	elem "bpAddLabel"
-		type = LABEL
-		pos = 644,276
-		size = 68x20
-		anchor1 = 78,35
-		anchor2 = 86,38
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "BP Add"
-	elem "bpMinInput"
-		type = INPUT
-		pos = 728,246
-		size = 92x20
-		anchor1 = 88,31
-		anchor2 = 99,34
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		saved-params = ""
-		no-command = true
-	elem "bpMinLabel"
-		type = LABEL
-		pos = 644,246
-		size = 68x20
-		anchor1 = 78,31
-		anchor2 = 86,34
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "Min BP"
-	elem "cancelButton"
-		type = BUTTON
-		pos = 593,0
-		size = 102x33
-		anchor1 = 72,0
-		anchor2 = 84,4
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = "Cancel"
-		command = "Cancel-Rank"
-	elem "saveButton"
-		type = BUTTON
-		pos = 711,0
-		size = 102x33
-		anchor1 = 86,0
-		anchor2 = 98,4
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = "Save"
-		command = "Save-Rank"
-	elem "rankChild"
-		type = CHILD
-		pos = 0,33
-		size = 640x750
-		anchor1 = 0,4
-		anchor2 = 77,100
-		border = sunken
-		saved-params = "splitter"
-		left = "rankSkills"
-		right = "rankItems"
-		is-vert = false
-		show-splitter = false
-		lock = left
-
-window "rankSkills"
-	elem "rankSkills"
-		type = MAIN
-		pos = 281,0
-		size = 417x257
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		background-color = #000000
-		is-visible = false
-		saved-params = "pos;size;is-minimized;is-maximized"
-		title = "Rank Skills"
-		statusbar = false
-		can-minimize = false
-		can-resize = false
-		is-pane = true
-		can-scroll = vertical
-	elem "selectedSkill"
-		type = LABEL
-		pos = 167,18
-		size = 82x29
-		anchor1 = 40,7
-		anchor2 = 60,18
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "N/A"
-	elem "removeSkill"
-		type = BUTTON
-		pos = 167,139
-		size = 82x29
-		anchor1 = 40,54
-		anchor2 = 60,65
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = " < < "
-		command = "Remove-Skill-From-Rank"
-	elem "addSkill"
-		type = BUTTON
-		pos = 167,103
-		size = 82x29
-		anchor1 = 40,40
-		anchor2 = 60,51
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = " > > "
-		command = "Add-Skill-To-Rank"
-	elem "rankSkillsList"
-		type = GRID
-		pos = 254,0
-		size = 163x257
-		anchor1 = 61,0
-		anchor2 = 100,100
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		drop-zone = false
-		saved-params = ""
-		cells = 1x0
-		current-cell = 1,1
-		highlight-color = #000000
-		is-list = true
-	elem "allSkillsList"
-		type = GRID
-		pos = 0,0
-		size = 163x257
-		anchor1 = 0,0
-		anchor2 = 39,100
-		text-color = #ffffff
-		background-color = #000000
-		border = sunken
-		drop-zone = false
-		saved-params = ""
-		cells = 1x0
-		current-cell = 1,1
-		highlight-color = #000000
-		is-list = true
+		saved-params = "max-lines"
+		link-color = #80ffff
+		visited-color = #008080
+		style = ".system {color:#FFFFFF;}"
+		enable-http-images = true
+		max-lines = 200
 
 window "rpane"
 	elem "rpane"
 		type = MAIN
 		pos = 281,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		background-color = #000000
 		saved-params = "pos;size;is-maximized"
 		titlebar = false
@@ -3255,7 +2352,7 @@ window "rpane"
 		pos = 512,0
 		size = 64x20
 		anchor1 = 100,0
-		anchor2 = -1,-1
+		anchor2 = none
 		text-color = #c0c0c0
 		background-color = #000000
 		border = line
@@ -3268,7 +2365,7 @@ window "rpane"
 		pos = 620,0
 		size = 20x20
 		anchor1 = 100,0
-		anchor2 = -1,-1
+		anchor2 = none
 		font-family = "sans-serif"
 		font-style = "bold"
 		text-color = #c0c0c0
@@ -3284,7 +2381,7 @@ window "rpane"
 		pos = 600,0
 		size = 20x20
 		anchor1 = 100,0
-		anchor2 = -1,-1
+		anchor2 = none
 		font-family = "sans-serif"
 		font-size = 11
 		text-color = #c0c0c0
@@ -3300,7 +2397,7 @@ window "rpane"
 		pos = 580,0
 		size = 20x20
 		anchor1 = 100,0
-		anchor2 = -1,-1
+		anchor2 = none
 		font-family = "sans-serif"
 		font-size = 10
 		font-style = "bold"
@@ -3327,7 +2424,7 @@ window "rpane"
 		pos = 440,0
 		size = 72x20
 		anchor1 = 100,0
-		anchor2 = -1,-1
+		anchor2 = none
 		text-color = #c0c0c0
 		background-color = #000000
 		is-visible = false
@@ -3342,8 +2439,8 @@ window "browserwindow"
 		type = MAIN
 		pos = 372,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		background-color = #000000
 		saved-params = "pos;size;is-maximized"
 		title = "Browser"
@@ -3362,16 +2459,16 @@ window "browserwindow"
 		background-color = #ffffff
 		is-default = true
 		saved-params = ""
-		on-show = ".winset\"rpane.rpanewindow.pos=0,30;rpane.rpanewindow.size=0x0;rpane.rpanewindow.left=browserwindow\""
-		on-hide = ".winset\"rpane.rpanewindow.left=infowindow:rpane.rpanewindow.left=textwindow rpane.rpanewindow.pos=0,0 rpane.rpanewindow.size=0x0\""
+		on-show = ".winset\"rpane.infob.is-visible=true?rpane.infob.pos=130,0;rpane.textb.is-visible=true;rpane.browseb.is-visible=true;rpane.browseb.is-checked=true;rpane.rpanewindow.pos=0,30;rpane.rpanewindow.size=0x0;rpane.rpanewindow.left=browserwindow\""
+		on-hide = ".winset\"rpane.browseb.is-visible=false;rpane.infob.is-visible=true?rpane.infob.is-checked=true rpane.infob.pos=65,0 rpane.rpanewindow.left=infowindow:rpane.rpanewindow.left=textwindow rpane.textb.is-visible=false rpane.rpanewindow.pos=0,0 rpane.rpanewindow.size=0x0\""
 
 window "infowindow"
 	elem "infowindow"
 		type = MAIN
 		pos = 281,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		background-color = #000000
 		is-visible = false
 		saved-params = "pos;size;is-maximized"
@@ -3385,7 +2482,7 @@ window "infowindow"
 	elem "info"
 		type = INFO
 		pos = 0,0
-		size = 640x480
+		size = 640x501
 		anchor1 = 0,0
 		anchor2 = 100,100
 		font-family = "Arial"
@@ -3400,8 +2497,8 @@ window "infowindow"
 		tab-font-family = "Arial"
 		tab-font-size = 10
 		allow-html = false
-		on-show = ".winset\"rpane.rpanewindow.pos=0,30 rpane.rpanewindow.size=0x0 rpane.rpanewindow.left=infowindow\""
-		on-hide = ".winset\"rpane.rpanewindow.left=browserwindow rpane.rpanewindow.pos=0,0 rpane.rpanewindow.size=0x0 rpane.rpanewindow.left=\""
+		on-show = ".winset\"rpane.infob.is-visible=true;rpane.browseb.is-visible=true?rpane.infob.pos=130,0:rpane.infob.pos=65,0 rpane.textb.is-visible=true rpane.infob.is-checked=true rpane.rpanewindow.pos=0,30 rpane.rpanewindow.size=0x0 rpane.rpanewindow.left=infowindow\""
+		on-hide = ".winset\"rpane.infob.is-visible=false;rpane.browseb.is-visible=true?rpane.browseb.is-checked=true rpane.rpanewindow.left=browserwindow:rpane.textb.is-visible=false rpane.rpanewindow.pos=0,0 rpane.rpanewindow.size=0x0 rpane.rpanewindow.left=\""
 		on-tab = ".winset \"mapwindow.map.focus=true\""
 
 window "Grid1"
@@ -3409,8 +2506,8 @@ window "Grid1"
 		type = MAIN
 		pos = 372,0
 		size = 315x304
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		background-color = #000000
 		is-visible = false
 		saved-params = "pos;size;is-minimized;is-maximized"
@@ -3464,8 +2561,8 @@ window "rpwindow"
 		type = MAIN
 		pos = 281,0
 		size = 640x480
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		is-visible = false
 		saved-params = "pos;size;is-minimized;is-maximized"
 		title = "RP Window"
@@ -3486,8 +2583,8 @@ window "subrpwindow"
 		type = MAIN
 		pos = 296,25
 		size = 681x251
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		is-visible = false
 		saved-params = "pos;size;is-minimized;is-maximized"
 		title = "RP Window"
@@ -3514,8 +2611,8 @@ window "transwindow"
 		type = MAIN
 		pos = 847,276
 		size = 225x360
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		background-color = #000000
 		is-visible = false
 		saved-params = "pos;size;is-minimized;is-maximized"
@@ -3528,8 +2625,8 @@ window "transwindow"
 		type = LABEL
 		pos = 0,280
 		size = 224x80
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3542,8 +2639,8 @@ window "transwindow"
 		type = LABEL
 		pos = 180,10
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -3556,8 +2653,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 150,10
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3570,8 +2667,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 0,10
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3584,8 +2681,8 @@ window "transwindow"
 		type = LABEL
 		pos = 30,10
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3596,8 +2693,8 @@ window "transwindow"
 		type = LABEL
 		pos = 180,30
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -3610,8 +2707,8 @@ window "transwindow"
 		type = LABEL
 		pos = 180,50
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -3624,8 +2721,8 @@ window "transwindow"
 		type = LABEL
 		pos = 180,70
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -3638,8 +2735,8 @@ window "transwindow"
 		type = LABEL
 		pos = 180,90
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -3652,8 +2749,8 @@ window "transwindow"
 		type = LABEL
 		pos = 180,110
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -3666,8 +2763,8 @@ window "transwindow"
 		type = LABEL
 		pos = 180,130
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -3680,8 +2777,8 @@ window "transwindow"
 		type = LABEL
 		pos = 180,150
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -3694,8 +2791,8 @@ window "transwindow"
 		type = LABEL
 		pos = 180,170
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -3708,8 +2805,8 @@ window "transwindow"
 		type = LABEL
 		pos = 180,190
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -3722,8 +2819,8 @@ window "transwindow"
 		type = LABEL
 		pos = 179,210
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -3736,8 +2833,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 150,250
 		size = 75x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3750,8 +2847,8 @@ window "transwindow"
 		type = LABEL
 		pos = 0,250
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3763,8 +2860,8 @@ window "transwindow"
 		type = LABEL
 		pos = 120,250
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3775,8 +2872,8 @@ window "transwindow"
 		type = LABEL
 		pos = 30,210
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3787,8 +2884,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 150,210
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3801,8 +2898,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 0,210
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3815,8 +2912,8 @@ window "transwindow"
 		type = LABEL
 		pos = 30,190
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3827,8 +2924,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 150,190
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3841,8 +2938,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 0,190
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3855,8 +2952,8 @@ window "transwindow"
 		type = LABEL
 		pos = 30,170
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3867,8 +2964,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 150,170
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3881,8 +2978,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 0,170
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3895,8 +2992,8 @@ window "transwindow"
 		type = LABEL
 		pos = 30,150
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3907,8 +3004,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 150,150
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3921,8 +3018,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 0,150
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3935,8 +3032,8 @@ window "transwindow"
 		type = LABEL
 		pos = 30,130
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3947,8 +3044,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 150,130
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3961,8 +3058,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 0,130
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3975,8 +3072,8 @@ window "transwindow"
 		type = LABEL
 		pos = 30,110
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -3987,8 +3084,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 150,110
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4001,8 +3098,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 0,110
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4015,8 +3112,8 @@ window "transwindow"
 		type = LABEL
 		pos = 30,90
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4027,8 +3124,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 150,90
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4041,8 +3138,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 0,90
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4055,8 +3152,8 @@ window "transwindow"
 		type = LABEL
 		pos = 30,70
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4067,8 +3164,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 150,70
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4081,8 +3178,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 0,70
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4095,8 +3192,8 @@ window "transwindow"
 		type = LABEL
 		pos = 30,50
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4107,8 +3204,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 150,50
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4121,8 +3218,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 0,50
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4135,8 +3232,8 @@ window "transwindow"
 		type = LABEL
 		pos = 30,30
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4147,8 +3244,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 150,30
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4161,8 +3258,8 @@ window "transwindow"
 		type = BUTTON
 		pos = 0,30
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4175,10 +3272,10 @@ window "transwindow"
 window "skills"
 	elem "skills"
 		type = MAIN
-		pos = 418,0
-		size = 268x423
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		pos = 862,246
+		size = 225x320
+		anchor1 = none
+		anchor2 = none
 		background-color = #000000
 		is-visible = false
 		saved-params = "pos;size;is-minimized;is-maximized"
@@ -4187,222 +3284,12 @@ window "skills"
 		can-close = false
 		can-resize = false
 		macro = "macro"
-	elem "plusEFF"
-		type = BUTTON
-		pos = 150,127
-		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = ">"
-		command = ".Skill_Points \"+\" \"Energy\""
-	elem "minusEFF"
-		type = BUTTON
-		pos = 0,127
-		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = "<"
-		command = ".Skill_Points \"-\" \"Energy\""
-	elem "plusANG"
-		type = BUTTON
-		pos = 150,326
-		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = ">"
-		command = ".Skill_Points \"+\" \"Anger\""
-	elem "minusANG"
-		type = BUTTON
-		pos = 0,327
-		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = "<"
-		command = ".Skill_Points \"-\" \"Anger\""
-	elem "plusREC"
-		type = BUTTON
-		pos = 150,307
-		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = ">"
-		command = ".Skill_Points \"+\" \"Recovery\""
-	elem "minusREC"
-		type = BUTTON
-		pos = 0,308
-		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = "<"
-		command = ".Skill_Points \"-\" \"Recovery\""
-	elem "plusREG"
-		type = BUTTON
-		pos = 150,287
-		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = ">"
-		command = ".Skill_Points \"+\" \"Regeneration\""
-	elem "minusREG"
-		type = BUTTON
-		pos = 0,288
-		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = "is-checked"
-		text = "<"
-		command = ".Skill_Points \"-\" \"Regeneration\""
-	elem "strMod"
-		type = LABEL
-		pos = 223,148
-		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-family = "Arial"
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "0"
-	elem "durMod"
-		type = LABEL
-		pos = 223,168
-		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-family = "Arial"
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "0"
-	elem "spdMod"
-		type = LABEL
-		pos = 223,188
-		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-family = "Arial"
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "0"
-	elem "forMod"
-		type = LABEL
-		pos = 223,208
-		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-family = "Arial"
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "0"
-	elem "resMod"
-		type = LABEL
-		pos = 223,228
-		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-family = "Arial"
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "0"
-	elem "accMod"
-		type = LABEL
-		pos = 223,248
-		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-family = "Arial"
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "0"
-	elem "refMod"
-		type = LABEL
-		pos = 223,268
-		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-family = "Arial"
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		border = line
-		saved-params = ""
-		text = "0"
 	elem "Race BP"
 		type = LABEL
-		pos = 0,370
+		pos = 0,272
 		size = 225x48
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4413,10 +3300,10 @@ window "skills"
 		text-wrap = true
 	elem "Efficiency"
 		type = LABEL
-		pos = 180,128
+		pos = 180,30
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -4427,10 +3314,10 @@ window "skills"
 		text = "0"
 	elem "Strength"
 		type = LABEL
-		pos = 180,148
+		pos = 180,50
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -4441,10 +3328,10 @@ window "skills"
 		text = "0"
 	elem "Endurance"
 		type = LABEL
-		pos = 180,168
+		pos = 180,70
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -4455,10 +3342,10 @@ window "skills"
 		text = "0"
 	elem "Speed"
 		type = LABEL
-		pos = 180,188
+		pos = 180,90
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -4469,10 +3356,10 @@ window "skills"
 		text = "0"
 	elem "Force"
 		type = LABEL
-		pos = 180,208
+		pos = 180,110
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -4483,10 +3370,10 @@ window "skills"
 		text = "0"
 	elem "Resistance"
 		type = LABEL
-		pos = 180,228
+		pos = 180,130
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -4497,10 +3384,10 @@ window "skills"
 		text = "0"
 	elem "Offense"
 		type = LABEL
-		pos = 180,248
+		pos = 180,150
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -4511,10 +3398,10 @@ window "skills"
 		text = "0"
 	elem "Defense"
 		type = LABEL
-		pos = 180,268
+		pos = 180,170
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -4525,10 +3412,10 @@ window "skills"
 		text = "0"
 	elem "Regeneration"
 		type = LABEL
-		pos = 180,288
+		pos = 180,190
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -4539,10 +3426,10 @@ window "skills"
 		text = "0"
 	elem "Recovery"
 		type = LABEL
-		pos = 179,308
+		pos = 179,210
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -4553,10 +3440,10 @@ window "skills"
 		text = "0"
 	elem "Proceed"
 		type = BUTTON
-		pos = 150,348
+		pos = 150,250
 		size = 75x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4567,10 +3454,10 @@ window "skills"
 		command = ".Skill_Points_Done"
 	elem "label6"
 		type = LABEL
-		pos = 0,348
+		pos = 0,250
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4580,10 +3467,10 @@ window "skills"
 		align = left
 	elem "PointsRemaining"
 		type = LABEL
-		pos = 120,348
+		pos = 120,250
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4592,10 +3479,10 @@ window "skills"
 		text = "11"
 	elem "Anger"
 		type = LABEL
-		pos = 180,328
+		pos = 180,230
 		size = 45x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-family = "Arial"
 		font-size = 10
 		font-style = "bold"
@@ -4606,46 +3493,130 @@ window "skills"
 		text = "0"
 	elem "Anger Label"
 		type = LABEL
-		pos = 30,328
+		pos = 30,230
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
 		background-color = #000000
 		saved-params = ""
 		text = "Anger"
+	elem "plusAnger"
+		type = BUTTON
+		pos = 150,230
+		size = 30x20
+		anchor1 = none
+		anchor2 = none
+		font-size = 10
+		font-style = "bold"
+		text-color = #ffffff
+		background-color = #000000
+		border = line
+		saved-params = "is-checked"
+		text = ">"
+		command = ".Skill_Points \"+\" \"Anger\""
+	elem "minusAnger"
+		type = BUTTON
+		pos = 0,230
+		size = 30x20
+		anchor1 = none
+		anchor2 = none
+		font-size = 10
+		font-style = "bold"
+		text-color = #ffffff
+		background-color = #000000
+		border = line
+		saved-params = "is-checked"
+		text = "<"
+		command = ".Skill_Points \"-\" \"Anger\""
 	elem "Recov"
 		type = LABEL
-		pos = 30,308
+		pos = 30,210
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
 		background-color = #000000
 		saved-params = ""
 		text = "Recovery"
+	elem "plusRecov"
+		type = BUTTON
+		pos = 150,210
+		size = 30x20
+		anchor1 = none
+		anchor2 = none
+		font-size = 10
+		font-style = "bold"
+		text-color = #ffffff
+		background-color = #000000
+		border = line
+		saved-params = "is-checked"
+		text = ">"
+		command = ".Skill_Points \"+\" \"Recovery\""
+	elem "minusRecov"
+		type = BUTTON
+		pos = 0,210
+		size = 30x20
+		anchor1 = none
+		anchor2 = none
+		font-size = 10
+		font-style = "bold"
+		text-color = #ffffff
+		background-color = #000000
+		border = line
+		saved-params = "is-checked"
+		text = "<"
+		command = ".Skill_Points \"-\" \"Recovery\""
 	elem "Regen"
 		type = LABEL
-		pos = 30,288
+		pos = 30,190
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
 		background-color = #000000
 		saved-params = ""
 		text = "Regeneration"
+	elem "plusRegen"
+		type = BUTTON
+		pos = 150,190
+		size = 30x20
+		anchor1 = none
+		anchor2 = none
+		font-size = 10
+		font-style = "bold"
+		text-color = #ffffff
+		background-color = #000000
+		border = line
+		saved-params = "is-checked"
+		text = ">"
+		command = ".Skill_Points \"+\" \"Regeneration\""
+	elem "minusRegen"
+		type = BUTTON
+		pos = 0,190
+		size = 30x20
+		anchor1 = none
+		anchor2 = none
+		font-size = 10
+		font-style = "bold"
+		text-color = #ffffff
+		background-color = #000000
+		border = line
+		saved-params = "is-checked"
+		text = "<"
+		command = ".Skill_Points \"-\" \"Regeneration\""
 	elem "DEF"
 		type = LABEL
-		pos = 30,268
+		pos = 30,170
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4654,10 +3625,10 @@ window "skills"
 		text = "Reflex"
 	elem "plusDEF"
 		type = BUTTON
-		pos = 150,268
+		pos = 150,170
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4668,10 +3639,10 @@ window "skills"
 		command = ".Skill_Points \"+\" \"Defense\""
 	elem "minusDEF"
 		type = BUTTON
-		pos = 0,268
+		pos = 0,170
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4682,10 +3653,10 @@ window "skills"
 		command = ".Skill_Points \"-\" \"Defense\""
 	elem "OFF"
 		type = LABEL
-		pos = 30,248
+		pos = 30,150
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4694,10 +3665,10 @@ window "skills"
 		text = "Accuracy"
 	elem "plusOFF"
 		type = BUTTON
-		pos = 150,248
+		pos = 150,150
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4708,10 +3679,10 @@ window "skills"
 		command = ".Skill_Points \"+\" \"Offense\""
 	elem "minusOFF"
 		type = BUTTON
-		pos = 0,248
+		pos = 0,150
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4722,10 +3693,10 @@ window "skills"
 		command = ".Skill_Points \"-\" \"Offense\""
 	elem "RED"
 		type = LABEL
-		pos = 30,228
+		pos = 30,130
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4734,10 +3705,10 @@ window "skills"
 		text = "Resistance"
 	elem "plusRES"
 		type = BUTTON
-		pos = 150,228
+		pos = 150,130
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4748,10 +3719,10 @@ window "skills"
 		command = ".Skill_Points \"+\" \"Resistance\""
 	elem "minusRES"
 		type = BUTTON
-		pos = 0,228
+		pos = 0,130
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4762,10 +3733,10 @@ window "skills"
 		command = ".Skill_Points \"-\" \"Resistance\""
 	elem "POW"
 		type = LABEL
-		pos = 30,208
+		pos = 30,110
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4774,10 +3745,10 @@ window "skills"
 		text = "Force"
 	elem "plusPOW"
 		type = BUTTON
-		pos = 150,208
+		pos = 150,110
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4788,10 +3759,10 @@ window "skills"
 		command = ".Skill_Points \"+\" \"Force\""
 	elem "minusPOW"
 		type = BUTTON
-		pos = 0,208
+		pos = 0,110
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4800,27 +3771,12 @@ window "skills"
 		saved-params = "is-checked"
 		text = "<"
 		command = ".Skill_Points \"-\" \"Force\""
-	elem "label4"
-		type = LABEL
-		pos = 8,-8
-		size = 224x136
-		anchor1 = -1,-1
-		anchor2 = -1,-1
-		font-family = "Arial"
-		font-size = 10
-		font-style = "bold"
-		text-color = #ffffff
-		background-color = #000000
-		saved-params = ""
-		text = "Customize your stats.\nEvery 3 points past 6 will increase your mod (displayed to the right) by +1."
-		align = left
-		text-wrap = true
 	elem "SPD"
 		type = LABEL
-		pos = 30,188
+		pos = 30,90
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4829,10 +3785,10 @@ window "skills"
 		text = "Speed"
 	elem "plusSPD"
 		type = BUTTON
-		pos = 150,188
+		pos = 150,90
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4843,10 +3799,10 @@ window "skills"
 		command = ".Skill_Points \"+\" \"Speed\""
 	elem "minusSPD"
 		type = BUTTON
-		pos = 0,188
+		pos = 0,90
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4857,10 +3813,10 @@ window "skills"
 		command = ".Skill_Points \"-\" \"Speed\""
 	elem "END"
 		type = LABEL
-		pos = 30,168
+		pos = 30,70
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4869,10 +3825,10 @@ window "skills"
 		text = "Durability"
 	elem "plusEND"
 		type = BUTTON
-		pos = 150,168
+		pos = 150,70
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4883,10 +3839,10 @@ window "skills"
 		command = ".Skill_Points \"+\" \"Endurance\""
 	elem "minusEND"
 		type = BUTTON
-		pos = 0,168
+		pos = 0,70
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4897,10 +3853,10 @@ window "skills"
 		command = ".Skill_Points \"-\" \"Endurance\""
 	elem "STR"
 		type = LABEL
-		pos = 30,148
+		pos = 30,50
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4909,10 +3865,10 @@ window "skills"
 		text = "Strength"
 	elem "plusSTR"
 		type = BUTTON
-		pos = 150,148
+		pos = 150,50
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4923,10 +3879,10 @@ window "skills"
 		command = ".Skill_Points \"+\" \"Strength\""
 	elem "minusSTR"
 		type = BUTTON
-		pos = 0,148
+		pos = 0,50
 		size = 30x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
@@ -4937,14 +3893,57 @@ window "skills"
 		command = ".Skill_Points \"-\" \"Strength\""
 	elem "EN"
 		type = LABEL
-		pos = 30,128
+		pos = 30,30
 		size = 120x20
-		anchor1 = -1,-1
-		anchor2 = -1,-1
+		anchor1 = none
+		anchor2 = none
 		font-size = 10
 		font-style = "bold"
 		text-color = #ffffff
 		background-color = #000000
 		saved-params = ""
 		text = "Energy"
+	elem "label4"
+		type = LABEL
+		pos = 0,0
+		size = 224x24
+		anchor1 = none
+		anchor2 = none
+		font-family = "Arial"
+		font-size = 10
+		font-style = "bold"
+		text-color = #ffffff
+		background-color = #000000
+		saved-params = ""
+		text = "Customize your stats."
+		align = left
+		text-wrap = true
+	elem "plusEN"
+		type = BUTTON
+		pos = 150,30
+		size = 30x20
+		anchor1 = none
+		anchor2 = none
+		font-size = 10
+		font-style = "bold"
+		text-color = #ffffff
+		background-color = #000000
+		border = line
+		saved-params = "is-checked"
+		text = ">"
+		command = ".Skill_Points \"+\" \"Energy\""
+	elem "minusEN"
+		type = BUTTON
+		pos = 0,30
+		size = 30x20
+		anchor1 = none
+		anchor2 = none
+		font-size = 10
+		font-style = "bold"
+		text-color = #ffffff
+		background-color = #000000
+		border = line
+		saved-params = "is-checked"
+		text = "<"
+		command = ".Skill_Points \"-\" \"Energy\""
 

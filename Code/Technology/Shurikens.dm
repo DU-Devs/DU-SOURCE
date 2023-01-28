@@ -78,7 +78,7 @@ obj/items/Shuriken
 		Shuriken()
 
 	verb/Shuriken()
-		set category = "Skills"
+		//set category="Skills"
 		if(usr.tournament_override()) return
 		if(usr.cant_blast()) return
 		if(usr.KO||usr.KB||usr.grabbedObject) return
@@ -88,7 +88,7 @@ obj/items/Shuriken
 			Shurikens--
 			if(Shrapnel) Shurikens--
 			if(Bounce) Shurikens--
-			usr.IncreaseStamina(-stam_drain)
+			usr.AddStamina(-stam_drain)
 
 			var/explosion_dmg_mult = 1
 
@@ -108,8 +108,9 @@ obj/items/Shuriken
 			A.Owner=usr
 			var/dmg = 7
 			if(Explosive) dmg *= explosion_dmg_mult
-			A.setStats(usr, Percent = 7, Off_Mult = 1.02, Explosion = Explosive * 2, bullet=1, burn_mod = 0)
+			A.setStats(usr, Percent = 7, Off_Mult = 1.02, Explosion = Explosive * 2, bullet=1)
 			A.from_attack=src
+			A.Force/=usr.sword_mult()
 			A.Bullet=1
 			A.Shrapnel=Shrapnel
 			A.Bounce=Bounce

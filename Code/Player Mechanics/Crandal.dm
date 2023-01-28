@@ -12,8 +12,7 @@ mob/proc/Player_Rename_List()
 
 obj/Colorfy/verb/Add_Color_to_Item(obj/O as obj in view(usr))
 	set src=usr.contents
-	set category="Other"
-	set name = "Colorify"
+	//set category="Other"
 	if(!O.can_change_icon)
 		usr<<"This object is uncolorable. Only objects that can have their icons changed can be colored"
 		return
@@ -22,7 +21,7 @@ obj/Colorfy/verb/Add_Color_to_Item(obj/O as obj in view(usr))
 	usr.Colorize(O)
 
 mob/Admin2/verb/Add_Color_to_Something(obj/O as obj|mob|turf in view(usr))
-	set category="Admin"
+	set category="Other"
 	usr.Colorize(O)
 
 mob/proc/Colorize(obj/O)
@@ -48,15 +47,8 @@ atom/var/can_change_icon=0
 mob/can_change_icon=1
 mob/proc/Change_Icon_List()
 	var/list/L=list("Cancel")
-	L+="Hair"
-	if(Race in list("Yasai", "Half Yasai"))
-		L+="Tail"
-	for(var/mob/P in view(src))
-		if(P.can_change_icon)
-			L+=P
-	for(var/obj/O in view(src))
-		if(O.can_change_icon)
-			L+=O
+	for(var/mob/P in view(src)) if(P.can_change_icon) L+=P
+	for(var/obj/O in view(src)) if(O.can_change_icon) L+=O
 	return L
 
 var
@@ -67,8 +59,8 @@ var
 proc/IconTooBig(icon/i)
 	//if(!isicon(i)) return NOT_AN_ICON
 	if(length(i) / 1024 / 1024 > maxIconFileSize) return FILE_SIZE
-	if(findtextEx("[i]", ".gif")) return NOT_AN_ICON
-	if(!findtextEx("[i]", ".gif")) //im just hoping people dont realize they can upload huge gifs because GetWidth()/Height() does not work on gifs, thats why we skip the check for it
+	if(findtext("[i]", ".gif")) return NOT_AN_ICON
+	if(!findtext("[i]", ".gif")) //im just hoping people dont realize they can upload huge gifs because GetWidth()/Height() does not work on gifs, thats why we skip the check for it
 		if(GetWidth(i) > maxIconW || GetHeight(i) > maxIconH)
 			return DIMENSIONS
 
@@ -106,17 +98,22 @@ obj/Crandal
 				M<<ftp(F)
 			if("No") if(usr) usr<<"[M] declined the file"*/
 
-	verb/Change_Icon(F in usr.Change_Icon_List())
+	verb/Change_Icon(atom/O in usr.Change_Icon_List())
 		set category="Other"
-		var/atom/O = F
-
 		if(!O||O=="Cancel") return
+		var/icon/I=input("Choose an icon file") as icon
 
-		var/icon/I=input("Choose an icon file") as icon|null
+		/*if(findtext("[I]",".gif"))
+			alert("gif files are not allowed until BYOND fixes the crashing bug when people upload certain gifs")
+			return
+
+		if(findtext("[I]",".jpg") || findtext("[I]",".jpeg"))
+			alert("jpegs are not allowed until BYOND fixes the crashing bug that occurs from jpegs now in BYOND v510")
+			return*/
 
 		if(!I||!O||!isicon(I)) return
 		if(IconTooBig(I)) return
-		if(ismob(O)&&O:client&&O!=usr) switch(input(O,"[usr] wants to change your icon into [I], allow?") in list("No","Yes"))
+		if(ismob(O)&&O:client) switch(input(O,"[usr] wants to change your icon into [I], allow?") in list("No","Yes"))
 			if("No")
 				usr<<"[O] denied the icon change to [I]"
 				return
@@ -129,33 +126,28 @@ obj/Crandal
 			sleep(25)
 			usr<<"[O] denied the icon change to [I]"
 			return
+		if(ismob(O))
+			var/mob/m3 = O
+			if(m3.dbz_character)
+				usr << "This does not work with Wish Orbs characters"
+				return
 		if(!O) return
-		if(O == "Hair")
-			usr.overlays.Remove(usr.hair)
-			usr.hair = I
-			usr.overlays.Add(usr.hair)
-		else if(O == "Tail")
-			usr.overlays.Remove(usr.Tail_Icon)
-			usr.Tail_Icon = I
-			usr.overlays.Add(usr.Tail_Icon)
-		else
-			O.icon=I
-			if(!ismob(O) && !istext(O))
-				O.icon_state=input("Icon State?") as text
-			if(!istext(O))
-				switch(alert(usr, "Would you like to set custom offsets?", "Offset", "Yes", "Auto-Center", "No"))
-					if("Yes")
-						O.pixel_x = input(usr, "Enter an X offset.") as num|null
-						O.pixel_y = input(usr, "Enter an Y offset.") as num|null
-					if("Auto-Center")
-						CenterIcon(O)
+		O.icon=I
+		if(!ismob(O)) O.icon_state=input("Icon State?") as text
+		CenterIcon(O)
 
 	verb/Rename(atom/movable/O in usr.Player_Rename_List())
 		set src=usr.contents
-		set category="Other"
+		//set category="Other"
 		if(!isobj(O)&&!ismob(O)) return
 		if(!O) return
 		if(usr)
+			if(ismob(O))
+				var/mob/m=O
+				if(m.dbz_character)
+					usr<<"DB characters can not be renamed"
+					return
+
 			usr<<"Do not use this to give yourself a name that is against the rules. Or somehow blank names."
 			var/ID=input(usr,"Name?","Options",O.name) as text
 			if(!ID) return
@@ -166,7 +158,7 @@ obj/Crandal
 			var/list/letters=list("a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z",\
 			"1","2","3","4","5","6","7","8","9","0")
 			var/found_valid_letter
-			for(var/letter in letters) if(findtextEx(ID,letter))
+			for(var/letter in letters) if(findtext(ID,letter))
 				found_valid_letter=1
 				break
 			if(!found_valid_letter)
@@ -182,20 +174,20 @@ obj/Crandal
 				usr<<"[O] declined the name change to [ID]"
 				return
 			if(!O) return
-			if(findtextEx(ID,"://"))
+			if(findtext(ID,"://"))
 				usr<<"No links in names"
 				return
-			if(findtextEx(ID,"\\") || findtextEx(ID,"\n"))
+			if(findtext(ID,"\\") || findtext(ID,"\n"))
 				usr << "Invalid symbols in name"
 				return
-
-			ID = replacetext(ID, regex(@"^\s+|\s+$|\s+(?=\s)", "gim"), "")
-			O.name=html_encode(copytext(ID,1,Social.GetSettingValue("Name Character Limit")))
-			if(ismob(O)) O:nameDisplay.Position(O, O.name)
+			O.name=html_encode(copytext(ID,1,50))
 
 	verb/Copy_Someones_Icon(mob/A in world)
 		set src=usr.contents
 		set category="Other"
+		if(usr.dbz_character)
+			usr << "This does not work with Wish Orbs characters"
+			return
 		usr.icon=A.icon
 		CenterIcon(usr)
 
@@ -206,7 +198,7 @@ obj/Sonku_Planet
 	Givable=0
 	Makeable=0
 	verb/Go_To_Planet()
-		set category = "Skills"
+		set category="Skills"
 		var/On_Planet
 		for(var/area/Sonku/S in range(40,usr)) On_Planet=1
 		if(!On_Planet)
@@ -225,7 +217,7 @@ obj/SSX_Planet
 	var/Y
 	var/Z
 	verb/Go_To_Planet()
-		set category = "Skills"
+		set category="Skills"
 		var/On_Planet
 		for(var/area/SSX/S in range(40,usr)) On_Planet=1
 		if(!On_Planet)

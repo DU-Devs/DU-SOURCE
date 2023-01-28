@@ -6,7 +6,7 @@ pixel offset aligned to their average pixel location (x * 32 and y * 32)
 */
 
 var/list
-	light_sources = list()
+	light_sources = new
 
 proc
 	FadeOutLights(area/a)
@@ -55,8 +55,7 @@ obj
 		New()
 			. = ..()
 			MakeImmovableIndestructable()
-			light_sources ||= list()
-			light_sources |= src
+			light_sources += src
 
 		proc
 			FadeOutLight(n = 100)
@@ -75,7 +74,6 @@ obj
 
 		GiveLightSource(size = 1, max_alpha = 60, light_color = rgb(255,255,255), auto_fade = 1, light_icon = 'TorchLightCircle.dmi')
 			set waitfor=0
-			set background = TRUE
 
 			//too many lights on screen can crash people. so dont add a light if too many nearby objects already have lights
 			var/nearbyLights = 0

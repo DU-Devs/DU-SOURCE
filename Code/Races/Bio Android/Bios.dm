@@ -18,13 +18,13 @@ mob/proc
 		if(!m) return
 		if(m.Race == "Bio-Android" && m.bio_form > bio_form) return 1
 		if(m.Is_Cybernetic()) return 1
-		if(m.base_bp + m.static_bp > highest_base_and_hbtc_bp * 0.93) return 1
+		if((m.base_bp + m.hbtc_bp) / m.bp_mod > highest_base_and_hbtc_bp * 0.93) return 1
 
 	BioNextForm()
 		if(bio_form >= 3) return
 		if(bio_form != 0) //if you are not transforming from a larva to imperfect
 			ClosePowerGapBy(0.5)
-			if(static_bp < base_bp * 0.2) static_bp = base_bp * 0.2
+			if(hbtc_bp < base_bp * 0.2) hbtc_bp = base_bp * 0.2
 
 			var
 				my_bp = effectiveBaseBp
@@ -43,13 +43,13 @@ mob/proc
 					if(my_bp > full_boost_bp) boost -= (my_bp - full_boost_bp)
 
 			if(boost < 0) boost = 0
-			static_bp += boost
+			hbtc_bp += boost
 
 		bio_form++
 
 		//to ensure that if you detrans then retrans you are never less bp in that form that you ever were before. aka you never LOSE power from retransing
-		//if(bio_form == 2 && bioform2_highest_bp < static_bp) bioform2_highest_bp = static_bp
-		//if(bio_form == 3 && bioform3_highest_bp < static_bp) bioform3_highest_bp = static_bp
+		//if(bio_form == 2 && bioform2_highest_bp < hbtc_bp) bioform2_highest_bp = hbtc_bp
+		//if(bio_form == 3 && bioform3_highest_bp < hbtc_bp) bioform3_highest_bp = hbtc_bp
 
 		switch(bio_form)
 			if(1)
@@ -76,11 +76,9 @@ mob/proc
 		if(!CanBioRevert()) return
 		last_bio_revert = world.realtime
 		bio_form = 0
-		static_bp = 0 //this is necessary or it will cause a bug where bios can stack their special era static boost over and over
+		hbtc_bp = 0 //this is necessary or it will cause a bug where bios can stack their special era static boost over and over
 		BioEggGfx()
 		LarvaEvolveLoop()
-		var/transformation/T = GetActiveForm()
-		if(T) T.ExitForm(src)
 		if(icon in list('Bio1.dmi', 'Bio2.dmi', 'Bio3.dmi')) icon = 'Cell Larva Blue.dmi'
 		else icon = 'Cell Larva.dmi'
 

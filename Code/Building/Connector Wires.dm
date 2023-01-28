@@ -11,18 +11,17 @@ players who touch it catch on fire and can spread the fire with other flammable 
 var
 	default_electricity_color = rgb(0,128,255)
 
-var/list/all_connectors
+var/list/all_connectors = new
 
 obj/Connector
 	icon = 'Connector Icons.dmi'
 	icon_state = "h"
 	desc = "This is just graphical decoration for your base. Connectors automatically connect to other connectors you put beside them. They're just pipes."
-	//Cost = 10000
+	Cost = 10000
 	layer = TURF_LAYER + 0.05
 	Grabbable = 0
 	Dead_Zone_Immune = 1
 	Knockable = 0
-	Savable = 0
 	var
 		tmp
 			connector_powered = 0
@@ -33,8 +32,7 @@ obj/Connector
 	New()
 		GiveLightSource(size = 20, max_alpha = 35, light_color = default_electricity_color, auto_fade = 0, light_icon = 'transparent.png')
 		if(light_obj)light_obj.alpha = 0
-		all_connectors ||= list()
-		all_connectors |= src
+		all_connectors += src
 		for(var/obj/Connector/c in view(1,src)) c.DecideConnectorIcon()
 		..()
 

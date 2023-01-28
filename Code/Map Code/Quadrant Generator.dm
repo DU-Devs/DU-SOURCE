@@ -10,21 +10,35 @@ var
 
 	list/generated_zones = new
 
-turf/Entered(mob/M)
-	. = ..()
-	if(!ismob(M) || !z || !M.z || !M.client) return
-	var/zone = GetZoneNum(M)
-	GenerateZone(zone)
-
-
 proc
 	round_up(n = 1)
 		if(round(n) != n) return round(n + 1)
 		return n
 
+	//we used to do this in every turf/New but it had problems including very long startup time (1 min 30 seconds instead of only 15-20 seconds)
+	//so now we do it this way
+	GenerateMapFeatures()
+		//set background = 1
+		sleep(150)
+		clients << "<font color=yellow>Generating map decoration. This could take a few minutes"
+		sleep(5)
+		//var/count = 0
+		var/list/l = turf_gen_cache
+		turf_gen_cache = null //so no more turfs can be registered into it
+
+		l = block(locate(1,1,1), locate(world.maxx / 4,world.maxy / 4,1))
+
+		for(var/turf/t in l) if(!t.Builder && t.auto_gen_eligible)
+			t.GenerateFeatures(ao_skip_side_checks = 1)
+			//count++
+			//if(count > 2000)
+			//	sleep(world.tick_lag)
+			//	count = 0
+			if(world.tick_usage > 35) sleep(world.tick_lag)
+		clients << "<font color=yellow>Map decoration complete."
+
 	GenerateMapFeaturesByZone()
 		set waitfor=0
-		set background = TRUE
 		sleep(100)
 		while(1)
 			for(var/mob/m in players) if(m.z)
@@ -35,7 +49,6 @@ proc
 			sleep(50)
 
 	GenerateZone(n = 1)
-		if(!generated_zones) generated_zones = new/list
 		if(n in generated_zones) return
 		generated_zones += n
 

@@ -10,10 +10,37 @@ mob/proc/Drop_dragonballs()
 		sleep(1)
 		skip_restore_hotbar=0
 		count++
-	src << "drop dragon balls"
 	Restore_hotbar_from_IDs()
 	if(count >= 7)
 		player_range(30,src) << sound('wish sfx 1.ogg', volume = 35)
+
+mob/proc/DropShikon()
+	set waitfor=0
+	if(item_list.len)
+		for(var/obj/items/Shikon_Jewel/sj in item_list) if(sj.loc == src)
+			var/turf/t = base_loc()
+			if(!t || !isturf(t) || Final_Realm()) t = locate(250,250,1)
+			skip_restore_hotbar=1
+			sj.Move(t)
+		sleep(10)
+		skip_restore_hotbar=0
+		Restore_hotbar_from_IDs()
+
+proc/EnableDragonBallsLoop()
+	set waitfor=0
+	sleep(600)
+	while(1)
+		for(var/obj/items/Dragon_Ball/db in dragon_balls)
+			if(world.realtime > db.next_enable && db.invisibility)
+				db.Wishes = 1
+				db.invisibility = 0
+				db.overlays -= 'Dragon Ball Aura.dmi'
+				if(db.name == "Wish Orbs 1")
+					if(announce_dragon_balls)
+						var/area/a = db.get_area()
+						players << "<font color=yellow><font size=3>The Wish Orbs of [a] are now active"
+				db.SetDBPixelOffsets()
+		sleep(3000)
 
 proc/Inert_Dragon_Ball(obj/O) if(istype(O,/obj/items/Dragon_Ball) && O.invisibility) return 1
 
@@ -23,26 +50,33 @@ mob/proc/ClosePowerGapBy(amount=0.5, include_hbtc = 1)
 	if(!m) return
 
 	var
-		base_gain = (m.base_bp - base_bp) * amount
-		hbtc_gain = (m.static_bp - static_bp) * amount
+		base_gain = ((m.base_bp / m.bp_mod) - (base_bp / bp_mod)) * amount * bp_mod
+		hbtc_gain = ((m.hbtc_bp / m.bp_mod) - (hbtc_bp / bp_mod)) * amount * bp_mod
 
 	if(!include_hbtc) hbtc_gain = 0
 
 	base_bp += base_gain
-	static_bp += hbtc_gain
+	hbtc_bp += hbtc_gain
 
 mob/proc/WishForPower(amount=0.5, no_strongest_increase)
 
-	if(base_bp >= highest_base_bp)
+	var/relative_base_bp=base_bp/bp_mod
+
+	if(relative_base_bp>=highest_relative_base_bp)
 		if(!no_strongest_increase)
 			base_bp*=1.03
-			static_bp*=1.03
+			hbtc_bp*=1.03
 	else
-		var/gain=(highest_base_bp - base_bp) * amount
+		var/gain=(highest_relative_base_bp-relative_base_bp) * amount
 		if(gain>0)
-			base_bp += gain
-			static_bp -= gain*0.5
-			if(static_bp<0) static_bp=0
+			gain*=bp_mod
+			base_bp+=gain
+			hbtc_bp-=gain*0.5
+			if(hbtc_bp<0) hbtc_bp=0
+
+	//var/new_relative_base_bp=base_bp/bp_mod
+	//LogBug("[Bug_Keys()] wished for power. [src]'s BP: [Commas(relative_base_bp)]. Highest BP: [Commas(highest_relative_base_bp)]. \
+	BP after wish: [Commas(new_relative_base_bp)]", rgb(255,150,0))
 
 	wishes_for_power++
 	Health=100
@@ -62,18 +96,20 @@ obj/Dragons
 	Knockable=0
 
 obj/Dragons/Shenron
-	icon='shenron 320x222.dmi'
+	//icon='shenron 320x222.dmi'
+	icon = 'ugandan knuckles dragon balls.dmi'
 	layer=5
 	pixel_x=-144
 	pixel_y=0
 
 obj/Dragons/Porunga
-	icon='porunga 200x307.dmi'
+	//icon='porunga 200x307.dmi'
+	icon = 'ugandan knuckles dragon balls.dmi'
 	layer=5
 	pixel_x=-84
 	pixel_y=0
 
-obj/Skills/Divine/Make_Dragon_Balls
+obj/Make_Dragon_Balls
 	teachable=1
 	Skill=1
 	Teach_Timer=24
@@ -91,7 +127,7 @@ obj/Skills/Divine/Make_Dragon_Balls
 		Make_Dragon_Balls()
 
 	verb/Make_Dragon_Balls()
-		set category = "Skills"
+		set category="Skills"
 		set name = "Make Wish Orbs"
 		if(world.time<1200)
 			usr<<"You can not make Wish Orbs until 2 minutes after the last reboot"
@@ -121,7 +157,6 @@ obj/Skills/Divine/Make_Dragon_Balls
 
 proc/check_dragonballs()
 	set waitfor=0
-	set background = TRUE
 	sleep(600)
 	while(1)
 		for(var/obj/items/Dragon_Ball/db in dragon_balls) if(db.Creator)
@@ -146,51 +181,14 @@ proc/check_dragonballs()
 					del(db2)
 		sleep(600)
 
-var/lastDragonBallCheck = 0
-
-proc/DragonBallCheck()
-	set waitfor = 0
-	if(lastDragonBallCheck + 600 > world.time) return
-	lastDragonBallCheck = world.time
-
-	for(var/obj/items/Dragon_Ball/db in dragon_balls)
-		if(db.Creator)
-			//if any Wish Orbs are missing recreate them
-			var/list/matches=new
-			for(var/obj/items/Dragon_Ball/db2 in dragon_balls)
-				if(db2.Creator==db.Creator)
-					for(var/v in 1 to 7)
-						if(db2.name=="Wish Orbs [v]") matches+=v
-			for(var/v in 1 to 7)
-				if(!(v in matches))
-					var/obj/items/Dragon_Ball/new_db = get_obj_copy(db)
-					new_db.SafeTeleport(db.loc) //in case the above doesnt work itll still be forced to the right loc
-					new_db.name="Wish Orbs [v]"
-
-			//if there are any duplicates delete them
-			for(var/obj/items/Dragon_Ball/db2 in dragon_balls)
-				if(db2 != db && db2.Home == db.Home && db2.name == db.name)
-					db2.Home = -1
-					db2.reallyDelete = 1
-					del(db2)
-
-		if(world.realtime > db.next_enable && db.invisibility)
-			db.Wishes = 1
-			db.invisibility = 0
-			db.overlays -= 'Dragon Ball Aura.dmi'
-			if(db.name == "Wish Orbs 1")
-				if(Social.GetSettingValue("Announce Dragon Ball Activity"))
-					var/area/a = db.get_area()
-					players << "<font color=yellow><font size=3>The Wish Orbs of [a] are now active"
-			db.SetDBPixelOffsets()
-
 var/list/dragon_balls=new
 
 obj/items/Dragon_Ball
 	can_change_icon=0
 	clonable=0
 	can_blueprint=0
-	icon='dragonball.dmi'
+	//icon='dragonball.dmi'
+	icon = 'wish orbs.dmi'
 	desc="One of the seven Wish Orbs. When all seven are gathered you will be granted a wish"
 	Health=1.#INF
 	Stealable=1
@@ -202,8 +200,7 @@ obj/items/Dragon_Ball
 
 	New()
 		icon=initial(icon)
-		dragon_balls ||= list()
-		dragon_balls |= src
+		dragon_balls+=src
 		spawn if(src) DB_Planet_Check()
 
 		spawn(50) if(src && Creator)
@@ -242,7 +239,7 @@ obj/items/Dragon_Ball
 			home_z=T.z
 			break
 		var/turf/T
-		while(!T||IsWater(T)||HasCreator(T))
+		while(!T||T.Water||T.Builder)
 			T=locate(rand(1,world.maxx),rand(1,world.maxy),home_z)
 			sleep(1)
 		Move(T)
@@ -341,15 +338,22 @@ obj/items/Dragon_Ball
 		if(Home==/area/Puranto) D=new/obj/Dragons/Porunga
 		else D=new/obj/Dragons/Shenron
 		D.SafeTeleport(locate(x,y+1,z))
+		//COPYRIGHT
+		//player_range(30,D) << sound('shenron say your wish.ogg', volume = 100)
+
+		//D.loc = null //COPYRIGHT
 
 		var/list/Choices=new
 		Choices+="Power For Someone"
 		if(WishPower>300) Choices+="Immortality"
 		if(WishPower>300) Choices+="Revive"
+		if(WishPower>1500) Choices+="Restore Planet"
+		if(WishPower>3000) Choices+="Restore Galaxy"
 		Choices.Add("Money","Skill points","Knowledge","Time chamber key","Deadzone immunity",\
-		"Learn God-Fist","Learn Omega Bomb","Learn Kai Teleport",\
-		"Learn Materialize","Learn Fusion Dance","Learn Regenerate",\
-		"Learn Unlock Potential","Learn Makankosappo")
+		"Learn soul contract","Learn God_Fist","Learn Genki Dama","Learn Majin","Learn Mystic",\
+		"Learn Kai Teleport","Learn Materialize","Learn Regenerate","Learn Giant Form","Learn Unlock Potential","Learn Makankosappo")
+		if(db_vampire_incurable) Choices+="Make vampirism curable again"
+		else Choices+="Make vampirism incurable"
 		Choices+="Nothing"
 		while(Wishes)
 			player_view(15,src)<<"[usr] is making a wish!"
@@ -357,65 +361,90 @@ obj/items/Dragon_Ball
 				if("Nothing") if(Wishes)
 					player_view(15,usr)<<"[usr] cancelled their wish"
 					return
+				if("Make vampirism incurable") if(Wishes)
+					if(!DBs_Gathered()) return
+					Alter_wishes()
+					player_view(15,usr)<<"[usr] wished to make vampirism incurable"
+					db_vampire_incurable=1
+					usr.wish_count++
+				if("Make vampirism curable again") if(Wishes)
+					if(!DBs_Gathered()) return
+					Alter_wishes()
+					player_view(15,usr)<<"[usr] wished to make vampirism curable again"
+					db_vampire_incurable=0
+					usr.wish_count++
 				if("Learn Kai Teleport") if(Wishes)
 					if(!DBs_Gathered()) return
 					Alter_wishes()
 					player_view(15,usr)<<"[usr] wished for the Kai Teleport ability"
-					usr.contents+=new/obj/Skills/Divine/Kai_Teleport
+					usr.contents+=new/obj/Teleport
 					usr.wish_count++
 				if("Learn Majin") if(Wishes)
 					if(!DBs_Gathered()) return
 					Alter_wishes()
 					player_view(15,usr)<<"[usr] wished for the Majin ability"
-					usr.contents+=new/obj/Skills/Divine/Majin
+					usr.contents+=new/obj/Majin
 					usr.wish_count++
 				if("Learn Makankosappo") if(Wishes)
 					if(!DBs_Gathered()) return
 					Alter_wishes()
 					player_view(15,usr)<<"[usr] wished for the Makankosappo ability"
-					usr.contents+=new/obj/Skills/Combat/Ki/Piercer
+					usr.contents+=new/obj/Attacks/Piercer
 					usr.wish_count++
 				if("Learn Unlock Potential") if(Wishes)
 					if(!DBs_Gathered()) return
 					Alter_wishes()
 					player_view(15,usr)<<"[usr] wished for the Unlock Potential ability"
-					usr.contents+=new/obj/Skills/Divine/Unlock_Potential
+					usr.contents+=new/obj/Unlock_Potential
 					usr.wish_count++
-				if("Learn Omega Bomb") if(Wishes)
+				if("Learn Mystic") if(Wishes)
 					if(!DBs_Gathered()) return
 					Alter_wishes()
-					player_view(15,usr)<<"[usr] wished for the Omega Bomb ability"
-					usr.contents+=new/obj/Skills/Combat/Ki/Genki_Dama
+					player_view(15,usr)<<"[usr] wished for the Mystic ability"
+					usr.contents+=new/obj/Mystic
 					usr.wish_count++
-				if("Learn God-Fist") if(Wishes)
+				if("Learn Genki Dama") if(Wishes)
 					if(!DBs_Gathered()) return
 					Alter_wishes()
-					player_view(15,usr)<<"[usr] wished for the God-Fist ability"
-					usr.contents+=new/obj/Skills/God_Fist
+					player_view(15,usr)<<"[usr] wished for the Genki Dama ability"
+					usr.contents+=new/obj/Attacks/Genki_Dama
+					usr.wish_count++
+				if("Learn God_Fist") if(Wishes)
+					if(!DBs_Gathered()) return
+					Alter_wishes()
+					player_view(15,usr)<<"[usr] wished for the God_Fist ability"
+					usr.contents+=new/obj/God_Fist
+					usr.wish_count++
+				if("Learn Giant Form") if(Wishes)
+					if(!DBs_Gathered()) return
+					Alter_wishes()
+					player_view(15,usr)<<"[usr] wished for the Giant Form ability"
+					var/obj/Giant_Form/gf=new(usr)
+					if(gf) gf.teachable=0
 					usr.wish_count++
 				if("Learn Regenerate") if(Wishes)
 					if(!DBs_Gathered()) return
 					Alter_wishes()
 					player_view(15,usr)<<"[usr] wished for the regenerate ability"
-					usr.contents+=new/obj/Skills/Utility/Regeneration
+					usr.contents+=new/obj/Regeneration
 					usr.wish_count++
 				if("Learn Materialize") if(Wishes)
 					if(!DBs_Gathered()) return
 					Alter_wishes()
 					player_view(15,usr)<<"[usr] wished for the materialize ability"
-					usr.contents+=new/obj/Skills/Divine/Materialization
+					usr.contents+=new/obj/Materialization
 					usr.wish_count++
-				if("Learn Fusion Dance") if(Wishes)
+				if("Learn soul contract") if(Wishes)
 					if(!DBs_Gathered()) return
 					Alter_wishes()
-					player_view(15,usr)<<"[usr] wished for the Fusion Dance ability"
-					usr.contents+=new/obj/Skills/Fusion_Dance
+					player_view(15,usr)<<"[usr] wished for the soul contract ability"
+					usr.contents+=new/obj/Demon_Contract
 					usr.wish_count++
 				if("Learn absorb") if(Wishes)
 					if(!DBs_Gathered()) return
 					Alter_wishes()
 					player_view(15,usr)<<"[usr] wished for the absorb ability"
-					usr.contents+=new/obj/Skills/Utility/Absorb
+					usr.contents+=new/obj/Absorb
 					usr.wish_count++
 				if("Deadzone immunity") if(Wishes)
 					if(!DBs_Gathered()) return
@@ -427,7 +456,23 @@ obj/items/Dragon_Ball
 					if(!DBs_Gathered()) return
 					Alter_wishes()
 					player_view(15,usr)<<"[usr] wished for a time chamber key"
-					usr.contents += give_hbtc_key()
+					usr.give_hbtc_key()
+					usr.wish_count++
+				if("Restore Planet") if(Wishes)
+					if(!DBs_Gathered()) return
+					if(!destroyed_planets.len)
+						player_view(15,usr)<<"There are no planets destroyed, please make another wish."
+						return
+					Alter_wishes()
+					var/planet=input("Which planet?") in destroyed_planets
+					spawn restore_planet(planet)
+					player_view(15,usr)<<"[usr] wishes to restore planet [planet]!"
+					usr.wish_count++
+				if("Restore Galaxy") if(Wishes)
+					if(!DBs_Gathered()) return
+					spawn restore_all_planets()
+					player_view(15,usr)<<"[usr] wishes for the Galaxy to be restored"
+					Alter_wishes()
 					usr.wish_count++
 				if("Power For Someone") if(Wishes)
 					if(!DBs_Gathered()) return
@@ -442,7 +487,7 @@ obj/items/Dragon_Ball
 					Alter_wishes()
 					var/mob/a=input(usr,"Choose who to give the money to") in players
 					if(!DBs_Gathered()) return
-					a.Alter_Res(50000000 * Mechanics.GetSettingValue("Resource Generation Rate"))
+					a.Alter_Res(50000000 * Resource_Multiplier)
 					player_view(15,usr)<<"[usr] wishes to give [a] money!"
 					usr.wish_count++
 				if("Skill points") if(Wishes)
@@ -450,7 +495,7 @@ obj/items/Dragon_Ball
 					Alter_wishes()
 					var/mob/a=input(usr,"Choose who to give skill points to") in players
 					if(!DBs_Gathered()) return
-					var/n=round(1*GetGlobalYear())
+					var/n=round(1*Year)
 					if(n<30) n=30
 					if(n>100) n=100
 					a.Experience+=n
@@ -504,6 +549,7 @@ mob/var/wish_count = 0
 obj/items/Dragon_Ball/proc/End_Wishes()
 	player_view(15,src)<<"The Wish Orbs scatter randomly across their home world"
 	var/r = 2 * rand(80,120) * 0.01 * 60 * 600
+	if(map_restriction_on) r *= 1
 	for(var/obj/items/Dragon_Ball/A in dragon_balls) if(A.Creator == Creator && A.Home == Home)
 		if(prob(33)) spawn(rand(1,40)) Make_Shockwave(A,sw_icon_size=512)
 		A.Scatter()

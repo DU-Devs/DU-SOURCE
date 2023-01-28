@@ -51,13 +51,13 @@ mob/proc
 	Tell_counterpart_i_died()
 		if(Dead) for(var/mob/m in players) if(key&&m.Puranto_counterpart==key&&!m.counterpart_died)
 			m.counterpart_died=1
-			m.SendMsg("Your Puranto counterpart has died. You will die soon too if they do not come back to life \
-			before all of your energy drains.", CHAT_IC)
+			m<<"Your Puranto counterpart has died. You will die soon too if they do not come back to life \
+			before all of your energy drains"
 
 	Tell_counterpart_im_alive()
 		if(!Dead) for(var/mob/m in players) if(key&&m.Puranto_counterpart==key&&m.counterpart_died)
 			m.counterpart_died=0
-			m.SendMsg("Your Puranto counterpart has come back to life. You are no longer in danger of dying.", CHAT_IC)
+			m<<"Your Puranto counterpart has come back to life. You are no longer in danger of dying"
 
 	Check_if_counterpart_is_alive_or_dead()
 		if(Puranto_counterpart)
@@ -78,7 +78,7 @@ mob/proc
 		spawn while(src)
 			if(counterpart_died&&!Dead)
 				while(counterpart_died&&!Dead)
-					IncreaseKi(-max_ki/60)
+					Ki-=max_ki/60
 					if(Ki<=0) Death("the loss of their Puranto counterpart",Force_Death=1)
 					sleep(10)
 			else sleep(600)
@@ -97,21 +97,9 @@ mob/proc
 				return
 			if(bp_mod<m.bp_mod) bp_mod=m.bp_mod
 			if(base_bp < m.base_bp * 0.93) base_bp = m.base_bp * 0.93
-			//if(static_bp<m.static_bp) static_bp=m.static_bp
+			//if(hbtc_bp<m.hbtc_bp) hbtc_bp=m.hbtc_bp
 			if(max_ki/Eff<m.max_ki/m.Eff) max_ki=m.max_ki/m.Eff*Eff
 			if(gravity_mastered < m.gravity_mastered) gravity_mastered=m.gravity_mastered
-	
-	CounterpartMatchTick()
-		for(var/mob/m in players)
-			if(m.key==Puranto_counterpart)
-				if(m.Puranto_counterpart!=key||m.Race!=Race)
-					src<<"[m] has dropped you as their counterpart"
-					Puranto_counterpart=null
-					return
-				if(bp_mod<m.bp_mod) bp_mod=m.bp_mod
-				if(base_bp < m.base_bp * 0.93) base_bp = m.base_bp * 0.93
-				if(max_ki/Eff<m.max_ki/m.Eff) max_ki=m.max_ki/m.Eff*Eff
-				if(gravity_mastered < m.gravity_mastered) gravity_mastered=m.gravity_mastered
 
 mob/proc/Counterpart_list()
 	var/list/L=new
@@ -131,7 +119,7 @@ obj/Puranto_Fusion
 	fusion has their character deleted and the other gets the boost."
 	var/Next_Use=0
 
-	New() if(!Next_Use) Next_Use=GetGlobalYear()+10
+	New() if(!Next_Use) Next_Use=Year+10
 
 	verb/Hotbar_use()
 		set hidden=1
@@ -139,7 +127,7 @@ obj/Puranto_Fusion
 		Puranto_Fusion()
 
 	verb/Puranto_Fusion()
-		set category = "Skills"
+		set category="Skills"
 		usr.Puranto_Fusion()
 
 mob/var/last_fused_with=0 //realtime
@@ -150,6 +138,10 @@ mob/proc/CanPurantoFuse(mob/fuser, showmsg)
 		var/hours = (last_fused_with + (Puranto_fusion_wait_hours * 60 * 60 * 10) - world.realtime) / (10 * 60 * 60)
 		if(showmsg)
 			src << "You can only fuse every [Puranto_fusion_wait_hours] hours. You must wait another [round(hours)] hours and [round(hours * 60 % 60)] minutes"
+		return
+
+	if(body_swapped())
+		if(showmsg) src<<"You can not use this while body swapped"
 		return
 
 	if(fuser)
@@ -186,19 +178,19 @@ mob/proc/Puranto_Fusion()
 
 				if(P.bp_mod < bp_mod) P.bp_mod=bp_mod
 				if(P.base_bp < base_bp) P.base_bp=base_bp
-				if(P.static_bp < static_bp) P.static_bp=static_bp
+				if(P.hbtc_bp < hbtc_bp) P.hbtc_bp=hbtc_bp
 
 				P.WishForPower(no_strongest_increase = 1)
 				if(P.max_ki/P.Eff<max_ki/Eff) P.max_ki=max_ki/Eff*P.Eff
 				if(P.gravity_mastered<gravity_mastered) P.gravity_mastered=gravity_mastered
 				if(P.Health<100) P.Health=100
 				if(P.Ki<P.max_ki) P.Ki=P.max_ki
-				if(P.Puranto_counterpart == key && P.base_bp + P.static_bp > 1500000)
+				if(P.Puranto_counterpart == key && P.base_bp + P.hbtc_bp > 1500000)
 					if(P.base_bp < 15000000) P.base_bp = 15000000
-					if(P.static_bp < 15000000) P.static_bp = 15000000
+					if(P.hbtc_bp < 15000000) P.hbtc_bp = 15000000
 
 				var/min_hbtc_bp = P.base_bp * 0.33
-				if(P.static_bp < min_hbtc_bp) P.static_bp = min_hbtc_bp
+				if(P.hbtc_bp < min_hbtc_bp) P.hbtc_bp = min_hbtc_bp
 
 				Respawn()
 				P.Puranto_Fusion_Gfx()

@@ -67,7 +67,7 @@ obj/Faction
 						B.suffix="Rank [B.rank]"
 					else usr<<"Their rank is higher than yours, you cannot change it."
 			if("Faction Icon")
-				icon=input("") as icon|null
+				icon=input("") as icon
 				icon_state=input("Enter the appropriate icon state, if any.") as text
 				version+=1
 			if("Change Faction Notes")

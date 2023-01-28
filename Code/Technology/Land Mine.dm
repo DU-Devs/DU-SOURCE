@@ -12,7 +12,6 @@ obj/items
 
 		var
 			land_mines = 24
-			damage_mod
 
 		New()
 			suffix = "[land_mines]"
@@ -22,17 +21,12 @@ obj/items
 			Hotbar_use()
 				set hidden=1
 				Use()
-			
-			Upgrade()
-				set src in view(1)
-				damage_mod = usr.Knowledge / Tech_BP * usr.Knowledge
 
 			Use()
 				set src in usr
 				if(loc == usr)
 					if(!usr.CanDeployLandMine()) return
-					if(!damage_mod) damage_mod = usr.Knowledge / Tech_BP * usr.Knowledge
-					usr.PlaceLandMine(damage_mod)
+					usr.PlaceLandMine()
 					land_mines--
 					suffix = "[land_mines]"
 					if(land_mines <= 0)
@@ -54,11 +48,10 @@ mob/proc
 
 		return 1
 
-	PlaceLandMine(dmg)
+	PlaceLandMine()
 		set waitfor=0
 		//var/obj/Land_Mine/lm = new(loc)
-		var/obj/Land_Mine/lm = new/obj/Land_Mine(loc)
-		lm.New_Landmine(dmg)
+		new/obj/Land_Mine(loc)
 
 obj/Land_Mine
 	Savable=1
@@ -68,17 +61,12 @@ obj/Land_Mine
 	icon_state="land mine"
 	var/tmp
 		mine_detonated
-	var
-		damage_mod
 
 	Del()
 		LandMineExplode(from_del = 1)
 		. = ..()
 
 	proc
-		New_Landmine(dmg)
-			damage_mod = dmg
-
 		LandMineExplode(from_del=0, delay=0)
 			set waitfor=0
 			if(mine_detonated) return
@@ -99,7 +87,7 @@ obj/Land_Mine
 					//the reason we do this is because 1 mine can detonate all other mines surrounding it, which is potentially like
 					//9 mines, which is insane damage and just too OP to exist
 					if(world.time - m2.last_hit_by_land_mine > 10)
-						m2.TakeLandMineDamage(damage_mod)
+						m2.TakeLandMineDamage()
 				else if(m.type == /obj/Land_Mine && m != src)
 					var/obj/Land_Mine/lm = m
 					lm.LandMineExplode(delay=TickMult(2))
@@ -110,11 +98,18 @@ obj/Land_Mine
 mob/var/tmp/last_hit_by_land_mine = 0
 
 mob/proc
-	TakeLandMineDamage(dmg_mod)
+	TakeLandMineDamage()
 		set waitfor=0
-		var/dmg = rand(10,50) * (dmg_mod / BP)
+		var/dmg = 40 * (Tech_BP * 1.63 / BP) ** 1
+		//var/dmg = 100 * (highest_relative_base_bp * 0.63 / (base_bp / bp_mod))**5
 
-		TakeDamage(dmg, "land mine explosion")
+		if(ThingC()) dmg *= 0.25
+
+		TakeDamage(dmg)
+		if(Health <= 0)
+			Blood_splatter_effects()
+			//SaitamaBloodEffect()
+			Death("land mine explosion",lose_immortality = 0, lose_hero = 0)
 
 atom/proc/ExplodeLandMines()
 	var/turf/t

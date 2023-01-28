@@ -11,6 +11,7 @@ Ideas for attributes:
 obj/var/Customization_Points=10
 obj/items/Gun
 	hotbar_type="Combat item"
+	era_reset_immune=0
 	clonable = 0
 	can_hotbar=1
 	can_change_icon=1
@@ -80,11 +81,14 @@ mob/verb/Customize_Gun(O as text,S as text) //O=Operator (+ or -), S=Stat
 	if(!(S in list("Range","Damage","Ammo","Velocity","Refire","Precision","Explosion","Spread","Knockback",\
 	"Stun","Reload","Type"))) return
 
+	//if(S=="Stun")
+		//alert("Stun guns are disabled due to players voting it off")
+		//return
+
 	if(S=="Type")
 		Gun.Bullet=!Gun.Bullet
 		Gun_Window_Refresh(Gun)
 		return
-
 	var/Amount=1
 	if(O=="-")
 		Amount=-1
@@ -127,7 +131,6 @@ obj/Bullet_Icons/Click() if(usr.Gun)
 var/list/Gun_Icons=new
 var/list/Bullet_Icons=new
 proc/Initialize_Gun_Icons()
-	set background = TRUE
 	var/Gun_Name=1
 	var/obj/Gun_Icon/G=new
 	G.name=Gun_Name

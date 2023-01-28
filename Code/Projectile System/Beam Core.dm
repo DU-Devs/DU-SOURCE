@@ -1,7 +1,7 @@
 var
 	global_beam_delay_mod = 1
 
-obj/Skills/Combat/Ki/var
+obj/Attacks/var
 	say_name_when_fired
 	shield_pierce_mult = 1 //multiplies normal damage vs shields
 
@@ -72,21 +72,25 @@ mob/proc/get_beam_size()
 	if(God_Fist_level) beam_size=1+(God_Fist_level/5)
 	else beam_size=BPpcnt / 100
 	beam_size=Clamp(beam_size,1,3)
-	var/transformation/T = GetActiveForm()
-	if(T) beam_size += 0.2
+	if(ssj==1) beam_size+=0.3
+	if(ssj==2) beam_size+=0.5
+	if(ssj==3) beam_size+=0.85
+	if(ssj==4) beam_size+=0.62
+	if(IsGod()) beam_size += 0.35
+	if(is_ssj_blue) beam_size += 0.15
 	if(ultra_instinct) beam_size += 0.85
 	return beam_size
 
 mob/var/tmp/last_beam_fire=0 //world.time
 
-mob/proc/BeamSizeLoop(obj/Skills/Combat/Ki/a)
+mob/proc/BeamSizeLoop(obj/Attacks/a)
 	set waitfor=0
 	while(a && a.streaming)
 		var/beam_size = get_beam_size()
 		for(var/obj/Blast/b in a.beam_objects) b.Update_transform_size(beam_size)
 		sleep(10)
 
-mob/proc/BeamStream(obj/Skills/Combat/Ki/A)
+mob/proc/BeamStream(obj/Attacks/A)
 	set waitfor=0
 	beaming=1
 	charging_beam=0
@@ -104,7 +108,7 @@ mob/proc/BeamStream(obj/Skills/Combat/Ki/A)
 	BeamSizeLoop(A)
 	BeamStreamLoop(A)
 
-mob/proc/BeamStreamLoop(obj/Skills/Combat/Ki/A)
+mob/proc/BeamStreamLoop(obj/Attacks/A)
 	set waitfor=0
 	while(A.streaming&&src)
 		var/obj/Blast/B
@@ -131,9 +135,9 @@ mob/proc/BeamStreamLoop(obj/Skills/Combat/Ki/A)
 			B.dir=dir
 			B.BP=BP
 			var/dmg = 3.4
-			if(Class == "Spirit Doll" && A.type == /obj/Skills/Combat/Ki/Dodompa)
+			if(Class == "Spirit Doll" && A.type == /obj/Attacks/Dodompa)
 				dmg *= 1.5
-			B.setStats(src, dmg * A.MoveDelay * A.WaveMult, Off_Mult=1, Explosion=0, burn_mod = A.burnMod)
+			B.setStats(src, dmg * A.MoveDelay * A.WaveMult, Off_Mult=1, Explosion=0)
 			B.from_attack=A
 			B.Beam_Delay=A.MoveDelay
 			B.deflect_difficulty=A.deflect_difficulty
@@ -152,7 +156,7 @@ mob/proc/BeamStreamLoop(obj/Skills/Combat/Ki/A)
 					break
 
 			if(B && A) A.beam_objects += B
-			IncreaseKi(-GetSkillDrain(A.Drain * A.MoveDelay * 0.5, is_energy = 1))
+			Ki -= GetSkillDrain(A.Drain * A.MoveDelay * 0.5, is_energy = 1)
 			A.Skill_Increase(1*A.MoveDelay,src)
 			if(Ki<=0 || KB || grabber || in_dragon_rush) BeamStop(A)
 		//sleep(world.tick_lag - 0.01)
@@ -165,7 +169,7 @@ mob/var
 		beamChargeMod = 1
 		current_beam
 
-mob/proc/BeamCharge(obj/Skills/Combat/Ki/A)
+mob/proc/BeamCharge(obj/Attacks/A)
 	if(current_beam)
 		if(current_beam!=A) return
 	charging_beam=1
@@ -191,13 +195,15 @@ mob/proc/BeamCharge(obj/Skills/Combat/Ki/A)
 		if(!God_Fist_level&&!super_God_Fist)
 			if(!A.chargelvl) A.chargelvl=1
 			else A.chargelvl += A.ChargeRate
+			Debug(Tens,"Beam Charge Level: [A.chargelvl]")
 			sleep((10 * Speed_delay_mult(severity = 0.5) * A.ChargeRate) / A.Experience)
 		else
+			Debug(Tens,"Kaioken Enabled. No Beam Charging")
 			if(!A.chargelvl) A.chargelvl=1
 			sleep((10 * Speed_delay_mult(severity = 0.5) * A.ChargeRate) / A.Experience)
 	if(src && A) Beam_Charge_Loop(A)
 
-mob/proc/BeamStop(obj/Skills/Combat/Ki/A)
+mob/proc/BeamStop(obj/Attacks/A)
 	//LOOK. i didnt like this chunk using spawn so i separated into its own function , if it causes problems just revert it
 	/*spawn for(var/i=my_beam_objs.len,i>0,i--)
 		if(my_beam_objs.len>=i)
@@ -214,7 +220,10 @@ mob/proc/BeamStop(obj/Skills/Combat/Ki/A)
 	A.streaming=0
 	attacking=0
 	current_beam=0
-	spawn(50) BPpcnt = bp_percent_before_charging //Set their BP back to what it was prior to charging the beam after 5 seconds.
+	//BPpcnt = bp_percent_before_charging
+	//spawn(10) BPpcnt = bp_percent_before_charging //im doing this because im too lazy to fix the bug where for some reason if i ONLY use the line above
+	//then when you stop firing your beam, instead of it actually going back to bp_percent_before_charging, it does far lower. so every time you use a
+	//beam you lose power and it sucks.
 	Aura_Overlays()
 	A.chargelvl=1
 	beamChargeMod = 1
@@ -235,17 +244,15 @@ mob/proc/BeamStopThing2()
 
 mob/var/tmp/last_beam_charge=0
 
-mob/proc/canChargeBeam()
-	return world.time - 50 > last_beam_charge
-
-mob/proc/Beam_Macro(obj/Skills/Combat/Ki/O)
+mob/proc/Beam_Macro(obj/Attacks/O)
 	if(!z) return //cant fire beams in spacepods
 	if(cant_blast(ignore_attack_check = 1)) return
 	if(using_final_explosion) return
-	for(var/obj/Skills/Combat/Ki/A in ki_attacks) if(A != O) if(A.charging || A.streaming) return
+	for(var/obj/Attacks/A in ki_attacks) if(A != O) if(A.charging || A.streaming) return
 
+	//if(!O.charging && !attacking)
 	if(!O.charging && !O.streaming)
-		if(attacking <= 1 && canChargeBeam())
+		if(attacking <= 1)
 			if(Ki < GetSkillDrain(mod = O.Drain, is_energy = 1)) return
 			last_beam_charge=world.time
 			BeamCharge(O)
@@ -261,7 +268,16 @@ mob/proc/Beam_Macro(obj/Skills/Combat/Ki/O)
 
 	O.calculate_beam_drain()
 
-obj/Skills/Combat/Ki/proc/calculate_beam_drain()
+/*
+obj/Attacks/proc/calculate_beam_drain()
+	Drain=5 * WaveMult**1.7 / MoveDelay**0.6 * (Range/25)**0.3 * deflect_difficulty**0.8
+	if(gain_power_with_range) Drain *= 1.15
+	if(lose_power_with_range) Drain /=1.35
+	Drain *= 1 + (shield_pierce_mult - 1) * 0.05
+	Drain=round(Drain,0.1)
+*/
+
+obj/Attacks/proc/calculate_beam_drain()
 	var/n = 1
 	n += WaveMult ** 2 - 1
 	n += (Range / 30) ** 0.3 - 1

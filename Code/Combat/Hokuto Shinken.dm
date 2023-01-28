@@ -1,8 +1,8 @@
 mob/proc/using_hokuto() if(hokuto_obj&&hokuto_obj.Attacking) return 1
 
-mob/var/tmp/obj/Skills/Combat/Melee/Hokuto_Shinken/hokuto_obj
+mob/var/tmp/obj/Hokuto_Shinken/hokuto_obj
 
-obj/Skills/Combat/Melee/Hokuto_Shinken
+obj/Hokuto_Shinken
 	teachable=1
 	Skill=1
 	name="Hundred Crack Fist"
@@ -26,36 +26,36 @@ obj/Skills/Combat/Melee/Hokuto_Shinken
 		Hundred_Crack_Fist()
 
 	verb/Hundred_Crack_Fist()
-		set category = "Skills"
+		//set category="Skills"
 		if(usr.beaming||usr.charging_beam)
-			usr.SendMsg("You can not use this and beam at the same time.", CHAT_IC)
+			usr<<"You can not use this and beam at the same time"
 			return
 		if(usr.tournament_override(fighters_can=0)) return
 
 		if(usr.KO||Attacking||usr.attacking) return
 		if(usr.beaming||usr.charging_beam)
-			usr.SendMsg("You can not use this and beam at the same time.", CHAT_IC)
+			usr<<"You can not use this and beam at the same time"
 			return
 		var/list/Chosen_Targets=new
 
 		for(var/mob/P in player_view(15,usr))
 			if(P!=usr&&!P.Safezone&&(get_dir(usr,P) in list(usr.dir,turn(usr.dir,45),turn(usr.dir,-45))))
-				if(!(P in usr.PartyMembers()))
-					Chosen_Targets+=P
+				Chosen_Targets+=P
+				if(alignment_on&&both_good(usr,P)) Chosen_Targets-=P
+				if(Same_league_cant_kill(usr,P)) Chosen_Targets-=P
 
 		if(usr.KO) return
 		if(usr.beaming||usr.charging_beam)
-			usr.SendMsg("You can not use this and beam at the same time.", CHAT_IC)
+			usr<<"You can not use this and beam at the same time"
 			return
 		if(Attacking||usr.attacking) return
 		if(!(locate(/mob) in Chosen_Targets))
-			usr.SendMsg("No viable targets...", CHAT_IC)
+			usr<<"No viable targets..."
 			return
 		player_view(10,usr)<<sound('Ai wo Torimodose 2.ogg',volume=30)
 		Attacking=1
 		player_view(10,usr)<<sound('ATATATA.ogg')
-		for(var/mob/M in player_view(10,usr))
-			M.SendMsg("A glowing aura of power appears around [usr], suddenly their shirt rips off!", CHAT_IC)
+		player_view(10,usr)<<"A glowing aura of power appears around [usr], suddenly their shirt rips off!"
 		spawn(12) if(usr)
 			for(var/obj/items/Clothes/TankTop/K in usr.item_list) if(K.suffix) K.Click(usr)
 			for(var/obj/items/Clothes/ShortSleeveShirt/K in usr.item_list) if(K.suffix) K.Click(usr)
@@ -83,7 +83,7 @@ obj/Skills/Combat/Melee/Hokuto_Shinken
 			sleep(3)
 		for(var/mob/m in players) for(var/obj/Hokuto_Shinken_Energy/E in m)
 			if(E.Creator==usr.key) if(m) m.Hokuto_Shinken_Effects(usr)
-		usr.Say("You're already dead.")
+		usr.Say("Your already dead.")
 		usr.overlays.Remove(I,F)
 		usr.Ki/=5
 		Attacking=0
@@ -92,16 +92,17 @@ obj/Skills/Combat/Melee/Hokuto_Shinken
 mob/proc/Hokuto_Shinken_Effects(mob/P)
 	set waitfor=0
 	for(var/obj/Hokuto_Shinken_Energy/E in src) if(E.Creator==P.key)
-		var/hs_power = (E.Level / BP) + E.hs_str - (GetStatMod("Dur") * GetTierBonus(0.75)) / 2
+		var/hs_power=((E.Level/BP)**bp_exponent + (E.hs_str/End)**0.3) / 2 * 0.75
 		if(hs_power<1)
-			P.KnockOut("hundred crack fist backfire",can_anger=0)
+			P.KO("hundred crack fist backfire",allow_anger=0)
 			del(E)
-		else spawn(rand(15,30))
-			if(src)
+		else spawn(rand(15,30)) if(src)
+			if(hero==key)
+				player_view(15,src)<<"[src] is able to resist the hundred crack fist!"
+			else
 				Body_Parts(10)
-				for(var/mob/M in player_view(10,usr))
-					M.SendMsg("[src]'s body swells and is in immense pain, only a moment later they explode as the effect's of [P]'s \
-				Hokuto Shinken style kills them instantly...(Killed by [P.key])", CHAT_IC)
+				player_view(15,src)<<"[src]'s body swells and is in immense pain, only a moment later they explode as the effect's of [P]'s \
+				Hokuto Shinken style kills them instantly...(Killed by [P.key])"
 				var/turf/T=loc
 				Death(P)
 				if(T) for(var/mob/S in T) if(!S.client) S.overlays+='Exploded Head.dmi'
@@ -112,8 +113,8 @@ mob/proc/Add_Hokuto_Shinken_Energy(mob/P) if(ismob(P)) if(!(locate(/obj/Hokuto_S
 		var/obj/Hokuto_Shinken_Energy/E=new
 		E.Creator=key
 		E.Level=BP
-		E.hs_str=GetStatMod("Str")
-		E.hs_force=GetStatMod("For")
+		E.hs_str=Str/sword_mult()
+		E.hs_force=Pow
 		P.contents+=E
 
 obj/Hokuto_Shinken_Energy

@@ -29,7 +29,7 @@ mob/proc/PlayerPreMove() //this proc is called in Move() BEFORE the movement act
 	if(last_move == world.time) return //because there can be multiple moves in the same tick in certain scenarios and anything below this line doesnt need to be called more
 	//than once per tick.
 	//FreezaRunnerCowardKill() //checks if a runner has ran into the gym for safety, freeza then kills them for being a coward
-	UpdateGravity() //check however much gravity the player should currently be considered to be in
+	Gravity_Update() //check however much gravity the player should currently be considered to be in
 	Cease_training() //they moved, so automatically stop training/meditating so as to allow them to conveniently move without having to manually stop training/meditating themselves
 
 atom/var/tmp
@@ -66,6 +66,14 @@ atom/movable/proc
 		lastCanTeleport = world.time
 		canTeleport = world.time
 
+		/*if(isturf(t))
+			Move(t)
+		//we do this in case t = null. Move(null) does nothing. but if we are trying to set someone's loc = null, it still needs to respond to that
+		//also we now do it in case its anything other than a turf, like we are putting a mob inside a obj or something
+		else
+			oldLoc = t
+			newLoc = t
+			loc = t*/
 		oldLoc = t
 		newLoc = t
 		loc = t
@@ -94,7 +102,10 @@ mob/proc/PlayerPostMove(old_loc)
 			last_sz_move_check = world.time
 		Save_Location() //misnomer. simply makes saved_x = x, saved_y = y, and saved_z = z. because byond savefiles do not by default save x/y/z vars, so it saved the saved_x/y/z
 			//vars instead and we use it to restore their position when they load back in at some point. its not the right way to do it but its old code
-		if(!KB && BuildTarget && istype(BuildTarget,/obj/Build) && isBuilding) Build_Lay(BuildTarget,src) //lays down an instance of whatever the player happens to be building right now, meaning Floors/Walls/etc
+		Opponent_move_slower_if_you_are_chasing_them() //pretty sure this system is disabled and if its not you probably want to disable it because its dumb. slows down the movement
+			//speed of anyone who the game thinks is "running away" from you
+		Edge_Check(old_loc) //this proc seems to be disabled so it doesnt matter.
+		if(!KB && Target && istype(Target,/obj/Build)) Build_Lay(Target,src) //lays down an instance of whatever the player happens to be building right now, meaning Floors/Walls/etc
 		if(prob(10) && is_on_destroyed_planet()) SafeTeleport(locate(x, y, 16)) //they are on a destroyed planet, so teleport them to Space now
 		ExplodeLandMines() //check if the player is standing on a landmine and explode it if so
 		update_area() //check if the player has went into a different "area" and do things accordingly
@@ -108,6 +119,19 @@ mob/proc/NPCPostMove(old_loc)
 		if(prob(5)) update_area() //it seems even NPCs need to know when they've been moved into a new area. but i slowed it down with a prob(5) because it was lagging
 
 mob/Move(turf/NewLoc, Dir = 0, step_x = 0, step_y = 0)
+	//return ..()
+
+	/*
+	I TURNED THIS OFF BECAUSE IT MAKES IT WHEN A SPACEPOD BLOWS UP WITH YOU IN IT YOU GET SENT TO THE VOID AND I JUST DONT WANNA DEAL WITH FIXING IT
+	//trying to prevent Sphax's teleport hack
+	if(client) //just trying to save some cpu but may need to run it on all if this doesnt stop Sphax and his teleport hack
+		if(!LegitMove(loc, NewLoc))
+			loc = newLoc
+			return
+		if(newLoc && canTeleport != world.time && loc != newLoc)
+			loc = newLoc
+			return
+	*/
 
 	var/turf/old_loc = loc
 
@@ -123,10 +147,104 @@ mob/Move(turf/NewLoc, Dir = 0, step_x = 0, step_y = 0)
 		loc = NewLoc
 		return //this move was indeed considered a teleport. so just stop here and forget running any code below.
 
+
+
 	if(client) PlayerPreMove()
 
+	//this is some code im testing as an alternative to AlignToTile(), where whenever you move, any direction you are NOT moving in will try to lerp
+	//back to perfect alignment
+	/*if(client) //it could be for npcs later but just in case of performance issues lets do players only at first
+		var/d = Dir //this should work, if not use XYtoDir(step_x, step_y)
+		var/adjustment_speed = 4 //if you up this, the adjustment will have more of a jolt, but if you lower it then it will take longer to reach alignment
+		if(d == NORTH || d == SOUTH) //if im moving just north then the east/west has permission to gradually lerp back to tile alignment
+			if(src.step_x != 0)
+				if(src.step_x < 16) //we are closer to the left tile
+					var/amount = adjustment_speed
+					if(amount > src.step_x) amount = src.step_x
+					step_x -= amount
+				else //we are closer to the right tile
+					var/amount = adjustment_speed
+					if(amount > 32 - src.step_x) amount = 32 - src.step_x
+					step_x += amount
+		if(d == EAST || d == WEST)
+			if(src.step_y != 0)
+				if(src.step_y < 16)
+					var/amount = adjustment_speed
+					if(amount > src.step_y) amount = src.step_y
+					step_y -= amount
+				else
+					var/amount = adjustment_speed
+					if(amount > 32 - src.step_y) amount = 32 - src.step_y
+					step_y += amount*/
+
+		//ESSENTIALLY THIS ALL WORKS BUT IT HAS SOME JITTERING I WANT TO FIX BEFORE ENABLING IT AGAIN
+		/*if(d == NORTHEAST) //the concept here is based on our misalignment, we will trade some velocity from the x and give it to the y if for example the
+		//y was more misaligned from the center of the tile than the x was. so we dont increase overall speed just shift some to reach alignment
+			if(src.step_x != 0 || src.step_y != 0)
+				var
+					x_dist = abs(32 - src.step_x)
+					y_dist = abs(32 - src.step_y)
+				if(x_dist > y_dist)
+					var/amount = adjustment_speed
+					if(amount > x_dist) amount = x_dist
+					step_x += amount
+					step_y -= amount
+				else
+					var/amount = adjustment_speed
+					if(amount > y_dist) amount = y_dist
+					step_x -= amount
+					step_y += amount
+
+		if(d == NORTHWEST)
+			if(src.step_x != 0 || src.step_y != 0)
+				var
+					x_dist = src.step_x //how from from off-center this axis is
+					y_dist = abs(32 - src.step_y)
+				if(x_dist > y_dist) //x is more misaligned than y
+					var/amount = adjustment_speed
+					if(amount > x_dist) amount = x_dist
+					step_x -= amount
+					step_y -= amount
+				else
+					var/amount = adjustment_speed
+					if(amount > y_dist) amount = y_dist
+					step_y += amount
+					step_x += amount
+		if(d == SOUTHWEST)
+			if(src.step_x != 0 || src.step_y != 0)
+				var
+					x_dist = src.step_x //how from from off-center this axis is
+					y_dist = src.step_y
+				if(x_dist > y_dist) //x is more misaligned than y
+					var/amount = adjustment_speed
+					if(amount > x_dist) amount = x_dist
+					step_x -= amount
+					step_y += amount
+				else
+					var/amount = adjustment_speed
+					if(amount > y_dist) amount = y_dist
+					step_x += amount
+					step_y -= amount
+		if(d == SOUTHEAST)
+			if(src.step_x != 0 || src.step_y != 0)
+				var
+					x_dist = abs(32 - src.step_x) //how from from off-center this axis is
+					y_dist = src.step_y
+				if(x_dist > y_dist) //x is more misaligned than y
+					var/amount = adjustment_speed
+					if(amount > x_dist) amount = x_dist
+					step_x += amount
+					step_y += amount
+				else
+					var/amount = adjustment_speed
+					if(amount > y_dist) amount = y_dist
+					step_x -= amount
+					step_y -= amount*/
+		//Dir = XYtoDir(step_x, step_y) //not sure if necessary
+	//----------
+
 	//the "KB" var stands for "knockback". if KB is 1 then they are currently being knocked back, otherwise they are not
-	if(!client || KB || lunge_attacking) . = ..() //if these criteria are met, just move them
+	if(!client || KB || lunge_attacking || evading) . = ..() //if these criteria are met, just move them
 	else if(Can_Move()) . = ..() //otherwise check if they Can_Move() first before allowing them to move
 
 	if(client) PlayerPostMove(old_loc)
@@ -236,6 +354,14 @@ mob/proc/UpdateStepSpeed()
 	set waitfor=0
 	if(last_move == world.time) return //because there can be multiple moves in the same tick in certain scenarios and some things dont need to be called repeatedly in the same tick
 
+	//force_32_pix_movement = 1 //uncomment this line to disable pixel speeds and force 32 pixel movement only, meaning tile-based moving only
+
+	if(force_32_pix_movement)
+		step_size = 32
+		step_x = 0
+		step_y = 0
+		return
+
 	if(ultra_instinct)
 		//step_size = 9
 		step_size = 32 //now i just want them to be fast. i had it where ultra instinct was slow moving for dramatic purposes but nah
@@ -254,10 +380,8 @@ mob/proc/UpdateStepSpeed()
 	stepSizeLabel = speed
 	var/delay_mult = GetInputMoveDelay(move_dir(), raw_mult_only = 1)
 	speed /= delay_mult
-	if(Flying) speed *= 1.5
-	if(IsShielding()) speed *= 0.6 //make people move slower while using a shield
 	speed *= 20 / world.fps //make the speed you move be fps independent
-	speed = min(speed, 32) //having fps below 20 can cause it to be relativized over 32 and that makes you move 2 full tiles at once due to the TileAlign code, not good
+	if(speed > 32) speed = 32 //having fps below 20 can cause it to be relativized over 32 and that makes you move 2 full tiles at once due to the TileAlign code, not good
 		//we can remove this when/if we ever get full REAL pixel movement in the game
 	step_size = speed
 
@@ -297,10 +421,15 @@ mob/proc/update_area()
 			current_area = a
 
 			if(client && istype(a, /area/Braal_Core)) Start_core_loops() //they have entered the core of planet vegeta so start the loops which run there, for the training gains and such
-			FinalRealm()
+			Final_realm_loop()
 			CheckAirMask() //check if they have entered or exited the Space area, and put on or off their air mask automatically as needed for their convenience
 			CheckSpaceDie() //this is actually a loop that will kill them gradually if they have no mask and have entered the Space area. the loop will stop itself when they
 				//are no longer in space
+
+			if(a.type == /area/Battlegrounds && client)
+				last_battleground_entry = world.time
+				last_battleground_defeat = world.time //reset your ranking among the battleground fighters
+				VerifyBattlegroundMaster()
 
 			current_area.AreaUpdateSenseTargets() //tell new area we entered it
 
@@ -344,8 +473,8 @@ mob
 			var/shield = (shield_obj && shield_obj.Using)
 			var/dmg = 9
 			if(shield && Ki >= max_ki / 100 * dmg)
-				IncreaseKi((max_ki / 100) * -dmg)
-			else TakeDamage(dmg, "space")
+				Ki -= max_ki / 100 * dmg
+			else Health-=dmg
 			if(Health<=0)
 				SaitamaBloodEffect()
 				Death("Space",lose_hero=0,lose_immortality=0)
@@ -360,6 +489,26 @@ area/var/tmp/list
 mob/proc/Can_Move()
 	if(KB || !move || Disabled()) return
 	else return 1
+
+mob/proc/Edge_Check(turf/old_loc)
+	set waitfor=0
+
+	return //disabled til fixed. or maybe its not needed at all from the looks of it.
+
+	if(!Flying)
+		var/turf/T=Get_step(old_loc,dir)
+		if(T)
+			if(!T.Enter(src)) return
+			for(var/obj/Edges/A in loc)
+				Bump(A)
+				if(A) if(!(A.dir in list(dir,turn(dir,90),turn(dir,-90),turn(dir,45),turn(dir,-45))))
+					SafeTeleport(old_loc)
+					break
+			for(var/obj/Edges/A in old_loc)
+				Bump(A)
+				if(A) if(A.dir in list(dir,turn(dir,45),turn(dir,-45)))
+					SafeTeleport(old_loc)
+					break
 
 mob/proc/Save_Location() if(z&&!Regenerating)
 	saved_x=x

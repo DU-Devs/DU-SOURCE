@@ -1,4 +1,4 @@
-var/client_fps = 40
+var/client_fps = 100
 
 mob/Admin4/verb/FPS()
 	set category="Admin"
@@ -10,8 +10,11 @@ mob/Admin4/verb/FPS()
 	if(N>100) N=100
 	world.fps=N
 
-	N=input(src,"Set the frames per second of the client. 40 is recommended.","FPS",client_fps) as num
-	client_fps = Math.Clamp(N, world.fps, 60)
+	N=input(src,"Set the frames per second of the client. 100 is recommended and the max byond can do","FPS",client_fps) as num
+	//trust me if you try to allow client_fps to be 999 it will be choppy, idk why. but 100 is fine
+	if(N<1) N=1
+	if(N > 100) N = 100
+	client_fps = N
 	for(var/client/c) c.fps = client_fps
 
 proc/Get_Pixel(mob/O,x,y)
@@ -30,4 +33,8 @@ proc/Generate_Bounding_Box(obj/O,Test)
 		if(!O.bound_y||O.bound_y>y) O.bound_y=y
 		if(O.bound_width<x-O.bound_x) O.bound_width=x-O.bound_x
 		if(O.bound_height<y-O.bound_y) O.bound_height=y-O.bound_y
+		//world<<"[O.bound_width],[O.bound_height]"
 	O.bound_height=round(O.bound_height*0.7)
+
+/*mob/Admin5/verb/Give_Bounding_Box(atom/movable/O in world)
+	Generate_Bounding_Box(O,1)*/

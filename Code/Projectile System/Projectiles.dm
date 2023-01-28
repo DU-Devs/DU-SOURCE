@@ -6,13 +6,12 @@ blast_force: the force of the player unaltered
 damage_percent: the percent multiplier of the damage inherited from the move that was used
 */
 
-obj/Blast/proc/setStats(mob/P, Percent = Mechanics.GetSettingValue("Base Ki Damage"), Off_Mult = 1, Explosion = 0, bullet = 0, homing_mod = 1, burn_mod = 1)
+obj/Blast/proc/setStats(mob/P, Percent=1, Off_Mult=1, Explosion=0, bullet=0, homing_mod = 1)
 	Health=0.2*P.BP*(Percent**0.4)
 	takes_gradual_damage=1
 	Fatal=P.Fatal
 	Owner=P
 	BP=P.BP
-	burnMod = burn_mod
 
 	if(ismob(P)) wall_breaking_power = P.WallBreakPower()
 	else wall_breaking_power = BP
@@ -20,8 +19,10 @@ obj/Blast/proc/setStats(mob/P, Percent = Mechanics.GetSettingValue("Base Ki Dama
 	percent_damage=Percent
 	if(!bullet)
 		Force=P.Pow
+		percent_damage*=ki_power
 	else
 		Force=P.Str
+		percent_damage*=melee_power
 	Offense=P.Off*Off_Mult
 	off_mult = Off_Mult
 	Explosive=Explosion
@@ -41,15 +42,8 @@ obj/var/Stun
 
 var/list/cached_blasts=new
 
-obj/Blast/plane = MOVABLE_PLANE
-obj/Blast/layer = PROJECTILE_LAYER
-
 proc/fill_cached_blasts()
-	set waitfor = FALSE
-	set background = TRUE
-	for(var/v in 1 to 50)
-		cached_blasts += new/obj/Blast
-	sleep(world.tick_lag)
+	for(var/v in 1 to 50) cached_blasts += new/obj/Blast
 
 proc/get_cached_blast()
 	for(var/obj/Blast/b in cached_blasts) if(!b.in_use)
@@ -88,6 +82,7 @@ proc/get_cached_blast()
 		b.bleed_damage = 0
 		b.shuriken = 0
 		b.deflected=0
+		b.is_makosen=0
 		b.wall_breaking_power=0
 		b.vampire_damage_multiplier=1
 		b.delete_on_next_move=0
@@ -178,7 +173,6 @@ obj/Blast
 		blast_go_over_obstacles_if_cant_destroy = 0
 		blast_go_over_owner = 0
 		stun_lowers_dmg = 1
-		burnMod = 0.8
 		tmp
 			projectile_creation_time = 0 //world.time
 			beam_steps = 0 //0 = first step, increases by +1 each time
@@ -186,6 +180,8 @@ obj/Blast
 	var/percent_damage=1
 	var/Force=1
 	var/off_mult = 1
+	var
+		is_makosen
 	var/Offense=1
 	var/vampire_damage_multiplier = 1
 	var/wall_breaking_power=0
@@ -222,8 +218,7 @@ obj/Blast
 			var/area/a=get_area()
 			if(a) a.blast_objs+=src
 
-		all_blast_objs ||= list()
-		all_blast_objs |= src
+		all_blast_objs+=src
 		spawn if(src) if(GetWidth(icon)>36||GetHeight(icon)>36) CenterIcon(src)
 		if(type!=/obj/Blast/Genki_Dama)
 			spawn(1) if(Owner&&ismob(Owner)&&Owner.icon_state!="Attack") if(Owner.client) flick("Attack",Owner)
@@ -277,12 +272,12 @@ obj/Blast
 			for(var/atom/A in Get_step(src,turn(dir,-90))) if(A!=src&&A.density&&!isarea(A)) Bump(A)
 		if(dir == NORTH || dir == SOUTH || dir == WEST || dir == EAST)
 			var/turf/t = loc
-			if(isturf(t) && IsWater(t)) t.ki_water(dir)
+			if(isturf(t) && t.Water) t.ki_water(dir)
 		if(!Can_Home || !Blast_Homing()) . = ..()
 		steps_since_last_homing_check++
 
 		Distance--
-		if(!Owner || !z || delete_on_next_move || Distance <= 0 || !get_step(src,dir))
+		if(!z || delete_on_next_move || Distance <= 0 || !get_step(src,dir))
 			if(z) Explode()
 			del(src)
 
@@ -296,7 +291,6 @@ obj/Blast
 	//remember: movable.At_forward_half(mob/m) exists
 	proc/Is_viable_homing_target(mob/m)
 		if(!m || m.KO || !At_forward_half(m)) return //fix bug where blasts track backwards toward the target
-		if(ismob(Owner) && Owner.IsPartyMember(m)) return
 
 		var/mob/bht = blast_homing_target
 		if(bht && bht.z==z && (Owner != bht || deflected) && getdist(src,bht)<100 && get_dir(src,bht) == dir)
@@ -369,13 +363,27 @@ obj/Blast
 				overlays+=i
 
 	proc/Shield(mob/A)
+		for(var/obj/items/Force_Field/S in A.item_list) if(S.Level>0)
+			var/force_vs_res=Force/Avg_Res()
+			if(force_vs_res>1) force_vs_res=force_vs_res**0.5
+			var/Dmg=BP*percent_damage*force_vs_res*0.0017
+			if(Owner && ismob(Owner)) Dmg *= Owner.AllAttacksDamageModifiers(A)
+			if(A.fearful||A.Good_attacking_good()) Dmg*=A.Fear_dmg_mult()
+			if(Owner&&ismob(Owner)&&Owner.is_kiting) Dmg*=kiting_penalty
+			if(A.is_teamer) Dmg*=teamer_dmg_mult
+			if(Owner&&ismob(Owner)&&Owner.is_teamer) Dmg/=teamer_dmg_mult
+			Dmg *= shield_pierce_mult
+			A.Apply_force_field_damage(S,Dmg)
+			return
+
 		if(A.Cyber_Force_Field)
 			var/Dmg=(BP*Force*percent_damage)/(A.BP*A.Res)
+			if(Owner && ismob(Owner)) Dmg *= Owner.AllAttacksDamageModifiers(A)
 			Dmg *= shield_pierce_mult
-			A.IncreaseKi(-(Dmg/100)*A.max_ki)
+			A.Ki-=(Dmg/100)*A.max_ki
 			if(A.Ki<=0) for(var/obj/Module/Force_Field/F in A.active_modules)
 				F.Disable_Module(A)
-				A.SendMsg("Your cybernetic force field has been damaged. You must re-install it to make it active again.", CHAT_IC)
+				A<<"Your cybernetic force field has been damaged. You must re-install it to make it active again."
 			for(var/obj/Blast/B in Get_step(src,turn(dir,180))) if(B.Beam) B.icon_state="struggle"
 			A.Force_Field('Electro Shield.dmi')
 			return
@@ -383,6 +391,8 @@ obj/Blast
 		//natural energy shield
 		if(A.shield_obj && A.shield_obj.Using)
 			var/Dmg = A.ShieldDamageReduction() * (A.max_ki/100/(A.Eff**shield_exponent)) * (BP/A.BP)**bp_exponent * (Force/A.Res)**0.5 * percent_damage * A.Generator_reduction(is_melee = Bullet)
+			if(Owner && ismob(Owner)) Dmg *= Owner.AllAttacksDamageModifiers(A)
+			if(A.fearful||A.Good_attacking_good()) Dmg*=A.Fear_dmg_mult()
 			if(Owner&&ismob(Owner)&&Owner.is_kiting) Dmg*=kiting_penalty
 			if(A.is_teamer) Dmg*=teamer_dmg_mult
 			if(Owner&&ismob(Owner)&&Owner.is_teamer) Dmg /= teamer_dmg_mult
@@ -392,7 +402,7 @@ obj/Blast
 			if(Beam) Dmg *= 0.5
 			else Dmg *= 2.5
 
-			A.IncreaseKi(-Dmg)
+			A.Ki -= Dmg
 			if(A.Ki <= 0) A.Shield_Revert()
 			for(var/obj/Blast/B in Get_step(src,turn(dir,180))) if(B.Beam) B.icon_state = "struggle"
 			return
@@ -417,6 +427,19 @@ obj/Blast
 				del(src)
 				return
 
+			//GROW/SHRINK WITH RANGE
+			/*if(ismob(Owner) && !lose_power_with_range)
+				var/range_from_owner = getdist(src,Owner)
+				if(range_from_owner>=1)
+					transform = matrix() * (1.015 ** range_from_owner)*/
+			//-----------------
+
+			/*if(ismob(Owner)&&Owner.IsTens())
+				var/death_damage=Damage/loop_delay/Beam_Delay
+				var/death_resist=Owner.BP*Owner.Res*10*Owner.Regenerate**0.5*ki_power
+				Owner<<"death damage: [Commas(death_damage)]<br>\
+				death resist: [Commas(death_resist)]"*/
+
 			var/obj/beam_redirector/br=locate(/obj/beam_redirector) in loc
 			if(br)
 				deflected=1
@@ -424,29 +447,31 @@ obj/Blast
 
 			if(!br && Deflectable && (icon_state in list("head","struggle")))
 				for(var/mob/m in Get_step(src,dir)) if(!m.KO && !m.grabber && !m.regenerator_obj)
+					Debug(Tens,"mob contacted by beam")
 					m.beam_deflect_difficulty = deflect_difficulty
 					m.dir=get_dir(m,src)
-					var/deflect_chance = 3 * global_beam_deflect_mod * Beam_Delay * loop_delay * (10 / (deflect_difficulty > 0 ? deflect_difficulty : 1))
-					deflect_chance *= Math.Max((m.GetTierBonus(0.75) + m.GetStatMod("Ref")) - (Owner.GetTierBonus(0.25) + (Owner.GetStatMod("Acc") / 2)), 0.0001)
+					var/deflect_chance = 1 * global_beam_deflect_mod * Beam_Delay * loop_delay * (5 / deflect_difficulty) * (m.BP/Owner.BP) * (1/(Acc_mult(Clamp(Owner.Off/m.Def,0.1,10))))
+					deflect_chance = 100 //so long as it takes stamina to deflect beams it can be 100% by default
 					if(m.beaming || m.KO) deflect_chance=0
 					if(m.BeamStruggling()) deflect_chance /= 10000 //only choice is to struggle out of the beam
 					if(m.standing_powerup) deflect_chance *= standing_powerup_deflect_mult
-					if(m.Shielding()) deflect_chance = 0 // shielding negates deflection since it can tank it
+					if(m.fearful||m.Good_attacking_good()) deflect_chance/=m.Fear_dmg_mult()
+					if(m.is_teamer) deflect_chance /= teamer_dmg_mult
+					if(Owner&&ismob(Owner) && Owner.is_teamer) deflect_chance*=teamer_dmg_mult
 
 					if(Owner&&ismob(Owner))
 						deflect_chance*=Owner.Speed_accuracy_mult(defender=m)
 
 					if(istype(m, /mob/Body) || m.KO) deflect_chance=0
 
-					if(deflect_chance > 20) deflect_chance = 20
+					deflect_chance = 0 //I JUST PLAIN TURNED IT OFF FOR NOW ITS ANNOYING HAVING TO RE-FIRE YOUR BEAM EVERY TIME THEY DEFLECT IT
 
-					var/stamDrain = 50 + Owner.GetStatMod("For") * Owner.GetTierBonus(0.25)
-					stamDrain -= ((m.GetStatMod("Res") + m.GetStatMod("Str") + m.GetStatMod("For")) * m.GetTierBonus(0.5)) * 0.33
-					stamDrain = Math.Clamp(stamDrain, m.max_stamina * 0.05, m.max_stamina * 0.33)
+					var/stamDrain = 50 * (Owner.BP / m.BP)**0.33
+					stamDrain *= (Owner.Pow / ((m.Res * 0.33) + (m.Str * 0.33) + (m.Pow * 0.33)))**0.33
 					stamDrain *= global_beam_deflect_mod * deflect_difficulty
 					if(prob(deflect_chance) && m.CanBlastDeflect() && m.stamina >= stamDrain)
 
-						m.IncreaseStamina(-stamDrain)
+						m.AddStamina(-stamDrain)
 
 						flick("Attack",m)
 						var/obj/beam_redirector/br2 = new(loc)
@@ -460,7 +485,7 @@ obj/Blast
 				if(ismob(Owner)) beam_radius += (Owner.BPpcnt - 100) / 130
 				beam_radius=Clamp(beam_radius,0,1)
 				beam_radius=ToOne(beam_radius)
-				if(deflected) beam_radius=0
+				if(is_makosen || deflected) beam_radius=0
 
 				beam_radius = 0 //off
 
@@ -473,13 +498,16 @@ obj/Blast
 						A.beam_deflect_difficulty = deflect_difficulty
 						if(A.loc==loc && Owner&&ismob(Owner))
 							Owner.Set_flash_step_mob(A)
+							if(A==Owner.chaser)
+								Owner.last_damaged_chaser=0
+								Owner.Remove_fear()
 						spawn if(A && A.loc == loc && A.drone_module&&Owner) A.Drone_Attack(Owner,lethal=1)
 
 						A.SetLastAttackedTime(Owner)
 
 						A.last_beamed_by = Owner
 						if(!A.regenerator_obj && A.Shielding())
-							A.last_hit_by_beam = world.time
+							if(!is_makosen) A.last_hit_by_beam = world.time
 
 							GetSuckedIntoBeam(A)
 
@@ -491,6 +519,7 @@ obj/Blast
 							return
 						if(A && !A.regenerator_obj && A.precog && A.precogs && prob(A.precog_chance) && !A.KO && (A.Flying || A.icon_state == "") && A.Ki > A.max_ki * 0.2 && !A.Disabled())
 							A.precogs--
+							//A.Ki-=A.Ki/30/A.Eff**0.4
 							var/turf/old_loc=A.loc
 							step(A,turn(dir,pick(-45,45)),32)
 							if(A.loc!=old_loc) return
@@ -514,16 +543,20 @@ obj/Blast
 							if(P.regenerator_obj) dmg *= regenerator_damage_mod
 
 							if(Owner && ismob(Owner))
+								dmg *= Owner.AllAttacksDamageModifiers(P)
 								if(ShouldOneShot(Owner, P)) dmg *= one_shot_dmg_mult
 
 							dmg*=Defense_damage_reduction(Owner,P)
+							if(ismob(Owner)&&Owner.alignment=="Evil") dmg*=villain_damage_penalty
+							if(P.fearful||P.Good_attacking_good()) dmg*=P.Fear_dmg_mult()
 							if(Owner&&ismob(Owner)&&Owner.is_kiting) dmg*=kiting_penalty
 							if(P.is_teamer) dmg*=teamer_dmg_mult
 							if(Owner&&ismob(Owner)&&Owner.is_teamer) dmg/=teamer_dmg_mult
 
 							if(ismob(Owner))
-								var/resist_dmg_mod = Math.Floor((Owner.GetStatMod("Res") + Owner.GetStatMod("For")) / 2)
-								resist_dmg_mod = Math.Clamp (resist_dmg_mod, 0.5, 1)
+								var/resist_dmg_mod=(Owner.Res/Owner.Pow)**0.35
+								if(resist_dmg_mod>1) resist_dmg_mod=1
+								if(resist_dmg_mod<0.5) resist_dmg_mod=0.5
 								dmg*=resist_dmg_mod
 
 								//DAMAGE INCREASE/DECREASE WITH RANGE
@@ -539,36 +572,21 @@ obj/Blast
 									dmg *= range_mult_dmg
 								//-------------
 
+							dmg*=sagas_bonus(Owner,P)
+							if(ismob(Owner)) Owner.training_period(P)
+
 							if(getdist(Owner,P) < beam_stun_start)
 								dmg /= Beam_Delay**0.7 //because slow beams would be too effective at close range
 								dmg *= 5
-							
-							dmg *= BEAM_DAMAGE_MODIFIER
-
-							var/mob/traitDummy = Owner
-							if(ismob(traitDummy))
-								if(traitDummy.PartySize() > 1)
-									dmg /= traitDummy.PartySize() * 0.7 * (traitDummy.HasTrait("Pack Mentality") ? 0.95 : 1)
-								else if(traitDummy.HasTrait("Lone Wolf")) dmg *= 1.15
-								if(P.PartySize() > 1) dmg *= P.PartySize() * 0.3 * (P.HasTrait("Pack Mentality") ? 0.95 : 1)
-
-								if(traitDummy.Race == "Tsujin" && traitDummy.HasTrait("Nerd Rage") && traitDummy.anger > 100)
-									dmg *= 1 + (traitDummy.Intelligence / 2)
-
-								if(P.Race == "Tsujin" && P.HasTrait("Nerd Rage") && P.anger > 100)
-									dmg /= 1 + (P.Intelligence / 2)
-								
-								if(P.HasTrait("Mind the Heel")) dmg *= 1.2
 
 							if(Owner.BeamStruggling()) dmg *= 3
 							if(P.Vampire) dmg *= vampire_damage_multiplier
-							if(ismob(Owner) && Owner.IsPartyMember(P)) dmg = 0
-							P.last_hit_by_beam = world.time
-							P.TakeDamage(dmg, Owner)
+							if(!is_makosen) P.last_hit_by_beam = world.time
+							P.TakeDamage(dmg)
 							if(ismob(Owner)&&!P.KO) P.setOpponent(Owner)
 							for(var/mob/M in Get_step(src,dir))
 								var/m_dmg=percent_damage*loop_delay*1*(BP/M.BP)**bp_exponent*(Force/M.Res)**0.5
-								M.TakeDamage(m_dmg, Owner)
+								M.TakeDamage(m_dmg)
 							if(P && P == A && !P.Safezone)
 								if(getdist(Owner,P) < beam_stun_start && P.last_beam_kb_pos != P.loc && apply_short_range_beam_knock && P.type != /mob/Body && !P.KO && P.client)
 									P.last_beam_kb_pos=P.loc
@@ -591,18 +609,31 @@ obj/Blast
 										if(getdist(Owner,P)==10)
 											if(!(locate(/obj/BigCrater) in P.loc))
 												BigCrater(pos = P.loc, minRangeFromOtherCraters = 4)
-							if(P && Paralysis)
-								P<<"You become paralyzed"
-								P.Frozen=1
-
+							if(P) //missing mob error
+								if(P.Health<=0)
+									if(Noob_Attack) P.KO()
+									else P.KO(Owner)
+								if(P) //ko can cause some mobs to delete. avoid error spam
+									if(Paralysis)
+										P<<"You become paralyzed"
+										P.Frozen=1
+									if((P.KO&&Owner.Fatal)||!P.client)
+										if(P.Health<=0)
+											if(P.Regenerate && Damage/loop_delay/Beam_Delay>P.BP*P.Res*12* P.Regenerate**0.3 * ki_power)
+												if(Noob_Attack) P.Death(null,1)
+												else P.Death(Owner,1)
+											else
+												if(Noob_Attack) P.Death()
+												else P.Death(Owner)
 							if(!Piercer)
 								icon_state="struggle"
 								delete_on_next_move=1
+								Debug(Tens,"!piercer")
 						//break
-
 				for(var/obj/Blast/A in loc) if(A != src)
 					if(A.dir != dir)
 						if(!A.Beam)
+							Debug(Tens,"no-struggle beam code reached")
 							icon_state="struggle"
 							layer=MOB_LAYER + 3
 							if(getdist(src,Owner)>1)
@@ -630,6 +661,7 @@ obj/Blast
 
 						//BEAM STRUGGLES
 						else if(A.Owner != Owner && A.Owner)
+							Debug(Tens,"beam struggle code reached")
 							if(Owner.beaming)
 								Owner.beam_struggling = world.time
 							icon_state="struggle"
@@ -640,6 +672,7 @@ obj/Blast
 							//up with the head of the beam then that also deletes itself
 							if(!Owner.beaming && getdist(src,Owner) > 2)
 								if(!(locate(/obj/Blast) in Get_step(src,turn(dir,180))))
+									Owner.ToTens("1")
 									SafeTeleport(null)
 									del(src)
 							//if any of your own beams are ahead of you, make sure this segment takes on the appearance of a "tail"
@@ -666,11 +699,23 @@ obj/Blast
 								for(var/obj/Blast/b in loc)
 									if(b != src && b.Owner == A.Owner)
 										b.SafeTeleport(null)
+										Owner.ToTens("2")
 										del(b)
 								for(var/obj/Blast/b in get_step(src,dir))
 									if(b != src && b.Owner == A.Owner)
+										Owner.ToTens("3")
 										b.SafeTeleport(null)
 										del(b)
+
+							//this is our way of slowing down how fast a winning beam will cut thru the other one
+							//we dont want it cutting thru at full speed. so 75% of the time even tho your winning, it'll revert to tie status
+							//if(prob(70) && dist_to_owner > 1 && dist_to_enemy > 1)
+							//	winning = 0
+
+							if(Owner.key == "EXGenesis")
+								if(winning == 1) Owner << "Winning"
+								if(winning == 0) Owner << "Tied"
+								if(winning == -1) Owner << "Losing"
 
 							if(winning == 1) //winning
 								for(var/obj/Blast/B in Get_step(A, turn(A.dir, 180)))
@@ -678,6 +723,7 @@ obj/Blast
 										B.icon_state = "struggle"
 								if(!A.delete_on_next_move)
 									A.delete_on_next_move = 1
+									Owner.ToTens("4")
 
 							if(winning == 0) //tied
 								icon_state = "struggle"
@@ -687,23 +733,27 @@ obj/Blast
 											B.icon_state = "struggle"
 									if(!A.delete_on_next_move)
 										A.delete_on_next_move = 1
+										Owner.ToTens("5")
 									if(!delete_on_next_move)
 										delete_on_next_move = 1
+										Owner.ToTens("6")
 
 							if(winning == -1) //losing
 								icon_state = "struggle"
 								SafeTeleport(null)
+								Owner.ToTens("7")
 								del(src)
 
 				var/turf/t = loc
 				if(t && isturf(t) && t.density)
-					if((t.Health <= wall_breaking_power) && (!ismob(Owner) || (ismob(Owner) && Owner.Is_wall_breaker())))
+					if((t.Health <= wall_breaking_power || Owner.Epic()) && (!ismob(Owner) || (ismob(Owner) && Owner.Is_wall_breaker())))
 						if(t.Health != 1.#INF)
 							t.Health=0
 							t.Destroy()
 					if(t) if(!Piercer && t.density)
 						icon_state="struggle"
 						delete_on_next_move=1
+						Owner.ToTens("8")
 
 				for(var/obj/A in loc) if(!istype(A,/obj/Blast) && !istype(A,/obj/Edges))
 					if(!A.takes_gradual_damage)
@@ -719,6 +769,7 @@ obj/Blast
 					if(A) if(!Piercer&&A.density)
 						icon_state="struggle"
 						delete_on_next_move=1
+						Owner.ToTens("9")
 					break
 			//sleep(TickMult(loop_delay))
 			sleep(world.tick_lag)
@@ -732,7 +783,9 @@ obj/Blast
 				var/mob/m=am
 				var/same_tile_as_firer
 				if(Owner && ismob(Owner) && am.loc==Owner.loc) same_tile_as_firer=1
-				if(!same_tile_as_firer)
+				if(m.attack_barrier_obj&&m.attack_barrier_obj.Firing_Attack_Barrier)
+					//attack barrier deflects all explosion heat and shrapnel
+				else if(!same_tile_as_firer)
 					if(!m.regenerator_obj && m.Shielding()) Shield(m)
 					else
 						var/kb_dist=Explosive+Shockwave
@@ -744,20 +797,26 @@ obj/Blast
 						else force_vs_res=Force/m.End
 						if(force_vs_res>1) force_vs_res=force_vs_res**0.5
 						dmg*=force_vs_res
+						if(m.fearful||m.Good_attacking_good()) dmg*=m.Fear_dmg_mult()
 						if(Owner&&ismob(Owner)&&Owner.is_kiting) dmg*=kiting_penalty
 						if(m.is_teamer) dmg*=teamer_dmg_mult
 						if(Owner&&ismob(Owner)&&Owner.is_teamer) dmg/=teamer_dmg_mult
 						if(m.regenerator_obj) dmg *= regenerator_damage_mod
 
 						if(ismob(Owner))
+							dmg *= Owner.AllAttacksDamageModifiers(m)
 
-							var/resist_dmg_mod = Math.Floor((Owner.GetStatMod("Res") + Owner.GetStatMod("For")) / 2)
-							resist_dmg_mod = Math.Clamp (resist_dmg_mod, 0.5, 1)
+							var/resist_dmg_mod=(Owner.Res/Owner.Pow)**0.35
+							if(resist_dmg_mod>1) resist_dmg_mod=1
+							if(resist_dmg_mod<0.5) resist_dmg_mod=0.5
 							dmg*=resist_dmg_mod
 
-						if(bleed_damage) m.ApplyBleed()
-						Owner.DealDamage(m, 1.3, "Ki")
+						if(bleed_damage) m.BleedDamage(dmg)
+						else m.TakeDamage(dmg)
 
+						if(m.Health<=0)
+							if(Noob_Attack) m.KO()
+							else m.KO(Owner)
 						if(Paralysis)
 							m<<"You become paralyzed"
 							m.Frozen=1
@@ -768,10 +827,11 @@ obj/Blast
 						del(am)
 		Explosion_Graphics(Get_step(src,dir),Explosive)
 		for(var/turf/A in TurfCircle(Explosive,src))
-			if((A.Health <= wall_breaking_power) && (!ismob(Owner) || (ismob(Owner) && Owner.Is_wall_breaker())))
+			if((A.Health <= wall_breaking_power || (ismob(Owner) && Owner.Epic())) && (!ismob(Owner) || (ismob(Owner) && Owner.Is_wall_breaker())))
 				if(A.Health != 1.#INF)
 					A.Health=0
 					if(A.density) A.Destroy()
+					else A.Make_Damaged_Ground(1)
 
 	proc/BlastCross(mob/m, override_dir, override_delete)
 		set waitfor=0
@@ -807,6 +867,9 @@ obj/Blast
 		if(ismob(Owner))
 			if(m != Owner && m.loc == Owner.loc) return 1
 			Owner.Set_flash_step_mob(m)
+			if(m == Owner.chaser)
+				Owner.last_damaged_chaser = 0
+				Owner.Remove_fear()
 		if(m.drone_module) m.Drone_Attack(Owner, lethal = 1)
 		m.SetLastAttackedTime(Owner)
 		if(!m.regenerator_obj)
@@ -828,6 +891,7 @@ obj/Blast
 		else adj_dmg = (BP / m.BP) ** bp_exponent
 		dmg *= adj_dmg
 		if(ismob(Owner))
+			dmg *= Owner.AllAttacksDamageModifiers(m)
 			if(ShouldOneShot(Owner, m)) dmg *= one_shot_dmg_mult
 
 		var/force_vs_resist
@@ -838,55 +902,61 @@ obj/Blast
 		dmg *= force_vs_resist
 
 		dmg *= Defense_damage_reduction(Owner,m)
+		if(m.fearful || m.Good_attacking_good()) dmg *= m.Fear_dmg_mult()
 		if(ismob(Owner) && Owner.is_kiting) dmg *= kiting_penalty
 		if(m.is_teamer) dmg *= teamer_dmg_mult
 		if(ismob(Owner) && Owner.is_teamer) dmg /= teamer_dmg_mult
 		if(m.regenerator_obj) dmg *= regenerator_damage_mod
-		if(Bullet && !m.client/*  && !istype(m,/mob/Enemy/Core_Demon) */) dmg *= 2 //guns do more damage to npcs
-		var/hit_chance = base_blast_accuracy
-		if(ismob(Owner)) hit_chance *= Owner.GetAttackAccuracy(m, dmg)
+		if(ismob(Owner) && Owner.alignment == "Evil") dmg *= villain_damage_penalty
+		dmg *= sagas_bonus(Owner,m)
+		if(ismob(Owner)) Owner.training_period(m)
+		if(Bullet && !m.client && !istype(m,/mob/Enemy/Core_Demon)) dmg *= 2 //guns do more damage to npcs
+		var
+			hit_chance = base_blast_accuracy * percent_damage ** 0.3 * (BP / m.BP) ** 0.5
+			off_vs_def = Acc_mult(Offense / m.Def)
+		hit_chance *= off_vs_def
 		if(m.standing_powerup) hit_chance /= standing_powerup_deflect_mult
+		if(m.fearful || m.Good_attacking_good()) hit_chance *= m.Fear_dmg_mult()
+		if(m.is_teamer) hit_chance *= teamer_dmg_mult
+		if(ismob(Owner) && Owner.is_teamer) hit_chance /= teamer_dmg_mult
+		if(ismob(Owner)) hit_chance *= Owner.Speed_accuracy_mult(defender = m)
 		if(m.dir in list(turn(dir,180), turn(dir,135), turn(dir,225))) hit_chance /= blast_front_deflection_mod
 		if(dir == m.dir && !m.knockback_immune && !m.KB && !m.standing_powerup)
 			hit_chance *= 2
 			dmg *= 1.5
+		if(dodging_mode == MANUAL_DODGE)
+			m.last_stamina_drain = world.time + 10 //prevent stam recharging and +whatever to add a lil more delay than usual
+			var/stam_drain = 1 * percent_damage * Acc_mult(Offense / m.Def) * (BP / m.BP) ** bp_exponent
+			if(m.stamina < stam_drain || !m.CanBlastDeflect()) hit_chance = 100
+			else
+				hit_chance = 0
+				m.AddStamina(-stam_drain)
 		if(m.grabber || m.KO || m.regenerator_obj) hit_chance = 100
 		if(prob(hit_chance) || !Deflectable || m.Disabled())
 			if(!m.regenerator_obj && m.precog && m.precogs && prob(m.precog_chance) && !m.KO && (m.Flying || m.icon_state == "") && m.Ki > m.max_ki * 0.2 && !m.Disabled())
-				m.precogs--
+				m.precog--
 				var/turf/old_loc = m.loc
 				step(m, turn(dir,pick(-45,45)), 32)
 				if(m.loc != old_loc) return 1
-			
-			var/mob/traitDummy = Owner
-			if(ismob(traitDummy))
-				if(traitDummy.PartySize() > 1)
-					dmg /= traitDummy.PartySize() * 0.7 * (traitDummy.HasTrait("Pack Mentality") ? 0.95 : 1)
-				else if(traitDummy.HasTrait("Lone Wolf")) dmg *= 1.15
-				if(m.PartySize() > 1) dmg *= m.PartySize() * 0.3 * (m.HasTrait("Pack Mentality") ? 0.95 : 1)
-			
-				if(traitDummy.Race == "Tsujin" && traitDummy.HasTrait("Nerd Rage") && traitDummy.anger > 100)
-					dmg *= 1 + (traitDummy.Intelligence / 2)
-
-				if(m.Race == "Tsujin" && m.HasTrait("Nerd Rage") && m.anger > 100)
-					dmg /= 1 + (m.Intelligence / 2)
-				
-				if(m.HasTrait("Mind the Heel")) dmg *= 1.2
-
 			if(dir == m.dir) Offense *= 3
 			if(m.Vampire) dmg *= vampire_damage_multiplier
-			if(ismob(Owner) && Owner.IsPartyMember(m)) dmg = 0
-			if(bleed_damage) m.ApplyBleed()
-			var/injury/burn/tryBurn = new
-			m.TryInjure(tryBurn, burnMod, dmg, Owner)
-			m.TakeDamage(dmg, Owner)
+			if(bleed_damage) m.BleedDamage(dmg)
+			else m.TakeDamage(dmg)
 			if(shuriken) m.ShurikenOverlayEffect(icon)
 			if(percent_damage >= 10) Make_Shockwave(m, sw_icon_size = Get_projectile_shockwave_size(src))
 			if(ismob(Owner) && !m.KO) m.setOpponent(Owner)
-			
+			if(m.Health <= 0)
+				m.KO(Owner)
+				if(m) //prevent null error spam since ko deletes some kinds of mobs
+					if(Fatal || !m.client)
+						m.TakeDamage(dmg)
+						if(m.Health <= 0)
+							if(m.Regenerate && !Bullet && original_dmg > m.BP * m.Res * m.Regenerate ** 0.5 * 150 * ki_power)
+								m.Death(Owner,1)
+							else m.Death(Owner)
 			if(m) //avoid error spam
-				if(slice_attack && (!ismob(Owner) || !Owner.IsPartyMember(m))) m.check_lose_tail(dmg,src)
-				if(Shockwave && !Explosive && (!ismob(Owner) || !Owner.IsPartyMember(m)))
+				if(slice_attack) m.check_lose_tail(dmg,src)
+				if(Shockwave && !Explosive)
 					var/kb_dist = Shockwave
 					if(ismob(Owner))
 						if(get_dist(src,Owner) <= 1) kb_dist *= 2.5
@@ -895,7 +965,7 @@ obj/Blast
 					var/turf/t = loc
 					if(override_dir) t = get_step(m,turn(override_dir,180))
 					m.Shockwave_Knockback(kb_dist,t)
-				if(Stun && m && (!ismob(Owner) || !Owner.IsPartyMember(m)))
+				if(Stun && m)
 					var/base_stun = 20 * Stun
 					var/stun = base_stun * (BP / m.BP) ** bp_exponent * (Force / m.Res) ** 0.25
 					stun = Clamp(stun, 0, base_stun * 3)
@@ -981,16 +1051,16 @@ obj/Blast
 			var/turf_destroyed = 0
 			var/destroy_blast_anyway = 0
 			if(A.Health != 1.#INF)
-				if(ismob(Owner) && (A.defenseTier * Mechanics.GetSettingValue("Turf Health Multiplier") < (Owner.effectiveBPTier + Owner.GetStatMod("For")) * 0.4)\
-								 && Owner.Is_wall_breaker())
-					var/turf/t=A
-					if(t.destroy_blast_anyway) destroy_blast_anyway = 1
-					t.Health=0
-					t.Destroy()
-					turf_destroyed = 1
+				if((A.Health <= wall_breaking_power || (Owner && ismob(Owner) && Owner.Epic())) && (!Owner || !ismob(Owner) || (ismob(Owner) && Owner.Is_wall_breaker())))
+					if(A.Health != 1.#INF)
+						var/turf/t=A
+						if(t.destroy_blast_anyway) destroy_blast_anyway = 1
+						t.Health=0
+						t.Destroy()
+						turf_destroyed = 1
 			if(!Piercer && !Bounce && !override_delete)
-				if(!turf_destroyed && (!weaker_obstacles_cant_destroy_blast || destroy_blast_anyway))
-					del(src)
+				if(turf_destroyed && weaker_obstacles_cant_destroy_blast && !destroy_blast_anyway)
+				else del(src)
 			Bounce_Dir()
 
 	proc
@@ -1013,9 +1083,13 @@ obj/proc/Shockwave_Knockback(Amount,turf/A)
 mob/proc/Shockwave_Knockback(Amount,turf/A, bypass_immunity)
 	set waitfor=0
 
-	if(!z) return //prevent bug knocking them out of body
+	if(is_saitama || key == "EXGenesis") return
+	if(!z) return //prevent body swap bug knocking them out of body
 	if(regenerator_obj && regenerator_obj.base_loc() == base_loc()) return
 
+	if(transing) Amount/=2
+	if(Class == "Legendary Yasai" && lssj_always_angry) Amount *= 0.5
+	if(jirenAlien) Amount *= jirenAlienKBresist
 	Amount=ToOne(Amount)
 	if(Safezone||KB) return
 	if(!bypass_immunity && knockback_immune) return
@@ -1030,6 +1104,8 @@ mob/proc/Shockwave_Knockback(Amount,turf/A, bypass_immunity)
 	var/mob/m=grabbedObject
 	ReleaseGrab()
 	if(m&&ismob(m)) m.Shockwave_Knockback(Amount,A)
+
+	if(Diarea) spawn Diarea(Other_Chance=100)
 
 	var/d=get_dir(A,src)
 	if(prob(20)) d=pick(turn(get_dir(A,src),45),turn(get_dir(A,src),-45))
@@ -1051,7 +1127,6 @@ mob/proc/Shockwave_Knockback(Amount,turf/A, bypass_immunity)
 	KB=0
 	last_knockbacked=world.time
 	knockback_immune=1
-	AlterInputDisabled(-1)
 	spawn(kb_immunity_time) if(src) knockback_immune=0
 	if(Dusts)
 		player_view(10,src)<<sound('wallhit.ogg',volume=25)

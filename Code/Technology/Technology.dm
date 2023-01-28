@@ -1,76 +1,4 @@
-mob/proc/HasItem(t)
-	for(var/obj/O in src)
-		if(O && O.type == t)
-			return TRUE
-
 var/item_tile_limit = 6 //how many science items you can lay on 1 tile to prevent the crashing bug
-
-mob/var/list/PersonalTech = new
-
-proc/GetUnlockableTechs(mob/M)
-	var/list/L = tech_list.Copy()
-	for(var/obj/O in L)
-		if(O && O.type in M.PersonalTech)
-			L -= O
-	return L
-
-var/list/All_Items
-proc/InitalizeAllItemsList()
-	if(!All_Items)
-		All_Items = new/list
-		for(var/A in typesof(/obj))
-			var/obj/B = new A
-			if(!B || B.type == /obj || B.type == /obj/items) continue
-			if(B && (B.Cost || istype(B,/obj/items))) All_Items["[B.name]"] = A
-
-mob/Admin3/verb/ManagePlayerTech()
-	set category = "Admin"
-	var/mob/M = input("Which player?", "Manage Player Tech") in list("Cancel") + players as mob|null
-	if(!M) return
-	while(1)
-		switch(input("Do what?", "Manage Player Tech") in list("Cancel", "Unlock", "Lock", "Set Cost"))
-			if("Unlock")
-				UnlockTechForPlayer(M)
-			if("Lock")
-				LockTechForPlayer(M)
-			if("Set Cost")
-				SetTechCostForPlayer(M)
-			else break
-		sleep(2)
-
-proc/SetTechCostForPlayer(mob/M)
-	if(!M.client || !M.playerCharacter)
-		return
-	while(1)
-		var/obj/T = input("What tech?") in list("Cancel") + tech_list
-		if(T == "Cancel" || !T) break
-		var/cost = input("Set the cost of the skill. Setting to 0 (or canceling) will revert to default cost.", "How much?") as num|null
-		M.SetTechCost(T, cost)
-		sleep(2)
-
-proc/UnlockTechForPlayer(mob/M)
-	if(!ismob(M) || !M.client || !M.playerCharacter)
-		return
-	while(1)
-		var/list/techs = GetUnlockableTechs(M)
-		var/obj/T = input("What tech?") in list("Cancel") + techs
-		if(T == "Cancel" || !T) break
-		M.PersonalTech += T.type
-		sleep(2)
-
-proc/LockTechForPlayer(mob/M)
-	if(!ismob(M) || !M.client || !M.playerCharacter)
-		return
-	while(1)
-		var/list/techs = new
-		for(var/v in M.PersonalTech)
-			var/obj/T = new v
-			if(!T) continue
-			techs += T
-		var/obj/T = input("What tech?") in list("Cancel") + techs
-		if(T == "Cancel" || !T) break
-		M.PersonalTech -= T.type
-		sleep(2)
 
 mob/proc/TryCreateScienceItem(obj/A)
 	if(A in tech_list)
@@ -83,19 +11,17 @@ mob/proc/TryCreateScienceItem(obj/A)
 			src << "Try another tile. Too many items here already"
 			return
 
-		if(InFinalRealm())
+		if(Final_Realm())
 			src<<"Items can not be made in the final realm"
 			return
-
 		var/turf/t=base_loc()
 		if(t&&t.z==10) //hbtc
 			if(A.type==/obj/Spawn)
 				src<<"Spawns can not be made in the time chamber"
 				return
-		if((A.type in Illegal_Science) && !(A.type in PersonalTech))
+		if(A.type in Illegal_Science)
 			src<<"<font size=3><font color=red>Admins have made this item illegal. You can not make it"
 			return
-
 		if(Can_Make_Technology(src,A) && GetResourceObject())
 
 			if(A.type==/obj/Ships/Ship&&!Get_ship_interior())
@@ -104,19 +30,17 @@ mob/proc/TryCreateScienceItem(obj/A)
 
 			var/obj/Resources/M = GetResourceObject()
 			M.Value-=Item_cost(src,A)
-
+			if(toxic_waste_on&&A.makes_toxic_waste)
+				src<<"Toxic waste was created as a byproduct of manufacturing this technology"
+				new/obj/Toxic_Waste_Barrel(base_loc)
 			var/obj/O=new A.type(base_loc)
 			if(O)
 				O.Cost=Item_cost(src,A)
 				O.Builder=key
 
-				if(istype(O,/obj/Ships/Ship))
-					if(Race=="Puranto")
-						O.icon='Puran Ship.dmi'
-						CenterIcon(O)
-					if(Race == "Frost Lord")
-						O.icon = 'Frieza Ship.dmi'
-						CenterIcon(O, x_only = 1)
+				if(istype(O,/obj/Ships/Ship)&&Race=="Puranto")
+					O.icon='Puran Ship.dmi'
+					CenterIcon(O)
 				if(istype(O,/obj/items/Scouter)&&Race=="Human")
 					O.icon='Item - Sun Glassess.dmi'
 					O.name="Scanner"
@@ -128,6 +52,16 @@ mob/proc/TryCreateScienceItem(obj/A)
 
 		if(client) winset(src,"mapwindow.map","focus=true")
 		if(client) winset(src,"mainwindow.map","focus=true")
+
+
+
+
+
+
+
+
+
+
 
 obj/var/bankable = 1
 
@@ -261,39 +195,57 @@ var/global_res_bags = 0
 
 obj/Resources/var/random_map_resources
 
-var/lastResourceDropCheck = 0
-proc/RandomResourceDrops()
-	set waitfor = 0
-	if(lastResourceDropCheck + 20 > world.time) return
-	lastResourceDropCheck = world.time
+proc/Random_resource_drops()
+	set waitfor=0
+	while(1)
+		if(global_res_bags < 500)
+			var/turf/t
+			while(!t)
+				t=locate(rand(1,world.maxx),rand(1,world.maxy),rand(1,world.maxz))
+				if(t)
+					if(t.type==/turf/Other/Blank||t.density||t.Water) t=null
+					else
+						var/area/a=locate(/area) in range(0,t)
+						if(!a.has_resources) t=null
 
-	if(global_res_bags < 500)
-		var/turf/t
-		while(!t)
-			t=locate(rand(1,world.maxx),rand(1,world.maxy),rand(1,world.maxz))
+			for(var/obj/Resource_Destroyer/rd in resource_destroyers) if(rd.z&&rd.destroy_resources)
+				var/area/a=locate(/area) in range(0,rd)
+				var/area/a2=locate(/area) in range(0,t)
+				if(a==a2) t=null
+
 			if(t)
-				if(t.type==/turf/Other/Blank||t.density||IsWater(t)) t=null
-				else
-					var/area/a=locate(/area) in range(0,t)
-					if(!a.has_resources) t=null
+				global_res_bags++
+				var/obj/Resources/r = GetCachedObject(/obj/Resources, t)
+				r.random_map_resources = 1
+				r.Savable=0
+				r.Value = rand(300000) * Resource_Multiplier
+				if(map_restriction_on) r.Value *= 2
+				r.icon = 'Resource Rocks.dmi'
+				r.icon_state = "[rand(1,4)]"
+				r.density = 1
 
-		if(t)
-			global_res_bags++
-			var/obj/Resources/r = GetCachedObject(/obj/Resources, t)
-			r.random_map_resources = 1
-			r.Savable=0
-			r.Value = rand(300000) * Mechanics.GetSettingValue("Resource Generation Rate")
-			r.icon = 'Resource Rocks.dmi'
-			r.icon_state = "[rand(1,4)]"
-			r.density = 1
+				if(sagas&&villain_league_member_count)
+					r.Value/=1+(villain_league_member_count*0.2)
 
-			r.Update_value()
+				r.Update_value()
+		sleep(20)
+
+
 
 proc/Planet_Resources(N=1)
-	for(var/area/A in all_areas)
-		if(A.Value <= 0) A.Value = 0 + N * 15000
-		A.Value += N * Mechanics.GetSettingValue("Resource Generation Rate")
+	N *= Resource_Multiplier
+	if(map_restriction_on) N *= 2
 
+	if(villain_league_member_count)
+		N/=1+(villain_league_member_count*0.1)
+
+	for(var/area/A in all_areas) if(A.has_resources && !A.Resources_destroyed())
+		A.Value += A.resource_refill_mod * N
+
+area/proc/Resources_destroyed()
+	for(var/obj/Resource_Destroyer/o in resource_destroyers) if(o.destroy_resources)
+		var/area/a=locate(/area) in range(0,o)
+		if(a==src) return 1
 mob/Admin4/verb/Upgrade_Settings()
 	set category="Admin"
 	switch(input(src,"You can set the upgrade cap to automatic, or a manual amount. Currently the upgrade cap is \
@@ -308,83 +260,74 @@ mob/Admin4/verb/Upgrade_Settings()
 			if(Amount<=0) return
 			Tech_BP=Amount
 			world<<"Upgrade cap set to [Commas(Tech_BP)] BP"
-
 var/Automate_Tech_Power=1
 var/Tech_BP=100
 var/Avg_BP=1
 var/Avg_Base=1
-var/Avg_Tier=1
 var/highest_avg_bp_this_reboot=1
 
-proc/SetAvgBase()
-	set waitfor = FALSE
-	set background = TRUE
-	if(Player_Count())
-		var/N=0, T=0
-		for(var/mob/P in players)
-			if(!P.IsFusion())
-				N += P.base_bp
-				T += P.bpTier
-		N /= Player_Count()
-		T /= Player_Count()
-		Avg_Base=N
-		Avg_Tier=T
+proc/Tech_BP()
+	spawn(300) while(1) //average base bp divided by bp mod of all players
+		if(Player_Count())
+			var/N=0
+			for(var/mob/P in players) if(P.era==era_resets) N+=P.base_bp/P.bp_mod
+			N/=Player_Count()
+			Avg_Base=N
+		sleep(600)
 
-proc/SetAvgTotalBP()
-	set waitfor = FALSE
-	set background = TRUE
-	if(Player_Count())
-		var/N=0
-		for(var/mob/P in players) if(!P.IsFusion()) N+=P.get_bp(factor_powerup=0)
-		N/=Player_Count()
-		Avg_BP=N
-		if(Avg_BP>highest_avg_bp_this_reboot) highest_avg_bp_this_reboot=Avg_BP
+	spawn(300) while(1) //average bp of players
+		if(Player_Count())
+			var/N=0
+			for(var/mob/P in players) if(P.era==era_resets) N+=P.get_bp(factor_powerup=0)
+			N/=Player_Count()
+			Avg_BP=N
+			if(Avg_BP>highest_avg_bp_this_reboot) highest_avg_bp_this_reboot=Avg_BP
+		sleep(600)
 
-proc/SetHighestBP()
-	set waitfor = FALSE
-	set background = TRUE
-	var/mob/m //the strongest player online in base bp
-	for(var/mob/m2 in players)
-		if(!m || m.base_bp < m2.base_bp)
-			m = m2
-	if(m)
-		if(highest_base_bp <= m.base_bp)
-			highest_base_bp = m.base_bp
-			highestBPTier = m.bpTier
-			m.GiveFeat("Get Highest Base BP This Wipe")
+	spawn(300) while(1) //upgrade cap
+		var/delay=4
+		if(Automate_Tech_Power && world.time>10*600)
 
-proc/SetUpgradeCap()
-	set waitfor = FALSE
-	set background = TRUE
-	if(Automate_Tech_Power && world.time>10*600)
+			/*var/all_bps=0
+			var/players_counted=0
+			for(var/mob/m in players) if(m.era==era_resets && !m.cyber_bp && m.Ki<=m.max_ki && m.loc && m.BPpcnt==100)
+				if(m.Race!="Frost Lord"||!m.Form)
+					if(m.hbtc_bp<m.base_bp)
+						var/bp=m.BP
+						all_bps+=bp
+						players_counted++
+			if(players_counted)
+				all_bps/=players_counted
+				if(Tech_BP<all_bps*1.5) Tech_BP*=1.0025**delay*/
 
-		var/all_base_bps=0
-		var/players_counted=0
-		var/highest_bp_mod=1, highestTier = 1
-		for(var/mob/m in players)
-			if(!m.IsFusion() && !m.cyber_bp && m.loc)
-				all_base_bps += m.base_bp
-				if(m.bp_mod > highest_bp_mod) highest_bp_mod = m.bp_mod
-				if(m.bpTier > highestTier) highestTier = m.bpTier
-				players_counted++
-		if(players_counted)
-			all_base_bps /= players_counted
-			var/goal = all_base_bps * highest_bp_mod * Progression.GetSettingValue("Knowledge Cap Rate") * (1 + highestTier * 0.025)
-			if(Tech_BP < goal) Tech_BP = goal
+			var/all_relative_bps=0
+			var/players_counted=0
+			var/highest_bp_mod=1
+			for(var/mob/m in players)
+				if(m.era == era_resets && !m.cyber_bp && m.loc)
+					all_relative_bps += (m.base_bp + m.hbtc_bp) / m.bp_mod
+					if(m.bp_mod > highest_bp_mod) highest_bp_mod = m.bp_mod
+					players_counted++
+			if(players_counted)
+				all_relative_bps /= players_counted
+				var/goal = all_relative_bps * highest_bp_mod * knowledge_cap_mod
+				if(GodOnline()) goal *= min_god_boost //primarily to let androids keep up with god era but also other technology too
+				if(Tech_BP < goal) Tech_BP = goal
 
-var/lastUpgradeCapCheck = 0
-proc/UpgradeCapCheck()
-	set waitfor = 0
-	if(lastUpgradeCapCheck + 600 > world.time) return
-	lastUpgradeCapCheck = world.time
+		sleep(10*delay)
 
-	spawn()
-		SetAvgBase()
-		SetAvgTotalBP()
-		SetUpgradeCap()
-		SetHighestBP()
+	spawn(3 * 600) while(1) //record highest relative base bp this wipe
+		var/mob/m //the strongest player online in relative base bp
+		for(var/mob/m2 in players)
+			if(!m || m.base_bp / m.bp_mod < m2.base_bp / m2.bp_mod)
+				m = m2
+		if(m)
+			if(highest_base_bp_this_wipe < m.base_bp / m.bp_mod)
+				highest_base_bp_this_wipe = m.base_bp / m.bp_mod
+				m.GiveFeat("Get Highest Relative Base BP This Wipe")
+		sleep(100)
 
-var/highest_base_bp_this_wipe = 1
+var/highest_base_bp_this_wipe = 0
 
 proc/Avg_Force(N=0)
 	if(!Player_Count()) return 1
@@ -408,40 +351,16 @@ proc/Avg_Offense(N=0)
 
 obj/var/Cost
 
-var/list/tech_list
-
-#ifdef DEBUG
-mob/Admin5/verb/GetItemList()
-	usr << "Getting list, prepare for lag"
-	sleep(2)
-	var/list/items = new
-	for(var/v in typesof(/obj))
-		if(v == text2path("/obj"))
-			continue
-		var/obj/o = new v
-		if(o)
-			items += o.type
-	var/json = json_encode(items)
-	if(json)
-		text2file(json, "debug/items.json")
-		usr << "List done, placed in 'debug/items.json'"
-	else usr << "Something went wrong..."
-#endif
-		
+var/list/tech_list = new
 
 proc/Add_Technology()
-	set background = TRUE
-	var/list/typesToCheck = typesof(/obj)
-	typesToCheck -= typesof(/obj/map_object)
-	typesToCheck -= typesof(/obj/screen_object)
-	typesToCheck -= typesof(/projectile)
-	for(var/v in typesToCheck)
+	for(var/v in typesof(/obj))
 		var/obj/o = new v
-		if(o && o.Cost)
+		if(o)
 			o.referenceObject = 1
 			o.suffix = null
-			tech_list ||= list()
-			tech_list |= o
+			if(o.Cost) tech_list += o
+			//else del(o)
 
 	tech_list = SortListOfObjectsAlphabetically(tech_list)
 
@@ -449,42 +368,19 @@ proc/Can_Make_Technology(mob/P,obj/O)
 	if(istype(P.get_area(),/area/Braal_Core))
 		P<<"Technology can not be made here."
 		return
+	//for(var/obj/Injuries/Brain/I in P.injury_list)
+	if(P.Brain_scrambled())
+		P<<"You have a brain injury and therefore cannot make technology"
+		return
 	if(P.Res()>=Item_cost(P,O)) return 1
 
-var/list/PlayerTechCosts = new
-
-mob/proc/GetTechCostList()
-	if(!client || !key)
-		return
-	var/list/L = PlayerTechCosts[key]
-	if(islist(L)) return L
-	else return null
-
-mob/proc/GetTechCost(obj/O)
-	if(!client || !key)
-		return
-	var/list/TechCosts = GetTechCostList()
-	if(TechCosts && TechCosts["[O.type]"])
-		return TechCosts["[O.type]"]
-
-mob/proc/SetTechCost(obj/O, cost=0)
-	if(!client || !key)
-		return
-	var/list/TechCosts = GetTechCostList()
-	if(!TechCosts) TechCosts = new
-	TechCosts["[O.type]"] = cost
-	PlayerTechCosts[key] = TechCosts
-
 proc/Item_cost(mob/P,obj/O)
-	var/n = O.Cost
-	if(P.GetTechCost(O))
-		n = P.GetTechCost(O)
-	if(n < 500000) n /= P.Intelligence()
-	else if(n < 5000000) n /= P.Intelligence()**0.6
-	else n /= P.Intelligence()**0.3
-	if(O.type==/obj/Module/Drone_AI && Mechanics.GetSettingValue("Resource Generation Rate")>1) n *= Mechanics.GetSettingValue("Resource Generation Rate")
+	var/n=O.Cost
+	if(O.type==/obj/Module/Drone_AI && Resource_Multiplier>1) n*=Resource_Multiplier
+	if(O.Cost<500000) n/=P.Intelligence()
+	else if(O.Cost<5000000) n/=P.Intelligence()**0.6
+	else n/=P.Intelligence()**0.3
 	n /= P.feat_price_div
-	n /= 1 + (P.GetTraitRank("Unparalleled Ingenuity") * 0.1)
 
 	return n
 
@@ -500,11 +396,10 @@ obj/Resources
 	verb/Show_Resources() player_view(15,usr)<<"[usr] shows their bag containing [Commas(Value)] resources"
 
 	New()
-		resources_list ||= list()
-		resources_list |= src
+		resources_list+=src
 		spawn if(ismob(loc))
 			var/mob/M=loc
-			M.resource_obj ||= src
+			M.resource_obj=src
 
 	Del()
 		if(random_map_resources)
@@ -528,12 +423,6 @@ obj/Resources
 		var/mob/P
 		for(P in Get_step(usr,usr.dir)) break
 		if(P&&!P.client) P=null
-		if(usr.Redoing_Stats)
-			usr << "You can not drop resources while redoing stats!"
-			return
-		if(usr.IsFusion())
-			usr << "Fused beings can not drop items!"
-			return
 		var/Money=input("Drop how much Resources? ([Commas(Value)])") as num
 		if(Money>Value) Money=Value
 		if(Money<=0) usr<<"You must atleast drop 1"
@@ -562,14 +451,13 @@ proc
 		if(n >= 10000000) return sqrt(1.5)
 		return 1
 
-var/lastPlanetResourceUpdate = 0
-proc/ResourcesTick()
-	set waitfor = 0
-	if(lastPlanetResourceUpdate + 50 > world.time) return
-	lastPlanetResourceUpdate = world.time
-
-	Planet_Resources(5) //allocate all planets with new resources
-	allocate_drills(5) //let drills dig those new resources
+proc/Resources_Loop()
+	set waitfor=0
+	while(1)
+		var/mod=5
+		Planet_Resources(1*mod) //allocate all planets with new resources
+		allocate_drills(1*mod) //let drills dig those new resources
+		sleep(10*mod)
 
 var/list/drills=new
 
@@ -617,8 +505,7 @@ obj/Drill
 	bound_width=64
 	layer=4
 	New()
-		drills ||= list()
-		drills |= src
+		drills+=src
 		//spawn Drill()
 	Del()
 		if(drill_drop_res_on_delete)

@@ -1,3 +1,4 @@
+var/Prison_Money=0 //the money the prison gets from the prisoners
 mob/var/Imprisonments=0
 obj/Prisoner_Mark
 	var
@@ -40,6 +41,8 @@ mob/proc
 
 	Imprison() if(!Prisoner())
 		Update_Bounties()
+		//Drop_Rsc(Res())
+		Prison_Money += Res()
 		SetRes(0)
 		player_view(15,src)<<"[src] has been teleported to Interdimensional Space Prison because someone has placed \
 		a bounty on them for their past crimes."
@@ -54,15 +57,13 @@ mob/proc
 		Prison because someone had placed a bounty on you for your crimes in the outside world. When your \
 		sentence is up you can leave thru the exit.")
 
-var/lastBountyDroneSend = 0
-proc/BountyDroneSendTick()
-	set waitfor = 0
-	if(lastBountyDroneSend + 18000 > world.time) return
-	lastBountyDroneSend = world.time
-	
-	for(var/mob/M in players)
-		if(M.Has_Bounty() && !M.Has_Bounty_Drone())
+proc/Send_Bounty_Drone()
+	set waitfor=0
+	while(1)
+		spawn for(var/mob/M in players) if(M.Has_Bounty() && !M.Has_Bounty_Drone())
 			DeployDroneNoWait(M)
+			sleep(rand(0,20))
+		sleep(30 * 600)
 
 mob/proc/Has_Bounty_Drone() for(var/mob/M in Bounty_Drones) if(M.Target == src) return M
 
@@ -92,15 +93,14 @@ proc/Deploy_Drone(mob/M,mob/Redeploy,turf/drone_loc,mob/deployer)
 	if(M) BD.Target=M
 	BD.deployer=deployer
 
-var/list/Bounty_Drones
+var/list/Bounty_Drones=new
 
 mob/Bounty_Drone
 	icon='Gochekbots.dmi'
 	icon_state="5"
 	var/tmp/mob/deployer
 	New()
-		Bounty_Drones ||= list()
-		Bounty_Drones |= src
+		Bounty_Drones+=src
 		Bounty_Drone()
 	Move()
 		density=0
@@ -112,7 +112,7 @@ mob/Bounty_Drone
 			sleep(5)
 			while(src)
 				if(!Target) del(src)
-				if(!Target.IsTournamentFighter())
+				if(!Tournament||Target.z!=7||!(Target in All_Entrants))
 					if(Target.z!=z||getdist(src,Target)>=150) Deploy_Drone(Target,src)
 				if(getdist(src,Target)>13 || (Target && Target.KO && getdist(src,Target)>4))
 					var/old_loc=loc

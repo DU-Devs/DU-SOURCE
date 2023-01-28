@@ -1,13 +1,9 @@
-obj/Skills/Combat/Ki/var/burnMod = 1
-
-obj/Skills/Combat/Ki/Buster_Barrage
-	Drain=20
+obj/Attacks/Buster_Barrage
+	Drain=9
 	Teach_Timer=2
 	student_point_cost = 20
 	Cost_To_Learn=7
 	Experience=1
-
-	burnMod = 2
 
 	//icon='Shield, Legendary.dmi'
 	icon = 'Green Ball 2017.dmi'
@@ -25,11 +21,11 @@ obj/Skills/Combat/Ki/Buster_Barrage
 		Buster_Barrage()
 
 	verb/Buster_Barrage()
-		set category = "Skills"
+		//set category="Skills"
 		usr.Buster_Barrage(src)
 
-mob/proc/Buster_Barrage(obj/Skills/Combat/Ki/Buster_Barrage/B)
-	if(!B) for(var/obj/Skills/Combat/Ki/Buster_Barrage/C in ki_attacks) B=C
+mob/proc/Buster_Barrage(obj/Attacks/Buster_Barrage/B)
+	if(!B) for(var/obj/Attacks/Buster_Barrage/C in ki_attacks) B=C
 	if(!B) return
 	if(B.Barraging)
 		B.Barraging=0
@@ -57,13 +53,13 @@ mob/proc/Buster_Barrage(obj/Skills/Combat/Ki/Buster_Barrage/B)
 			player_view(10,src)<<sound('Blast.wav',volume=10)
 			B.lastBlastSfx = world.time
 		B.Skill_Increase(1,src)
-		IncreaseKi(-GetSkillDrain(mod = B.Drain, is_energy = 1))
+		Ki-=GetSkillDrain(mod = B.Drain, is_energy = 1)
 		var/obj/Blast/A=get_cached_blast()
 
 		var/dmg_pct = 5
-		if(Class == "Legendary") dmg_pct *= 1.5
+		if(Class == "Legendary Yasai") dmg_pct *= 1.5
 
-		A.setStats(src,Percent = dmg_pct,Off_Mult=1,Explosion=0, burn_mod = B.burnMod)
+		A.setStats(src,Percent = dmg_pct,Off_Mult=1,Explosion=0)
 		A.weaker_obstacles_cant_destroy_blast = 1
 		A.from_attack=B
 		A.Distance = 250
@@ -101,28 +97,134 @@ obj/proc/Buster_Barrage_Move()
 			if(prob(50)) dir = pick(dir, turn(dir,45), turn(dir,-45))
 		sleep(TickMult(0.7))
 
-atom/var/Fatal=0
+
+
+
+
+obj/Attacks/Attack_Barrier
+	Drain=6
+	Teach_Timer=2
+	student_point_cost = 30
+	Cost_To_Learn=5
+	verb/Hotbar_use()
+		set hidden=1
+		Attack_Barrier()
+	icon='1.dmi'
+	desc="An offensive and defensive move that makes many balls of ki swarm around you and whatever enters the \
+	barrier will be attacked by them. Press the command once to begin firing the balls, press it again when you \
+	feel you have fired enough. The more you fire the more it will drain your energy. This ability protects the \
+	user from all explosion damage."
+	var/tmp/Firing_Attack_Barrier
+	verb/Attack_Barrier()
+		//set category="Skills"
+		usr.Attack_Barrier(src)
+
+obj/Blast/proc/attack_barrier_loop()
+	set waitfor=0
+	sleep(1)
+	while(src&&z&&!deflected)
+		if(!Owner) return
+		var/mob/target
+		if(Owner.attack_barrier_blasts >= Owner.MaxAttackBarrierBlasts() - 2)
+			for(target in view(3,src))
+				if(target == Owner) continue
+				if(target.type == /mob/Splitform)
+					var/mob/Splitform/s = target
+					if(s.Maker == Owner) continue //dont attack your own splitforms
+				break
+		if(target)
+			step_towards(src,target)
+			if(target in loc) Bump(target)
+		else if(getdist(src,Owner) > 1) step_towards(src,Owner)
+		else step_rand(src)
+
+		if(ismob(Owner) && Owner.tournament_override(fighters_can=1,show_message=0)) break
+		else if(ismob(Owner) && (!Owner.attack_barrier_obj || !Owner.attack_barrier_obj.Firing_Attack_Barrier)) break
+		else sleep(TickMult(1))
+	if(Owner&&ismob(Owner)) Owner.attack_barrier_blasts--
+	if(z) del(src)
+
+mob/var/tmp/attack_barrier_blasts=0
+mob/var/tmp/obj/Attacks/Attack_Barrier/attack_barrier_obj
+
+mob/proc/MaxAttackBarrierBlasts()
+	var/n = 13 * Eff ** 0.3
+	n = Clamp(n, 9, 22)
+	n = ToOne(n)
+	return n
+
+mob/proc/UsingAttackBarrier()
+	if(!attack_barrier_obj) return 0
+	if(attack_barrier_obj.Firing_Attack_Barrier) return 1
+
+mob/proc/Attack_Barrier(obj/Attacks/Attack_Barrier/B)
+	attack_barrier_obj=B
+	if(B.Firing_Attack_Barrier)
+		B.Firing_Attack_Barrier=0
+		src<<"You stop using Attack Barrier"
+		return
+	if(!B) for(var/obj/Attacks/Attack_Barrier/C in ki_attacks) B=C
+	if(!B) return
+	if(cant_blast()) return
+	if(Ki<GetSkillDrain(mod = B.Drain, is_energy = 1)) return
+	attacking=3
+	B.Experience+=0.05
+	//for(var/obj/Blast/Attack_Barrier/O) if(O.Owner==src) del(O)
+	B.Firing_Attack_Barrier=1
+
+	overlays += BlastCharge
+	player_view(10,src) << sound('basicbeam_charge.ogg',volume=20)
+	sleep(15 + (2 * Speed_delay_mult(severity = 0.5)))
+
+	while(B.Firing_Attack_Barrier)
+		var/max_blasts = MaxAttackBarrierBlasts()
+		while(B && src && B.Firing_Attack_Barrier && attack_barrier_blasts >= max_blasts)
+			sleep(5)
+		if(Ki<GetSkillDrain(mod = B.Drain, is_energy = 1)) B.Firing_Attack_Barrier=0
+		else if(cant_blast(ignore_attack_check = 1) || KB || KO || Stunned()) B.Firing_Attack_Barrier=0
+		else
+			B.Skill_Increase(0.6,src)
+			Ki -= GetSkillDrain(mod = B.Drain, is_energy = 1)
+			flick("Blast",src)
+			player_view(10,src)<<sound('Blast.wav',0,1,0,15)
+			attack_barrier_blasts++
+			var/obj/Blast/A=get_cached_blast()
+			spawn(rand(600,900)) if(A&&A.z) del(A)
+			A.Shockwave = 4
+			A.blast_go_over_obstacles_if_cant_destroy = 1
+			A.blast_go_over_owner = 1
+			A.pass_over_owners_blasts = 1
+			A.density=0
+			A.Distance=99999999999
+			A.pixel_x=rand(-16,16)
+			A.pixel_y=rand(-16,16)
+			A.icon=B.icon
+			A.setStats(src,Percent = 2,Off_Mult = 1,Explosion = 0)
+			A.from_attack=B
+			//A.Shockwave=prob(33)
+			A.dir=dir
+			A.loc=loc
+			A.attack_barrier_loop()
+			sleep(TickMult(1*Speed_delay_mult(severity=0.3)))
+	attacking=0
+	overlays -= BlastCharge
+
+atom/var/Fatal=1
 
 mob/verb/Ki_Toggle()
-	set category="Other"
-	set hidden = TRUE
-	if(IsTournamentFighter())
-		src.SendMsg("Your attacks can not be set to lethal in the tournament", CHAT_IC)
+	//set category="Other"
+	if(src in All_Entrants)
+		src<<"Your attacks can not be set to lethal in the tournament"
 		return
 	Fatal=!Fatal
-	if(Fatal) src.SendMsg("Your attacks are now lethal.", CHAT_IC)
-	else src.SendMsg("Your attacks are now non-lethal.", CHAT_IC)
+	if(Fatal) src<<"Your attacks are now lethal."
+	else src<<"Your attacks are now non-lethal."
 
 obj/var/Mastery=1
 
 var/list/Blasts=new
 
-proc/AddBlasts()
-	set waitfor = FALSE
-	set background = TRUE
-	for(var/A in typesof(/obj/Blasts))
-		if(A!=/obj/Blasts)
-			Blasts+=new A
+proc/AddBlasts() for(var/A in typesof(/obj/Blasts)) if(A!=/obj/Blasts) Blasts+=new A
 
 obj/var/tmp/iconSize = 32
 
@@ -140,8 +242,8 @@ obj/Blasts
 		if(!usr) return
 		if(Color) icon += Color
 		var/list/C=new
-		for(var/obj/Skills/Combat/Ki/D in usr.ki_attacks) if(D.type!=/obj/Skills/Combat/Ki/Time_Freeze) C+=D
-		var/obj/Skills/Combat/Ki/A=input("Give this icon to which attack?") in C
+		for(var/obj/Attacks/D in usr.ki_attacks) if(D.type!=/obj/Attacks/Time_Freeze) C+=D
+		var/obj/Attacks/A=input("Give this icon to which attack?") in C
 		if(usr && A)
 			A.icon=image(icon=icon,icon_state=icon_state)
 
@@ -291,6 +393,8 @@ obj/Aura_Choices
 		var/C=input("Choose a color. Hit cancel to have default color.") as color|null
 		if(!usr||!usr.Auras) return
 		if(C) icon+=C
+		usr.Auras.SSj4=initial(usr.Auras.SSj4)
+		if(C) usr.Auras.SSj4+=C
 		usr.FlightAura='Aura Fly.dmi'
 		if(C) usr.FlightAura+=C
 		usr.Auras.icon=image(icon=icon,icon_state=icon_state)
@@ -341,7 +445,7 @@ obj/Charges
 	Charge7 icon_state="7"
 	Charge8 icon_state="8"
 	Charge9 icon_state="9"
-obj/Skills/Combat/Ki/var
+obj/Attacks/var
 	Power=1 //Damage multiplier
 	Explosive=0
 	Shockwave=0
@@ -359,15 +463,14 @@ atom/var
 	Savable=1
 	Builder
 obj/Health=5000
-mob/var/tmp/obj/Skills/Combat/Ki/Blast/blast_obj
+mob/var/tmp/obj/Attacks/Blast/blast_obj
 
-obj/Skills/Combat/Ki/Blast
-	Drain = 1.3
+obj/Attacks/Blast
+	Drain = 1
 	Teach_Timer=0.5
 	student_point_cost = 10
 	Cost_To_Learn=2
 	Experience=1
-	burnMod = 0.8
 	var/Spread=1
 	var/Blast_Count=1
 	var/blast_refire=1
@@ -412,6 +515,10 @@ obj/Skills/Combat/Ki/Blast
 					switch(alert("Explosive? Increases damage, damage range, and drain","Options","No","Yes"))
 						if("No") Explosive=0
 						if("Yes")
+							//if(blast_refire>0.65)
+							//	alert("Blast refire must not be higher than 0.65x to have explosions enabled. It has been \
+							//	set to 0.65x automaticly")
+							//	blast_refire=0.65
 							Explosive=1
 				if("Amount of blasts")
 					Blast_Count=input("Amount of blasts? 1 to 4. More blasts increases drain heavily") as num
@@ -420,6 +527,7 @@ obj/Skills/Combat/Ki/Blast
 					Blast_Count=round(Blast_Count)
 				if("Refire")
 					var/max=1
+					//if(Explosive) max=0.65
 					blast_refire=input("Blast refire: 0.2 to [max]. The slower the more powerful. If you disable \
 					exploding blasts you can set the refire higher") as num
 					if(blast_refire>max) blast_refire=max
@@ -438,7 +546,7 @@ obj/Skills/Combat/Ki/Blast
 		usr.Blast_macro()
 
 	verb/Blast()
-		set category = "Skills"
+		//set category="Skills"
 		usr.Blast_Fire(src)
 
 mob/var/tmp
@@ -461,25 +569,21 @@ mob/proc/blast_fire_loop()
 
 mob/proc/get_blast_refire()
 	if(!blast_obj) return 1
-	var/mod = 1
-	if(CheckForInjuries() && GetInjuryTypeCount(/injury/fracture/left_arm))
-		mod *= 1.05
-	if(CheckForInjuries() && GetInjuryTypeCount(/injury/fracture/right_arm))
-		mod *= 1.05
-	return TickMult((1 / blast_obj.blast_refire * Speed_delay_mult(severity=0.25)) * (src.HasTrait("Quickfire Ki") ? 0.5 : 1) * mod)
+	return TickMult(1 / blast_obj.blast_refire * Speed_delay_mult(severity=0.25))
 
 mob/proc/get_shuriken_refire()
 	return TickMult(2.4 * Speed_delay_mult(severity=0.3))
 
-mob/proc/Blast_Fire(obj/Skills/Combat/Ki/Blast/B)
+mob/proc/Blast_Fire(obj/Attacks/Blast/B)
 
 	//return //disabled to see if it is crashing things
 
 	if(!B) B=blast_obj
-	if(!B) for(var/obj/Skills/Combat/Ki/Blast/C in ki_attacks) B=C
+	if(!B) for(var/obj/Attacks/Blast/C in ki_attacks) B=C
 	if(!B) return
 
 	B.Blast_Count = 1
+	//B.Blast_Count /= Speed_delay_mult(severity = 0.2)
 	B.Blast_Count = ToOne(B.Blast_Count)
 
 	if(beaming || Beam_stunned()) return
@@ -503,7 +607,7 @@ mob/proc/Blast_Fire(obj/Skills/Combat/Ki/Blast/B)
 
 	while(Amount)
 
-		IncreaseKi(-GetSkillDrain(mod = B.Drain, is_energy = 1))
+		Ki -= GetSkillDrain(mod = B.Drain, is_energy = 1)
 
 		var/obj/Blast/A = get_cached_blast()
 		var/percent = 1.5 / B.blast_refire ** 0.75 //was 3
@@ -511,7 +615,7 @@ mob/proc/Blast_Fire(obj/Skills/Combat/Ki/Blast/B)
 		if(B.Stun) percent *= 1
 		//if(B.Spread==3) off_mod*=0.7
 		A.Stun = B.Stun
-		A.setStats(src, Percent=percent, Off_Mult=off_mod, Explosion=0, burn_mod = B.burnMod)
+		A.setStats(src, Percent=percent, Off_Mult=off_mod, Explosion=0)
 		var
 			base_speed = 32
 			max_speed_bonus = 32 - base_speed
@@ -528,6 +632,18 @@ mob/proc/Blast_Fire(obj/Skills/Combat/Ki/Blast/B)
 		A.Shockwave = ToOne(1.4 * B.Shockwave / B.blast_refire**0.4)
 		if(prob(100)) A.Explosive=B.Explosive
 		A.dir = dir
+
+		//it graphically looks like its shooting too far out from your character so im just gonna rig it like this now
+		var
+			pixX = 0
+			pixY = 0
+			pix = 16
+		if(dir == NORTH || dir == NORTHEAST || dir == NORTHWEST) pixY = -pix
+		if(dir == SOUTH || dir == SOUTHEAST || dir == SOUTHWEST) pixY = pix
+		if(dir == WEST || dir == SOUTHWEST || dir == NORTHWEST) pixX = pix
+		if(dir == EAST || dir == SOUTHEAST || dir == NORTHEAST) pixX = -pix
+		//A.pixel_x += pixX
+		//A.pixel_y += pixY
 
 		A.SafeTeleport(loc)
 
@@ -582,13 +698,13 @@ obj/Blast/proc/BlastVectorWalk(angle = 0)
 		vector_step(src, angle)
 		sleep(world.tick_lag)
 
-obj/Blast/proc/Blast_Move(obj/Skills/Combat/Ki/Blast/b,mob/m, skip_first_delay)
+obj/Blast/proc/Blast_Move(obj/Attacks/Blast/b,mob/m, skip_first_delay)
 	set waitfor=0
 	var
 		steps = 0
 		spread_step = rand(1,4)
 
-	if(b.Spread == 3) spread_step = rand(3,8)
+	if(b.Spread == 3) spread_step = rand(0,8)
 
 	if(!skip_first_delay) sleep(world.tick_lag)
 
@@ -606,15 +722,14 @@ obj/Blast/proc/Blast_Move(obj/Skills/Combat/Ki/Blast/b,mob/m, skip_first_delay)
 
 //avoid using this old ass proc whenever possible, it makes no sense
 mob/proc/Disabled()
-	return KO || KB || (Frozen && !paralysis_immune) || (Action in list("Meditating","Training"))
+	if(KO || KB || (Frozen && !paralysis_immune) || (Action in list("Meditating","Training"))) return 1
 
-obj/Skills/Combat/Ki/Big_Bang_Attack
+obj/Attacks/Big_Bang_Attack
 	Drain=80
 	Teach_Timer=1
 	student_point_cost = 20
 	Cost_To_Learn=10
 	Experience=1
-	burnMod = 3
 	icon='Big bang attack.dmi'
 	desc="Basicly a more powerful version of the 'charge' ki attack"
 	repeat_macro=1
@@ -623,28 +738,26 @@ obj/Skills/Combat/Ki/Big_Bang_Attack
 		Big_Bang()
 
 	verb/Big_Bang()
-		set category = "Skills"
+		//set category="Skills"
 		if(usr.cant_blast()) return
 		if(usr.Ki<usr.GetSkillDrain(mod = Drain, is_energy = 1)) return
 		if(prob(10)&&Experience<1) Experience+=0.1
-		if(!usr) return
-		usr.IncreaseKi(-usr.GetSkillDrain(mod = Drain, is_energy = 1))
+		usr.Ki-=usr.GetSkillDrain(mod = Drain, is_energy = 1)
 		Skill_Increase(2,usr)
 		usr.attacking=3
-		usr.moving_charge=1
+		charging=1
 		usr.overlays+=usr.BlastCharge
 		player_view(10,usr)<<sound('basicbeam_charge.ogg',volume=30)
 		var/turf/fire_location=usr.loc
-		sleep(TickMult(18 * usr.Speed_delay_mult(severity=0.4)) * (usr.HasTrait("Quickfire Ki") ? 0.5 : 1))
+		sleep(TickMult(18 * usr.Speed_delay_mult(severity=0.4)))
 		usr.overlays-=usr.BlastCharge
 		if(!usr.cant_blast(ignore_attack_check = 1))
 			player_view(10,usr)<<sound('Blast.wav',volume=70)
 			usr.Say("BIG BANG ATTACK!!")
 			var/obj/Blast/A=get_cached_blast()
-			if(!A) A = new
 			var/dmg=54
 			if(usr.loc==fire_location) dmg*=1.5
-			A.setStats(usr,Percent=dmg,Off_Mult=1,Explosion=4, burn_mod = burnMod)
+			A.setStats(usr,Percent=dmg,Off_Mult=1,Explosion=4)
 			A.from_attack=src
 			A.Shockwave=1
 			A.icon=icon
@@ -654,13 +767,54 @@ obj/Skills/Combat/Ki/Big_Bang_Attack
 		usr.attacking=0
 		charging=0
 
-obj/Skills/Combat/Ki/Charge
+	/*verb/Big_Bang()
+		//set category="Skills"
+		if(usr.cant_blast()) return
+		if(usr.Ki<usr.GetSkillDrain(mod = Drain, is_energy = 1)) return
+		if(prob(10)&&Experience<1) Experience+=0.1
+		usr.Ki-=usr.GetSkillDrain(mod = Drain, is_energy = 1)
+		Skill_Increase(2,usr)
+		usr.attacking=3
+		charging=1
+		//usr.moving_charge=1
+		usr.overlays+=usr.BlastCharge
+		player_view(10,usr)<<sound('basicbeam_charge.ogg',volume=30)
+		var/turf/fire_location=usr.loc
+		sleep(TickMult(23 * usr.Speed_delay_mult(severity=0.3)))
+		usr.overlays-=usr.BlastCharge
+		if(!usr.cant_blast(ignore_attack_check = 1))
+			player_view(10,usr)<<sound('Blast.wav',volume=70)
+			usr.Say("BIG BANG ATTACK!!")
+			var/obj/Blast/A=get_cached_blast()
+			var/dmg=54
+			if(usr.loc==fire_location) dmg*=1.5
+			A.setStats(usr,Percent=dmg,Off_Mult=1,Explosion=4)
+			A.from_attack=src
+			A.Shockwave=1
+			//A.Distance=50
+			A.step_size = 32 * 1
+			A.icon=icon
+			A.dir=usr.dir
+			A.loc=usr.loc
+			//step(A,A.dir)
+			if(A&&A.z) A.blast_walk(world.tick_lag)
+		usr.attacking=0
+		//usr.moving_charge=0
+		charging=0*/
+
+
+
+
+
+
+
+
+obj/Attacks/Charge
 	Drain=20
 	Teach_Timer=0.1
 	student_point_cost = 10
 	Cost_To_Learn=1
 	Experience=1
-	burnMod = 2
 	icon='20.dmi'
 	desc="An explosive one-shot energy attack that takes a few seconds to charge."
 	repeat_macro=1
@@ -670,25 +824,25 @@ obj/Skills/Combat/Ki/Charge
 		Charge()
 
 	verb/Charge()
-		set category = "Skills"
+		//set category="Skills"
 		if(usr.cant_blast()) return
 		if(usr.Ki<usr.GetSkillDrain(mod = Drain, is_energy = 1)) return
 		if(prob(10)&&Experience<1) Experience+=0.1
-		usr.IncreaseKi(-usr.GetSkillDrain(mod = Drain, is_energy = 1))
+		usr.Ki-=usr.GetSkillDrain(mod = Drain, is_energy = 1)
 		Skill_Increase(2,usr)
 		usr.attacking=3
 		usr.moving_charge=1
 		usr.overlays+=usr.BlastCharge
 		player_view(10,usr)<<sound('basicbeam_charge.ogg',volume=20)
 		var/turf/fire_location=usr.loc
-		sleep(TickMult(7.5 * usr.Speed_delay_mult(severity=0.6)) * (usr.HasTrait("Quickfire Ki") ? 0.5 : 1))
+		sleep(TickMult(7.5 * usr.Speed_delay_mult(severity=0.6)))
 		usr.overlays-=usr.BlastCharge
 		if(!usr.cant_blast(ignore_attack_check = 1))
 			player_view(10,usr)<<sound('Blast.wav',volume=40)
 			var/obj/Blast/A=get_cached_blast()
 			var/dmg=20
 			if(usr.loc==fire_location) dmg*=1.5
-			A.setStats(usr,Percent=dmg,Off_Mult=2,Explosion=2, burn_mod = burnMod)
+			A.setStats(usr,Percent=dmg,Off_Mult=2,Explosion=2)
 			A.from_attack=src
 			A.Shockwave=1
 			A.icon=icon
@@ -697,6 +851,41 @@ obj/Skills/Combat/Ki/Charge
 			A.BlastAutoTargetGo(boundWidth = 32, boundHeight = 32, stepSize = 44, angleLimit = 20, dist = 47, randomAngle = 0)
 		usr.attacking=0
 		usr.moving_charge=0
+
+	/*verb/Charge()
+		//set category="Skills"
+		if(usr.cant_blast()) return
+		if(usr.Ki<usr.GetSkillDrain(mod = Drain, is_energy = 1)) return
+		if(prob(10)&&Experience<1) Experience+=0.1
+		usr.Ki-=usr.GetSkillDrain(mod = Drain, is_energy = 1)
+		Skill_Increase(2,usr)
+		usr.attacking=3
+		//charging=1
+		usr.moving_charge=1
+		usr.overlays+=usr.BlastCharge
+		player_view(10,usr)<<sound('basicbeam_charge.ogg',volume=20)
+		var/turf/fire_location=usr.loc
+		sleep(TickMult(10*usr.Speed_delay_mult(severity=0.5)))
+		usr.overlays-=usr.BlastCharge
+		if(!usr.cant_blast(ignore_attack_check = 1))
+			player_view(10,usr)<<sound('Blast.wav',volume=40)
+			var/obj/Blast/A=get_cached_blast()
+			var/dmg=20
+			if(usr.loc==fire_location) dmg*=1.5
+			A.setStats(usr,Percent=dmg,Off_Mult=2,Explosion=2)
+			A.from_attack=src
+			A.Shockwave=1
+			//A.Distance=50
+			A.icon=icon
+			A.dir=usr.dir
+			A.loc=usr.loc
+			A.step_size = 32 * 1
+			//step(A,A.dir)
+			if(A&&A.z)
+				A.blast_walk(world.tick_lag)
+		usr.attacking=0
+		usr.moving_charge=0
+		*/
 
 obj/proc/blast_walk(delay=1,start_dir)
 	set waitfor=0
@@ -707,7 +896,7 @@ obj/proc/blast_walk(delay=1,start_dir)
 		sleep(t)
 
 mob/var/tmp/moving_charge
-obj/Skills/Combat/Ki/New()
+obj/Attacks/New()
 	spawn(5) if(src&&ismob(loc))
 		var/mob/m=loc
 		m.ki_attacks+=src
@@ -717,14 +906,13 @@ obj/Skills/Combat/Ki/New()
 	spawn(50) if(src && icon && icon == initial(icon))
 		icon += rgb(rand(0,255),rand(0,255),rand(0,255))
 	. = ..()
-obj/Skills/Combat/Ki/Cyber_Charge
+obj/Attacks/Cyber_Charge
 	teachable=0
 	Drain=10
 	Teach_Timer=0.1
 	student_point_cost = 15
 	Cost_To_Learn=0
 	Experience=1
-	burnMod = 2.2
 	Mastery=100
 	icon='11.dmi'
 	desc="This artificial attack is designed to mimic charge. It is a bit weaker but can be fired \
@@ -734,23 +922,23 @@ obj/Skills/Combat/Ki/Cyber_Charge
 		set hidden=1
 		CyberCharge()
 	verb/CyberCharge()
-		set category = "Skills"
+		//set category="Skills"
 		if(usr.cant_blast()) return
 		if(usr.Ki<usr.GetSkillDrain(mod = Drain, is_energy = 1)) return
 		if(prob(10)&&Experience<1) Experience+=0.1
-		usr.IncreaseKi(-usr.GetSkillDrain(mod = Drain, is_energy = 1))
+		usr.Ki-=usr.GetSkillDrain(mod = Drain, is_energy = 1)
 		Skill_Increase(2,usr)
 		usr.attacking=3
 		charging=1
 		usr.overlays+=usr.BlastCharge
 		player_view(10,usr)<<sound('basicbeam_charge.ogg',volume=20)
-		sleep(TickMult(5 * usr.Speed_delay_mult(severity=0.6)) * (usr.HasTrait("Quickfire Ki") ? 0.5 : 1))
+		sleep(TickMult(5 * usr.Speed_delay_mult(severity=0.6)))
 		usr.overlays-=usr.BlastCharge
 		if(!usr.cant_blast(ignore_attack_check = 1))
 			player_view(10,usr)<<sound('Blast.wav',volume=30)
 			var/obj/Blast/A=get_cached_blast()
 			A.icon=icon
-			A.setStats(usr,Percent=20,Off_Mult=2,Explosion=1, burn_mod = burnMod)
+			A.setStats(usr,Percent=20,Off_Mult=2,Explosion=1)
 			A.from_attack=src
 			A.step_size = 32 * 1
 			A.dir=usr.dir
@@ -760,12 +948,11 @@ obj/Skills/Combat/Ki/Cyber_Charge
 		usr.attacking=0
 		charging=0
 
-obj/Skills/Combat/Ki/Kienzan
+obj/Attacks/Kienzan
 	icon='Blast - Destructo Disk.dmi'
 	Cost_To_Learn=3
 	Teach_Timer=1
 	student_point_cost = 20
-	burnMod = 0.5
 	desc="A guidable energy disk"
 	var/tmp/Kienzan_Delay=0.85
 	Drain=100
@@ -776,7 +963,7 @@ obj/Skills/Combat/Ki/Kienzan
 		Kienzan()
 
 	verb/Kienzan()
-		set category = "Skills"
+		//set category="Skills"
 		if(usr.cant_blast()) return
 		if(!usr.move || usr.Ki<usr.GetSkillDrain(mod = Drain, is_energy = 1)) return
 		var/turf/t=Get_step(usr,NORTH)
@@ -787,14 +974,13 @@ obj/Skills/Combat/Ki/Kienzan
 				break
 			if(t.density) obstacle=1
 			if(obstacle)
-				usr.SendMsg("You can not use this here because there is an obstacle above you.", CHAT_IC)
+				usr<<"You can not use this here because there is an obstacle above you"
 				return
 		Using=1
-		if(!usr) return
 		usr.attacking=3
 		if(usr.h1_overhead_gfx)
 			usr.icon_state="1H Overhead Charge"
-		usr.IncreaseKi(-usr.GetSkillDrain(mod = Drain, is_energy = 1))
+		usr.Ki-=usr.GetSkillDrain(mod = Drain, is_energy = 1)
 		Skill_Increase(3,usr)
 		player_view(10,usr)<<sound('destructodisc_charge.ogg',volume=35)
 
@@ -809,13 +995,12 @@ obj/Skills/Combat/Ki/Kienzan
 		A.slice_attack=1
 		var/dmgPercent = 45
 		if(usr.Race == "Human") dmgPercent *= 1.5
-		A.setStats(usr,Percent = dmgPercent, Off_Mult = 15, Explosion = 0, burn_mod = burnMod)
+		A.setStats(usr,Percent = dmgPercent, Off_Mult = 15, Explosion = 0)
 		A.from_attack=src
 		A.step_size = 22
 		A.weaker_obstacles_cant_destroy_blast = 1
 
 		sleep(TickMult(12*usr.Speed_delay_mult(severity=0.3)))
-		if(!usr) return
 		if(usr && usr.h1_overhead_gfx)
 			usr.icon_state=""
 		if(A)
@@ -829,11 +1014,128 @@ obj/Skills/Combat/Ki/Kienzan
 				else step(A,usr.last_direction_pressed)
 				if(A) A.density=1
 				if(usr.KO && A) del(A)
-				if(!usr) del(A)
 				sleep(world.tick_lag)
 			if(A&&A.z) walk(A,A.dir)
 		Using=0
 		if(usr) usr.attacking=0
+
+obj/Attacks/Spin_Blast
+	Experience=1
+	Teach_Timer=0.4
+	student_point_cost = 15
+	Cost_To_Learn=2
+	Drain = 10
+	icon='1.dmi'
+	desc="Shoot many small blasts in every direction continuously"
+	repeat_macro=1
+
+	verb/Hotbar_use()
+		set hidden=1
+		SpinBlast()
+
+	verb/SpinBlast()
+		//set category="Skills"
+		Experience=1000
+		if(usr.cant_blast()) return
+		if(usr.Ki<usr.GetSkillDrain(mod = Drain, is_energy = 1)) return
+		usr.Ki-=usr.GetSkillDrain(mod = Drain, is_energy = 1)
+		Skill_Increase(2,usr)
+		if(prob(50))
+			usr.attacking=3
+			var/Delay=25/Experience
+			if(Delay<1*usr.Speed_delay_mult(severity=0.5)) Delay=1*usr.Speed_delay_mult(severity=0.5)
+			Delay=TickMult(Delay)
+			spawn(Delay) usr.attacking=0
+		Experience+=0.01
+		player_view(10,usr)<<sound('Blast.wav',volume=30)
+		for(var/v in 1 to 2)
+			var/obj/Blast/A=get_cached_blast()
+			A.pixel_x+=rand(-12,12)
+			A.pixel_y+=rand(-12,12)
+			A.icon=icon
+			A.setStats(usr,Percent = 1.8, Off_Mult=1, Explosion=rand(2,3))
+			A.from_attack=src
+			A.step_size = ToOne(32 * 0.67)
+			A.Shockwave=Shockwave
+			A.dir=pick(NORTH,SOUTH,EAST,WEST,NORTHWEST,NORTHEAST,SOUTHEAST,SOUTHWEST)
+			A.loc=usr.loc
+			walk(A,A.dir)
+			if(prob(67))
+				spawn(3) if(A&&A.z && !A.deflected) step(A,turn(A.dir,pick(-45,0,45)))
+				spawn(5) if(A&&A.z && !A.deflected) walk(A,pick(A.dir,turn(A.dir,45),turn(A.dir,-45)))
+
+obj/Attacks/Makosen
+	Cost_To_Learn=6
+	Teach_Timer=2
+	student_point_cost = 30
+	var/Spread=50
+	var/ChargeTime = 140
+	var/Shots=25
+	var/ShotSpeed=2
+	var/SleepProb=30
+	var/Deletion=20
+	var/ExplosiveChance=0
+	var/Explosiveness=1
+	Drain=150
+	icon='Aura Blast Size 1.dmi'
+	desc="A very, very powerful attack, widespread and very destructive. Made up of many smaller shots \
+	that inflict a lot of damage all together. It is very draining, not very long range, and has a \
+	long charge time."
+	repeat_macro=1
+
+	verb/Hotbar_use()
+		set hidden=1
+		Makosen()
+
+	verb/Makosen()
+		//set category="Skills"
+		if(usr.cant_blast()) return
+		if(usr.Ki<usr.GetSkillDrain(mod = Drain, is_energy = 1)) return
+		usr.attacking=3
+		usr.overlays+=usr.BlastCharge
+		player_view(10,usr)<<sound('basicbeam_charge.ogg',volume=20)
+		charging=1
+		sleep(TickMult(0.1 * ChargeTime * usr.Speed_delay_mult(severity=0.4)))
+		if(usr) usr.overlays-=usr.BlastCharge
+		if(!usr.cant_blast(ignore_attack_check = 1))
+			player_view(10,usr)<<sound('basicbeam_fire.ogg',volume=10)
+			var/Amount=ToOne(17*usr.Eff**0.25)
+			while(Amount)
+				Amount-=1
+				var/obj/Blast/A=get_cached_blast()
+				A.Can_Home=0
+				A.icon=icon
+				var/Os=5
+				while(Os)
+					Os-=1
+					var/image/I=image(icon=A.icon,icon_state=A.icon_state,pixel_x=rand(-32,32),pixel_y=rand(-32,32))
+					A.overlays+=I
+				//A.Deflectable=0
+				A.apply_short_range_beam_knock=0
+				A.layer=4
+				A.setStats(usr, Percent = 17, Off_Mult = 1,Explosion = 0)
+				A.deflect_difficulty=4
+				A.from_attack=src
+				if(prob(ExplosiveChance)) A.Explosive=Explosiveness
+				A.dir=usr.dir
+				A.pixel_x+=rand(-32,32)
+				A.pixel_y+=rand(-32,32)
+				A.Distance=35
+				A.is_makosen=1
+				A.loc=Get_step(usr,usr.dir)
+				A.loc=pick(Get_step(usr,usr.dir),Get_step(usr,turn(usr.dir,45)),Get_step(usr,turn(usr.dir,-45)))
+
+				//to keep makosen from shooting thru 1 tile thick walls when you fire it right next to it
+				var/turf/t=A.loc
+				if(t && isturf(t) && t.Health>A.BP) del(A)
+
+				if(A) A.Beam()
+				spawn if(A && A.z) walk(A,A.dir,ShotSpeed * world.tick_lag)
+				sleep(TickMult(1))
+			usr.Ki-=usr.GetSkillDrain(mod = Drain, is_energy = 1)
+			Skill_Increase(2,usr)
+		usr.attacking=0
+		charging=0
 
 obj/Time_Freeze_Energy
 	var/TF_Timer=600
@@ -856,7 +1158,7 @@ mob/var/tmp/list/Active_Freezes=new
 mob/proc/Fill_Active_Freezes_List()
 	for(var/mob/P in players) for(var/obj/Time_Freeze_Energy/T in P) if(T.ID==key) Active_Freezes+=T
 
-obj/Skills/Combat/Ki/Time_Freeze
+obj/Attacks/Time_Freeze
 	desc="This will send paralyzing energy rings all around nearby people and they will not be able \
 	to move until it wears off. The more BP and force you have compared to your opponent's BP and resistance, the \
 	longer it will last."
@@ -874,15 +1176,15 @@ obj/Skills/Combat/Ki/Time_Freeze
 		Time_Freeze()
 
 	verb/Time_Freeze()
-		set category = "Skills"
+		//set category="Skills"
 		if(usr.attacking||usr.tournament_override(fighters_can=1)) return
 		if(usr.Frozen) return
 		if(usr.KO) return
 		if(time_freeze_timer>0)
-			usr.SendMsg("You can not use this for another [time_freeze_timer] seconds.", CHAT_IC)
+			usr<<"You can not use this for another [time_freeze_timer] seconds"
 			return
 		for(var/obj/Time_Freeze_Energy/T) if(T.ID==usr.key)
-			usr.SendMsg("You can not use this until it has worn off from everyone affected by the previous time you used this.", CHAT_IC)
+			usr<<"You can not use this until it has worn off from everyone affected by the previous time you used this"
 			return
 		usr.overlays-='TimeFreeze.dmi'
 		usr.overlays+='TimeFreeze.dmi'
@@ -904,12 +1206,11 @@ obj/Skills/Combat/Ki/Time_Freeze
 				A.contents+=T
 				usr.Active_Freezes+=T
 				T.ID=usr.key
-				T.TF_Timer = (50 + (usr.GetStatMod("For") * usr.GetTierBonus(0.5)) - (A.GetStatMod("Res") * A.GetTierBonus(0.75) * (1 + A.recov / 2)))
-				T.TF_Timer /=  A.stun_resistance_mod
-				T.TF_Timer = Math.Min (T.TF_Timer, 600)
+				T.TF_Timer=50*sqrt(usr.BP/A.BP) * Clamp((usr.Pow/A.Res)**0.35,0.4,3) / A.stun_resistance_mod
+				if(T.TF_Timer>600) T.TF_Timer=600
 				sleep(10*usr.Speed_delay_mult(severity=0.5))
 
-obj/Skills/Combat/Ki/Explosion
+obj/Attacks/Explosion
 	var/On
 	hotbar_type="Ability"
 	can_hotbar=1
@@ -919,7 +1220,6 @@ obj/Skills/Combat/Ki/Explosion
 	student_point_cost = 20
 	Experience=0
 	Level=5
-	burnMod = 5
 
 	New()
 		if(Level>5) Level=5
@@ -930,12 +1230,12 @@ obj/Skills/Combat/Ki/Explosion
 		Explosion_Toggle()
 
 	verb/Explosion_Toggle()
-		set category = "Skills"
+		set category="Skills"
 		if(!On)
-			usr.SendMsg("Explosion skill is now activated, click the ground to trigger.", CHAT_IC)
+			usr<<"Explosion skill is now activated, click the ground to trigger."
 			On=1
 		else
-			usr.SendMsg("Explosion deactivated. Now when you click the ground you will warp there instead.", CHAT_IC)
+			usr<<"Explosion deactivated. Now when you click the ground you will warp there instead."
 			On=0
 
 //mob/var/tmp/last_scattershot=0 //world.time
@@ -947,7 +1247,7 @@ mob
 			lastStopScattershot = -9999
 
 mob/proc
-	TryScatterShot(obj/Skills/Combat/Ki/Scatter_Shot/s)
+	TryScatterShot(obj/Attacks/Scatter_Shot/s)
 		if(using_scattershot)
 			StopScatterShotting(s)
 		else
@@ -956,14 +1256,14 @@ mob/proc
 			src << "<font color=cyan>Click again to stop"
 			ScatterShot(s)
 
-	CanScatterShot(obj/Skills/Combat/Ki/Scatter_Shot/s)
+	CanScatterShot(obj/Attacks/Scatter_Shot/s)
 		if(world.time - lastStopScattershot < 25) return //because theres a bug where if you just spam the scattershot verb you do this sure rapid fire homing blast thing
 			//that will rek almost anyone
 		if(using_scattershot || beaming || Beam_stunned() || cant_blast()) return
 		if(Ki < GetSkillDrain(mod = s.Drain, is_energy = 1)) return
 		return 1
 
-	StopScatterShotting(obj/Skills/Combat/Ki/Scatter_Shot/s)
+	StopScatterShotting(obj/Attacks/Scatter_Shot/s)
 		if(!using_scattershot)
 			return
 		src << "<font color=cyan>You stop using Scatter Shot"
@@ -977,11 +1277,11 @@ mob/proc
 				if(ScatterShotInterrupted(s, ignore_low_ki = 1)) b.ScatterShotInterruptedFlyOff()
 				else b.ScatterShotAttackTarget()
 
-	ScatterShotInterrupted(obj/Skills/Combat/Ki/Scatter_Shot/s, ignore_low_ki)
+	ScatterShotInterrupted(obj/Attacks/Scatter_Shot/s, ignore_low_ki)
 		if(KO || knock_dist >= 5 || stun_level || Frozen || cant_blast(ignore_attack_check = 1)) return 1
 		if(!ignore_low_ki && Ki < GetSkillDrain(mod = s.Drain, is_energy = 1)) return 1
 
-	ScatterShot(obj/Skills/Combat/Ki/Scatter_Shot/s)
+	ScatterShot(obj/Attacks/Scatter_Shot/s)
 		for(var/obj/Blast/b in s.scatter_shot_blasts) if(!b.z || b.Owner != src) s.scatter_shot_blasts -= b
 		AlterInputDisabled(1)
 		attacking = 3
@@ -995,7 +1295,7 @@ mob/proc
 		FireScatterShotsLoop(s)
 		StopScatterShotting(s)
 
-	FireScatterShotsLoop(obj/Skills/Combat/Ki/Scatter_Shot/s)
+	FireScatterShotsLoop(obj/Attacks/Scatter_Shot/s)
 		var
 			refire = 1 + (1 * Speed_delay_mult(severity = 0.5)) * 0.5
 			last_retarget = 0
@@ -1016,17 +1316,17 @@ mob/proc
 					break
 				sleep(TickMult(refire))
 
-	NewScatterShotBlast(mob/m, obj/Skills/Combat/Ki/Scatter_Shot/s)
+	NewScatterShotBlast(mob/m, obj/Attacks/Scatter_Shot/s)
 		set waitfor=0
 		if(!m) return
 		flick("Attack",src)
 		player_view(10,src) << sound('Blast.wav', volume = 10)
-		IncreaseKi(-GetSkillDrain(mod = s.Drain, is_energy = 1))
+		Ki -= GetSkillDrain(mod = s.Drain, is_energy = 1)
 
 		var/obj/Blast/b = get_cached_blast()
 		s.scatter_shot_blasts += b
 		//Percent was 3.7 before they asked me to buff it
-		b.setStats(src, Percent = 5, Off_Mult = 1, Explosion = 3, homing_mod = 2, burn_mod = s.burnMod)
+		b.setStats(src, Percent = 5, Off_Mult = 1, Explosion = 3, homing_mod = 2)
 		b.Distance = 150
 		b.pixel_x += rand(-6,6)
 		b.pixel_y += rand(-6,6)
@@ -1086,12 +1386,11 @@ obj/Blast
 				vector_step(src, angle, step_size)
 				sleep(world.tick_lag)
 
-obj/Skills/Combat/Ki/Scatter_Shot
+obj/Attacks/Scatter_Shot
 	Drain = 30
 	Teach_Timer=1
 	student_point_cost = 35
 	Cost_To_Learn=6
-	burnMod = 10
 	icon='17.dmi'
 	desc="This will create multiple homing balls all around an opponent, and when its done they will \
 	all collide at once on top of them. Individually each ball is weak, but all together it can be \
@@ -1111,18 +1410,86 @@ obj/Skills/Combat/Ki/Scatter_Shot
 		usr.TryScatterShot(src)
 
 	verb/Scatter_Shot()
-		set category = "Skills"
+		//set category="Skills"
 		usr.TryScatterShot(src)
+
+		/*if(usr.beaming||usr.Beam_stunned()) return
+		if("Scatter shot" in usr.active_prompts) return
+
+		var/minutes=1
+		if(world.time<usr.last_scattershot+(minutes*60*10))
+			var/minutes_left=(usr.last_scattershot+(minutes*60*10)-world.time)/(10*60)
+			usr<<"You can not use scattershot for another [round(minutes_left)] minutes and [round((minutes_left*60)%60)] \
+			seconds"
+			return
+
+		for(var/obj/o in scatter_shot_blasts) if(!o.z) scatter_shot_blasts-=o
+
+		if(usr.cant_blast()) return
+		if(!usr.move || usr.Ki<usr.GetSkillDrain(mod = Drain, is_energy = 1)) return
+
+		var/mob/B=usr.LungeTarget()
+		if(!B)
+			usr<<"No target found"
+			return
+		//if(!B) B=usr
+
+		usr.attacking=3
+		var/amount=ToOne(40*sqrt(usr.Eff))
+		Using=1
+		usr.last_scattershot=world.time
+		while(amount&&!usr.cant_blast(ignore_attack_check = 1))
+			player_view(10,usr)<<sound('Blast.wav',volume=20)
+			amount-=1
+			flick("Attack",usr)
+			var/obj/Blast/A=get_cached_blast()
+			scatter_shot_blasts+=A
+			A.Distance=70
+			A.density=0
+			A.step_size = 22
+			A.icon=icon
+			if(prob(100)) A.Explosive=1
+			A.Shockwave=3
+			A.setStats(usr,Percent=3.1,Off_Mult=1,Explosion=ToOne(0.3))
+			A.from_attack=src
+			A.loc=usr.loc
+			var/turf/Spot
+			var/list/Spots
+			for(var/turf/T in Circle(9,B)) if(!T.density)
+				if(!Spots) Spots=new/list
+				Spots+=T
+			if(Spots)
+				Spot=pick(Spots)
+				A.Can_Home=0
+				walk_towards(A,Spot,1)
+				spawn(rand(20,25)*usr.Speed_delay_mult(severity=0.5)) if(A&&A.z&&A.Owner==usr)
+					A.density=1
+					if(B) walk_towards(A,B,TickMult(1))
+					spawn while(B&&A&&A.z&&A.Owner==usr)
+						if(usr&&(usr.KB||usr.KO))
+							walk(A,pick(A.dir,turn(A.dir,45),turn(A.dir,-45),turn(A.dir,90),turn(A.dir,-90)))
+						if(B in range(0,A)) A.Bump(B,override_dir=pick(NORTH,SOUTH,EAST,WEST,NORTHEAST,NORTHWEST,SOUTHWEST,SOUTHEAST))
+						sleep(TickMult(1))
+				spawn if(A&&A.z&&A.Owner==usr)
+					while(A&&A.z&&B) sleep(TickMult(2))
+					if(A&&A.z)
+						walk_rand(A)
+						spawn(rand(1,50)) if(A) del(A)
+				sleep(TickMult(0.3))
+			else if(A) del(A)
+		usr.Ki-=usr.GetSkillDrain(mod = Drain, is_energy = 1)
+		Skill_Increase(5,usr)
+		usr.attacking=0
+		spawn(30+usr.Speed_delay_mult(severity=0.5)*4) if(src) Using=0*/
 
 mob/var/tmp/lastSokidan = 0 //world.time
 
 obj/var/tmp/Sokidan
-obj/Skills/Combat/Ki/Sokidan
+obj/Attacks/Sokidan
 	icon='17.dmi'
 	Teach_Timer=0.7
 	student_point_cost = 25
 	Cost_To_Learn=3
-	burnMod = 1.2
 	desc="This makes a very powerful guided bomb of energy that explodes on contact. If you can get it \
 	to actually hit someone it is a very nice attack. It will move faster and faster as you master it."
 	var/tmp/Sokidan_Delay=1
@@ -1133,7 +1500,7 @@ obj/Skills/Combat/Ki/Sokidan
 		Sokidan()
 
 	verb/Sokidan()
-		set category = "Skills"
+		//set category="Skills"
 		if(world.time - usr.lastSokidan < 20) return
 		if(usr.cant_blast()) return
 		if(!usr.move || usr.Ki<usr.GetSkillDrain(mod = Drain, is_energy = 1)) return
@@ -1145,16 +1512,15 @@ obj/Skills/Combat/Ki/Sokidan
 				break
 			if(t.density) obstacle=1
 			if(obstacle)
-				usr.SendMsg("You can not use this here because there is an obstacle above you.", CHAT_IC)
+				usr<<"You can not use this here because there is an obstacle above you"
 				return
 		Using=1
 
-		if(!usr) return
 		usr.attacking=3
 
 		if(usr.h1_overhead_gfx)
 			usr.icon_state="1H Overhead Charge"
-		usr.IncreaseKi(-usr.GetSkillDrain(mod = Drain, is_energy = 1))
+		usr.Ki-=usr.GetSkillDrain(mod = Drain, is_energy = 1)
 		Skill_Increase(3,usr)
 		player_view(10,usr)<<sound('basicbeam_charge.ogg',volume=20)
 
@@ -1170,13 +1536,12 @@ obj/Skills/Combat/Ki/Sokidan
 		A.step_size = 22
 		var/dmgPercent = 23
 		if(usr.Race == "Human") dmgPercent *= 1.5
-		A.setStats(usr,Percent = dmgPercent, Off_Mult = 3, Explosion = 2, homing_mod = 2, burn_mod = burnMod)
+		A.setStats(usr,Percent = dmgPercent, Off_Mult = 3, Explosion = 2, homing_mod = 2)
 		A.from_attack=src
 		A.weaker_obstacles_cant_destroy_blast = 1
 
-		if(!usr) return
-
 		sleep(TickMult(7*usr.Speed_delay_mult(severity=0.7)))
+
 		if(usr.h1_overhead_gfx)
 			usr.icon_state=""
 
@@ -1187,8 +1552,8 @@ obj/Skills/Combat/Ki/Sokidan
 			var/controlling=1
 			var/bumps=5
 
-			while(A && A.z && usr && getdist(A,usr) < 25 && !A.deflected && controlling)
-			//while(A && A.z && usr && getdist(A,usr) < 25 && controlling)
+			//while(A && A.z && usr && getdist(A,usr) < 25 && !A.deflected && controlling)
+			while(A && A.z && usr && getdist(A,usr) < 25 && controlling)
 				Using=1
 				if(locate(/mob) in Get_step(A,usr.dir))
 					for(var/mob/m in Get_step(A,usr.dir))
@@ -1214,6 +1579,55 @@ obj/Skills/Combat/Ki/Sokidan
 		Using=0
 		usr.attacking=0
 		usr.lastSokidan = world.time
+
+obj/Attacks/Genocide
+	var/Charging
+	Drain=3
+	Teach_Timer=5
+	student_point_cost = 50
+	Cost_To_Learn=40
+	icon='18.dmi'
+	desc="This is a very weak attack, about the power of a single blast, but each one homes in on random \
+	targets across the planet. Press it once to begin firing, again to stop."
+	verb/Hotbar_use()
+		set hidden=1
+		Genocide()
+	verb/Genocide()
+		//set category="Skills"
+		if(!Charging)
+			if(usr.cant_blast()) return
+			if(usr.Ki<usr.GetSkillDrain(mod = Drain, is_energy = 1)) return
+			Charging=1
+			usr.overlays+='SBombGivePower.dmi'
+			usr.attacking=3
+			sleep(25*usr.Speed_delay_mult(severity=0.5))
+
+			while(Charging && !usr.cant_blast(ignore_attack_check = 1) && usr.Ki>10)
+				var/area/a = usr.get_area()
+				var/target_found
+				for(var/mob/B in a.player_list)
+					if(B.z == usr.z && B != usr && B.client && !B.Safezone && !(B in All_Entrants) && !B.hiding_energy)
+						if(!usr.cant_blast(ignore_attack_check = 1))
+							target_found = 1
+							Skill_Increase(1,usr)
+							player_view(10,usr)<<sound('Blast.wav',volume=20)
+							var/obj/Blast/A=get_cached_blast()
+							A.Distance=500
+							A.icon=icon
+							A.setStats(usr,Percent=1.5,Off_Mult=1,Explosion=0)
+							A.from_attack=src
+							A.loc=usr.loc
+							A.dir=NORTH
+							walk_towards(A,B)
+							if(prob(20)) sleep(1)
+						usr.Ki-=usr.GetSkillDrain(mod = Drain, is_energy = 1)
+						sleep(5)
+				if(!target_found) sleep(5)
+
+			usr.overlays-='SBombGivePower.dmi'
+			usr.attacking=0
+			Charging=0
+		else Charging=0
 
 var/list/small_crater_cache=new
 var/list/big_crater_cache=new
@@ -1280,6 +1694,10 @@ proc/BigCrater(turf/pos, maxSize, growTime, fadeTime, minRangeFromOtherCraters)
 	return c
 
 obj/BigCrater
+	//icon='Craters.dmi'
+	//icon_state="Center"
+
+	//icon = 'kikoho crater.dmi'
 	icon = 'crater 2 stretch 2019.png'
 
 	Dead_Zone_Immune=1
@@ -1289,7 +1707,7 @@ obj/BigCrater
 	Nukable=0
 	Knockable=0
 	attackable=0
-	layer = DECAL_LAYER
+	layer = TURF_LAYER + 0.1
 
 	var
 		craterMaxSize = 1
@@ -1345,7 +1763,7 @@ obj/Blast/Genki_Dama
 	weaker_obstacles_cant_destroy_blast = 1
 
 mob/var/tmp/shockwaving
-obj/Skills/Combat/Ki/Shockwave
+obj/Attacks/Shockwave
 	teachable=1
 	hotbar_type="Ability"
 	can_hotbar=1
@@ -1353,7 +1771,6 @@ obj/Skills/Combat/Ki/Shockwave
 	Teach_Timer=0.5
 	student_point_cost = 15
 	Drain=15
-	burnMod = 0
 	desc="This emits a shockwave that will knockback anyone within range, dealing some damage. It does \
 	damage based on your strength + force, compared to the target's durability + resistance"
 	repeat_macro=1
@@ -1363,18 +1780,18 @@ obj/Skills/Combat/Ki/Shockwave
 		Shockwave()
 
 	verb/Shockwave()
-		set category = "Skills"
+		//set category="Skills"
 		if(usr.beaming||usr.Beam_stunned()) return
 		if(usr.tournament_override(fighters_can=1)) return
 		if(usr.cant_blast()) return
 		if(usr.dash_attacking||usr.Ki<usr.GetSkillDrain(mod = Drain, is_energy = 1)) return
 		if(world.time<usr.next_shockwave)
 			var/seconds=(usr.next_shockwave-world.time)/10
-			usr.SendMsg("You can not use this for another [round(seconds,0.1)] seconds.", CHAT_IC)
+			usr<<"You can not use this for another [round(seconds,0.1)] seconds"
 			return
 		usr.ReleaseGrab()
 		Skill_Increase(1.5,usr)
-		usr.IncreaseKi(-usr.GetSkillDrain(mod = Drain, is_energy = 1))
+		usr.Ki-=usr.GetSkillDrain(mod = Drain, is_energy = 1)
 		//usr.attacking=3
 		usr.shockwaving=1
 		var/Amount = 7
@@ -1383,27 +1800,28 @@ obj/Skills/Combat/Ki/Shockwave
 			Amount-=1
 			Make_Shockwave(usr,7,sw_icon_size=256)
 			for(var/turf/T in oview(7,usr))
-				if(prob(10)&&!T.density&&!IsWater(T))
+				if(prob(10)&&!T.density&&!T.Water)
 					var/Dirts=prob(40)
 					while(Dirts)
 						Dirts-=1
 						var/image/I=image(icon='Damaged Ground.dmi',pixel_x=rand(-16,16),pixel_y=rand(-16,16))
 						T.overlays+=I
+						T.Remove_Damaged_Ground(I)
 			spawn for(var/mob/P in mob_view(10,usr)) if(P.z&&P!=usr&&P.grabbedObject!=usr)
 				if(!P.AOE_auto_dodge(usr,usr.loc))
-					var/Distance = 7 + (usr.GetStatMod("Str") + usr.GetStatMod("For")) * usr.GetTierBonus(0.5)
-					Distance -= (P.GetStatMod("Res") + P.GetStatMod("Dur")) * P.GetTierBonus(0.25)
+					var/Distance = 7 * (((usr.Pow + usr.Str) / (P.Res + P.End)) ** 0.5) * ((usr.BP / P.BP) ** 0.5)
 					Distance=round(Distance)
 					if(Distance>30) Distance=30
 					P.Shockwave_Knockback(Distance,usr.loc, bypass_immunity = 1)
-					var/dmg = 1 + (usr.GetStatMod("Str") + usr.GetStatMod("For")) * usr.GetTierBonus(0.5)
-					dmg -= (P.GetStatMod("Res") + P.GetStatMod("Dur")) * P.GetTierBonus(0.25)
-					dmg = Math.Max(dmg, 1)
+					var/dmg=1*(usr.BP/P.BP)**bp_exponent*((usr.Pow+usr.Swordless_strength())/(P.Res+P.End))**0.4 * (ki_power+melee_power)/2
 
-					if(P.IsShielding())
+					dmg*=sagas_bonus(usr,P)
+					usr.training_period(P)
+
+					if(P.ki_shield_on())
 						dmg*=(P.max_ki/100) * P.ShieldDamageReduction() / (P.Eff**shield_exponent)*P.Generator_reduction()
-						P.IncreaseKi(-dmg)
-					else P.TakeDamage(dmg, usr)
+						P.Ki-=dmg
+					else P.TakeDamage(dmg)
 					spawn if(P&&P.drone_module) P.Drone_Attack(usr,lethal=1)
 			spawn if(usr)
 				var/n=0

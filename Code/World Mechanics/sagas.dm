@@ -11,6 +11,7 @@ should be able to drop the villain rank
 */
 
 var
+	sagas
 	hero
 	mob/hero_mob
 	villain
@@ -37,6 +38,7 @@ mob/var
 
 proc
 	find_new_hero(mob/old_hero)
+		if(old_hero) old_hero.reset_hero_stuff()
 		var/list/l=new
 		for(var/mob/m in players) if(m.Hero_eligible() && m.key!=villain)
 			if(m!=old_hero&&m.z&&m.client&&m.alignment=="Good"&&!m.Dead)
@@ -49,6 +51,7 @@ proc
 		//m.training_period=0
 
 	find_new_villain(mob/old_villain,mob/villain_killer)
+		if(old_villain) old_villain.reset_villain_stuff()
 		var/list/l=new
 		for(var/mob/m in players) if(m.Villain_eligible() && m.key!=hero)
 			if(m!=old_villain&&m.z&&m.client&&m.alignment=="Evil"&&!m.Dead) l+=m
@@ -58,6 +61,7 @@ proc
 			m=villain_killer
 		if(!m||!ismob(m)) return
 		villain=m.key
+		m.add_villain_verbs()
 		if(!m.villain_time) m.villain_time=world.realtime
 		if(!m.heroes_killed) m.showdown_time=30
 		else m.showdown_time = 180
@@ -67,7 +71,7 @@ proc
 	villain_online() for(var/mob/m in players) if(m.key && villain==m.key) return m
 
 	sagas_bonus(mob/a,mob/b) //a = attacker. b = defender
-		if(!Mechanics.enableSagas||!ismob(a)||!ismob(b)) return 1
+		if(!sagas||!ismob(a)||!ismob(b)) return 1
 		var/n=1
 
 		if(a.key==hero&&!b.client) n*=2
@@ -100,22 +104,25 @@ mob/proc
 	ChangeAlignment(a = "Good")
 		if(!(a in list("Good","Evil"))) return
 		alignment = a
-		if(majinCurse) alignment = "Evil"
 		if(alignment == "Good" && villain == key) find_new_villain(src)
 		if(alignment == "Evil" && hero == key) find_new_hero(src)
 
 	Hero_eligible()
 		if(ignore_hero) return
 		return 1
+		//if(cyber_bp>1) return 1
+		//if(base_bp/bp_mod>highest_relative_base_bp*0.4) return 1
 
 	Villain_eligible()
 		if(ignore_villain) return
 		return 1
+		//if(cyber_bp>1) return 1
+		//if(base_bp/bp_mod>highest_relative_base_bp*0.4) return 1
 
 	killing_spree_loop()
 		good_kills=0
 		spawn while(src)
-			if(good_kills>killing_spree_min&&villain==key&&Mechanics.enableSagas)
+			if(good_kills>killing_spree_min&&villain==key&&sagas)
 				world<<"<font color=red>The main villain [src] has begun a killing spree on good people \
 				to draw the main hero out of hiding. If the main hero does not respond before the kill \
 				count reaches [killing_spree_max] they will be considered either a coward or a failure as \
@@ -135,7 +142,7 @@ mob/proc
 	villain_timer()
 		set waitfor=0
 		while(src)
-			if(villain==key&&Mechanics.enableSagas)
+			if(villain==key&&sagas)
 				showdown_time--
 				if(showdown_time<=0)
 					showdown_time=0
@@ -150,12 +157,13 @@ mob/proc
 
 	hero_seniority_check()
 		if(hero==key || alignment=="Evil") return
-		if(!Hero_eligible() || hero) return
+		if(!Hero_eligible() && hero) return
 		if(hero_online())
 			if(!hero_time || !villains_killed || !Hero_eligible()) return
 			for(var/mob/m in players)
 				if(m.key==hero && m.hero_time<hero_time && m.alignment=="Good" && m.villains_killed>0) return
 			var/mob/m=hero_online()
+			m.reset_hero_stuff()
 			var/hours=(world.realtime-hero_time)/10/60/60
 			m<<"<font color=cyan>The main hero [src] from [round(hours)] hours and \
 			[round(hours*60 %60)] minutes ago \
@@ -167,12 +175,13 @@ mob/proc
 
 	villain_seniority_check()
 		if(villain==key||alignment=="Good") return
-		if(!Villain_eligible() || villain) return
+		if(!Villain_eligible() && villain) return
 		if(villain_online())
 			if(!villain_time || !heroes_killed) return
 			for(var/mob/m in players)
 				if(m.key==villain && m.villain_time<villain_time && m.alignment=="Evil" && m.heroes_killed>0) return
 			var/mob/m=villain_online()
+			m.reset_villain_stuff()
 			var/hours=(world.realtime-villain_time)/10/60/60
 			m<<"<font color=red>The main villain [src] from [round(hours)] hours and [round(hours*60 %60)] \
 			minutes ago \
@@ -180,9 +189,10 @@ mob/proc
 			longer playing the role of the main villain"
 		else world<<"<font color=red>[src] has become the main villain because nobody else online has it"
 		villain=key
+		add_villain_verbs()
 		if(!villain_time) villain_time=world.realtime
 
-	hero_death(mob/killer) if(key && hero == key&&Mechanics.enableSagas)
+	hero_death(mob/killer) if(key && hero == key&&sagas)
 		if(killer && ismob(killer) && killer.client && killer.key==villain)
 			killer.heroes_killed++
 			killer.GiveFeat("Kill Hero while you are Villain")
@@ -226,7 +236,7 @@ mob/proc
 			if(!m.heroes_killed) m.showdown_time=30
 			else m.showdown_time=180
 
-	villain_death(mob/m) if(key && villain==key && Mechanics.enableSagas)
+	villain_death(mob/m) if(key && villain==key && sagas)
 		villain_time=0
 		if(m && ismob(m) && m.client && m.key==hero)
 			m.villains_killed++
@@ -235,8 +245,24 @@ mob/proc
 		world<<"<font color=red>The main villain [src] was killed, the title of main villain has \
 		gone to [villain_online()]"
 
+	reset_hero_stuff()
+		//hero_time=0
+		//training_period=0
+
+	reset_villain_stuff()
+		//villain_time=0
+		//showdown_time=0
+		remove_villain_verbs()
+
+	remove_villain_verbs()
+		verbs-=typesof(/mob/villain/verb)
+
+	add_villain_verbs()
+		remove_villain_verbs()
+		verbs+=typesof(/mob/villain/verb)
+
 	training_period(mob/d) //d = defender. src = attacker
-		if(!Mechanics.enableSagas||!ismob(d)) return
+		if(!sagas||!ismob(d)) return
 		if(villain==key&&d.key==hero&&world.realtime<d.training_period)
 			find_new_villain(src)
 			world<<"<font color=red>The main villain [key] has lost the villain rank for attacking the \
@@ -245,3 +271,47 @@ mob/proc
 			training_period=0
 			world<<"<font color=cyan>The hero's special training session has ended because they attacked the \
 			main villain."
+
+	can_threaten()
+		if(world.realtime<last_threaten+(threat_timer*60*10))
+			var/t=last_threaten+(threat_timer*60*10)-world.realtime
+			t/=10*60
+			t=round(t,0.1)
+			src<<"You can not issue another threat to the hero for another [t] minutes"
+			return
+		return 1
+var
+	threat_timer=45 //how often the villain can issue threats after issuing one before, in minutes
+	hero_response_time_left=0 //how many minutes the hero has to respond to the threat issued
+mob/villain/verb
+	Threaten_Hero()
+		set category="Skills"
+		var/mob/m=hero_online()
+		if(!m)
+			src<<"You can not issue a threat right now because there is no hero online"
+			return
+		if(!can_threaten()) return
+		if(world.realtime<m.training_period)
+			src<<"You can issue threats while the hero is in a training period"
+			return
+		var/list/L=list("Cancel","Mass killing","Blow up this planet")
+		var/choice=input(src,"You can use this to threaten the hero with something that a true hero MUST \
+		respond to. If they do not respond to it then they will lose their rank for being a coward.") in L
+		if(!can_threaten()) return
+		switch(choice)
+			if("Cancel") return
+			if("Mass killing")
+				if(!can_threaten()) return
+				world<<"<font color=red>The main villain [src] is now mass killing to force the hero [hero_online()] out \
+				of hiding. If the hero does not respond before the kill count reaches 10 they will lose the rank for \
+				being a coward"
+			if("Blow up this planet")
+				if(!can_threaten()) return
+				var/area/a=get_area()
+				if(!a.can_planet_destroy)
+					src<<"This planet is indestructable, go to another and try again"
+					return
+				world<<"<font color=red>The main villain [src] will blow up [a] in 15 minutes to force the hero \
+				[hero_online()] out of hiding. If the hero does not respond in time they will lose the rank for being a \
+				coward"
+		last_threaten=world.realtime

@@ -1,6 +1,6 @@
 client/authenticate = 0
 
-mob/var
+mob/var/
 	icer_form1_mult=0.1
 	icer_form2_mult=0.2
 	icer_form3_mult=0.3
@@ -8,12 +8,34 @@ mob/var
 proc/ShouldOneShot(mob/a, mob/b) //a = attacker
 	if(!a || !b) return
 
-	if(a.BP / b.BP > Mechanics.GetSettingValue("Absurd Damage Requirement") && a.GetMeleeDamage(b) > 200) return 1
+	//makes it so npcs cant be one shotted or get one shotted for now since theres a bug where they always get 1 shotted because they have no base_bp
+	//or something like that
+	if(ismob(a) && !a.client) return
+	if(ismob(b) && !b.client) return
+
+	var
+		a_bp = 1
+		b_bp = 1
+
+	if(ismob(a))
+		a_bp = a.base_bp * 3.5 + a.BP + a.cyber_bp
+		if(ismob(b))
+			if(a.BP < b.BP * 1.5) return
+	else if(isnum(a)) a_bp = a
+
+	if(ismob(b)) b_bp = b.base_bp * 3.5 + b.BP + a.cyber_bp
+	else if(isnum(b)) b_bp = b
+
+	if(a_bp > b_bp * one_shot_start) return 1
 
 var
+	noPacksOnRP = 0
+	classic_ui = 1 //use the classic user interface or not
+		//remember to check the right skin file to include so it matches which one we have here
 	daynight_enabled = 1
 	fireflies = 1
 
+	lssj_always_angry = 0
 	lssjTakeDmgMult = 0.8
 
 	bp_exponent = 0.25 //how much bp matters in a fight
@@ -33,8 +55,10 @@ var
 	//!!!!!!!!!! DO NOT USE modless_gain_exponent anymore. modless_gain_mult IS THE REPLACEMENT THAT IS MORE LINEAR WHICH IS BETTER
 	modless_gain_exponent = 0.7 //adjusting these 2 vars can fix a lot of the balance problems. remember they are sort of intertwined
 		//REMEMBER CHANGING modless_gain_exponent WILL NEED ALL PLAYERS TO REDO STATS
+	balance_rating_mult = 0.48 //0.42 //0 = off. lower = retains more balance rating when changing stats.
 	modless_gain_mult = 0.4 //we started using this instead of modless_gain_exponent to have more predictable numbers and just see how it goes
 
+	base_melee_damage = 3.5
 	base_melee_delay = 3 //was 3
 	melee_delay_severity = 0.5 //was 0.52
 	lowSpeedDmgAdd = 0.2
@@ -55,6 +79,7 @@ var
 	sword_damage_mod = 0.3 //applies to the bonus only, so +70% damage becomes +(70x0.8)% damage assuming the mod is 0.8, so not 1.7x0.8
 	sword_drain_mult = 0.5 //melee drain *= 1 + (sword.Damage - 1) * sword_drain_mult
 	sword_refire_mod = 0 //was 0.3 //delay *= 1 + (s.Damage - 1) * sword_refire_mod
+	swordDodgeMod = 0.5 //accuracy /= 1 + (equipped_sword.Damage - 1) * swordDodgeMod
 	energy_sword_damage_mod = 1 //0.975
 	silver_sword_damage_penalty = 1 //against nonvampires
 	silver_sword_damage_mult = 1.5 //against vampires
@@ -78,15 +103,19 @@ var
 	kb_inferior_scaling_mod = 1
 
 	defense_auto_combo_backhit_chance = 20
-	recovery_powerup_exponent = 1.45
-	energy_mod_powerup_exponent = 0.90 //was .84, determines max powerup % before massive slowdown begins, a soft cap
+	recovery_powerup_exponent = 1.3
+	energy_mod_powerup_exponent = 0.88 //was .84, determines max powerup % before massive slowdown begins, a soft cap
 	powerup_softcap_scaledown_exponent = 3 //how fast powerup slows down past the soft cap. this is not the soft cap itself
 	health_regen_exponent = 1
-	
+
+	android_extra_cyber_bp_mult = 1.8
 	android_dmg_taken_mult = 0.66
 
 	standing_powerup_deflect_mult = 10
 	teamer_dmg_mult = 0.65 //remember double angers is a possiblility
+
+	melee_power=1
+	ki_power=1
 
 	icer_recovery = 1.1 //was 1.2, but they wanted it off, meaning icer forms no longer lower recovery with each higher transformation
 
@@ -100,14 +129,14 @@ mob/var
 
 	base_bp=1
 	bp_mod=1
-	Str=6
-	End=6
-	Spd=6
+	Str=100
+	End=100
+	Spd=100
 	Eff=1
-	Pow=6
-	Res=6
-	Off=6
-	Def=6
+	Pow=100
+	Res=100
+	Off=100
+	Def=100
 	regen=1
 	recov=1
 	max_ki=80

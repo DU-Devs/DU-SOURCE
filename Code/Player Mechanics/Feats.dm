@@ -14,7 +14,7 @@ FEAT IDEAS:
 		restore planet using crystal
 		master high gravity
 		make league, join league, league something
-		become first Omega Yasai
+		become first Super Yasai
 
 		Win 30 fights, +3%, 1x
 		Beat someone very strong, +1%, 2x
@@ -25,6 +25,8 @@ FEAT IDEAS:
 		Learn rare skill, +1%, can be earned once for however many rare skills exist in the game
 	Science Feats:
 		build a drone
+	Other feats:
+		Stop a zombie apocalypse
 
 FEAT IDEAS THAT REQUIRE EXPLANATION:
 	Blind Run Training: In this TV show called The Shannara Chronicles there were these Elf warriors who trained to gain heightened awareness by
@@ -34,6 +36,7 @@ FEAT IDEAS THAT REQUIRE EXPLANATION:
 */
 
 var
+	feats_on = 1
 	list/master_feats = list(\
 		"Win Tournament" = list("boost" = 0.005, "stacks" = 0, "max stacks" = 3, "type" = "BP cap"),\
 		"Win Tournament Match" = list("boost" = 0.0033, "stacks" = 0, "max stacks" = 2, "type" = "BP cap"),\
@@ -149,7 +152,7 @@ mob
 						src<<"<font color=yellow>Feat details: Teach a player 200 student points worth of skills"
 
 		GiveFeat(f = "Feat Name")
-			if(!Mechanics.GetSettingValue("Feats")) return
+			if(!feats_on) return
 			if(!(f in feats)) return
 			if(feats[f]["stacks"] < feats[f]["max stacks"])
 				src<<"<font color=yellow>FEAT ACCOMPLISHED: [f]. \
@@ -164,7 +167,7 @@ mob
 			feat_bp_multiplier = 1
 			feat_price_div = 1
 
-			if(!Mechanics.GetSettingValue("Feats")) return
+			if(!feats_on) return
 
 			for(var/f in feats)
 				switch(feats[f]["type"])

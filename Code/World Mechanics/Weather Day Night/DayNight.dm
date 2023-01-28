@@ -49,8 +49,7 @@ area
 
 	proc
 		DayNightLoop()
-			set waitfor = 0
-			set background = TRUE
+			set waitfor=0
 			if(!daynight_enabled)
 				icon = null
 				return
@@ -70,22 +69,22 @@ area
 
 		FadeToNight()
 			set waitfor=0
-			set background = TRUE
 
 			FadeInLights(src)
 			ToggleAreaFireflies(src, 1)
 
 			animate(src)
 			animate(src, color = dawndusk_color, time = night_fade_time / 2)
-			animate(color = night_color, time = night_fade_time / 2)
+			sleep(night_fade_time / 2)
+			animate(src, color = night_color, time = night_fade_time / 2)
 
 		FadeToDay()
 			set waitfor=0
-			set background = TRUE
 
 			FadeOutLights(src)
 			ToggleAreaFireflies(src, 0)
 
 			animate(src)
 			animate(src, color = dawndusk_color, time = day_fade_time / 2)
-			animate(color = day_color, time = day_fade_time / 2)
+			sleep(day_fade_time / 2)
+			animate(src, color = day_color, time = day_fade_time / 2)

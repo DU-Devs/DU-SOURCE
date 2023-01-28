@@ -1,44 +1,25 @@
 mob/proc/get_bp_loop()
 	set waitfor=0
 	while(src)
-		bp_mod = Math.Max(bp_mod, Get_race_starting_bp_mod())
-		if(Progression.GetSettingValue("Energy Cap") && max_ki / Eff > Progression.GetSettingValue("Energy Cap")) max_ki = Progression.GetSettingValue("Energy Cap") * Eff
+		if(Race == "Half Yasai" && bp_mod > Yasai_bp_mod_after_ssj) bp_mod = Yasai_bp_mod_after_ssj
+		if(energy_cap && max_ki / Eff > energy_cap) max_ki = energy_cap * Eff
 		//this doesnt really go here but im just rigging it up so oh well
 		if(world.time-last_attacked_time > 400) power_attack_meter=0
 		while(client&&client.inactivity>600) sleep(50)
-		BPpcnt = Math.Max(BPpcnt, 0.01)
+		var/Amount=2
+		if(BPpcnt<0.01) BPpcnt=0.01
 		if(Ki<0) Ki=0
 		if(Age<0) Age=0
 		if(real_age<0) real_age=0
 		Body()
 		BP=get_bp()
 		if(BP<1) BP=1
-		effectiveBPTier = GetEffectiveBPTier()
-		sleep(1)
+		sleep(TickMult(Amount*10))
+		if(!client&&!battle_test) sleep(70) //clones lag a lot from this if there is many of them
 
-		//clones lag a lot from this if there is many of them
-		if(!client&&!battle_test) sleep(70)
-
-mob/proc/GetBP()
-	bp_mod = Math.Max(bp_mod, Get_race_starting_bp_mod())
-	if(Progression.GetSettingValue("Energy Cap") && max_ki / Eff > Progression.GetSettingValue("Energy Cap")) max_ki = Progression.GetSettingValue("Energy Cap") * Eff
-	BPpcnt = Math.Max(BPpcnt, 0.01)
-	Ki = Math.Max(Ki, 0)
-	Age = Math.Max(Age, 0)
-	real_age = Math.Max(real_age, 0)
-	Body()
-	BP = Math.Max(get_bp(), 1)
-	effectiveBPTier = GetEffectiveBPTier()
-
-mob/proc/YasaiAscensionMods()
-	if(bp_mod < Yasai_bp_mod_after_ssj)
-		var/mult = Yasai_bp_mod_after_ssj / bp_mod
-		base_bp *= mult
-		bp_mod = Yasai_bp_mod_after_ssj
-		if(Race == "Half Yasai") bp_mod += 2
-
-mob/proc/UpdateBP()
-	BP = get_bp()
+mob/proc
+	UpdateBP()
+		BP = get_bp()
 
 var/bp_tier_effect=1.5
 var/anger_bp_effect=1
@@ -61,22 +42,40 @@ mob/proc/Anger_Powerup_SuperGod_Fist_Mix_Mult(factor_powerup = 1)
 	if(!factor_powerup) p = 1
 
 	var/k = 0
+	if(super_God_Fist) k = (super_God_Fist_mult - 1) * God_FistMod
 
 	var/t = a + (p - 1) + k
 	return t
 
+
+var
+	demon_hell_boost=1.35
+	kai_heaven_boost=1.35
+
+	dead_power_loss = 0.5
+	keep_body_loss = 1
+
 mob/proc/Dead_power()
-	. = 1
-	if(Dead && !IsTournamentFighter())
-		if(!KeepsBody) return Mechanics.GetSettingValue("Dead Player BP Multiplier (No Body)")
-		else return Mechanics.GetSettingValue("Dead Player BP Multiplier (Body)")
+	if(!Dead) return 1
+	if(Dead && (!Tournament || !(src in All_Entrants)))
+		if(!KeepsBody) return dead_power_loss
+		else return keep_body_loss
+	return 1
 
 mob/proc
+	BodySwapBPMult()
+		if(has_body_swap) return 0.67
+		return 1
+
 	//because legendary has 0 defense force they get more bp
 	LegendaryZeroDefenseBPMult()
 		var/mult = 1
-		if(Class == "Legendary")
+		if(Class == "Legendary Yasai")
 			mult *= 1.3
+			if(lssj_always_angry) mult += 0.25
+		//JIREN ALIEN
+		if(jirenAlien)
+			mult *= jirenAlienBPMult
 		return mult
 
 var
@@ -89,34 +88,31 @@ mob
 			effectiveBaseBp = 1
 	proc
 		effectiveBaseBPMult()
-			return 1 * feat_bp_multiplier * LegendaryZeroDefenseBPMult()
-
-mob/var/transBPMult = 1
-mob/var/transBPAdd = 0
-mob/var/transRecovRate = 1
-mob/var/transRegenRate = 1
-mob/var/transStaminaRegen = 1
-
-mob/proc/GetEffectiveBase()
-	return (base_bp + static_bp + cyber_bp)
+			return 1 * feat_bp_multiplier * LegendaryZeroDefenseBPMult() //THIS FACTORS JIREN ALIEN TOO. THE SAME LSSJ PROC FOR BOTH
 
 mob/proc/get_bp(factor_powerup=1)
 
-	effectiveBaseBp = GetEffectiveBase() * effectiveBaseBPMult()
-	
-	if(majinCurse)
-		var/obj/MajinCurse/O = majinCurse
-		if(O.initialBP * 1.4 < effectiveBaseBp)
-			O.Remove(src)
-			majinCurse = null
+	effectiveBaseBp = (base_bp + hbtc_bp + unlockedBP) * effectiveBaseBPMult()
+
+	var/obj/BP_Equalizer/bpe = ObeyBPEqualizer()
+	if(bpe) return bpe.equalizer_bp
+
+	if(is_saitama) return Tech_BP * 0.5
+
+	//this doesnt go here but its okay
+	if(key == "EXGenesis")
+		Health = 100
+		Ki = max_ki
 
 	var/time_freeze_divider=1
+	//for(var/obj/o in Active_Freezes) time_freeze_divider+=1.5/time_freeze_divider
+	if(sagas&&!hero_mob) hero_mob=hero_online()
 	if(Health<0) Health=0
 	if(Ki<0) Ki=0
-	if(IsTournamentFighter() && ongoingTournament?.skillTournament)
+	if(Tournament && skill_tournament && (src in All_Entrants))
 		if(IsGreatApe())
 			Great_Ape_revert()
-			src.SendMsg("You can not be Great_Ape in a skill tournament", CHAT_IC)
+			src<<"You can not be Great_Ape in a skill tournament"
 		var/n = 100 * bp_mult
 		switch(Race)
 			if("Android") n*=1.5
@@ -125,282 +121,240 @@ mob/proc/get_bp(factor_powerup=1)
 			var/sf_count=SplitformCount()
 			n/=sf_count+1
 			if(sf_count) if(Race in list("Bio-Android","Majin")) n*=1.25
-		if(majinCurse) n *= 1.2
 		n *= hp_ki_bp_loss_mult() / time_freeze_divider
 		n *= Anger_Powerup_SuperGod_Fist_Mix_Mult(factor_powerup)
-		n *= feat_bp_multiplier
+		//n*=feat_bp_multiplier
 		n *= LegendaryZeroDefenseBPMult()
-		n *= transBPMult
-		n *= bp_mod
+		if(is_ssj_blue) n *= ssj_blue_mult
+		if(is_ssg) n *= ssjg_bp_mult
+		if(is_gold_form) n *= gold_form_mult
+		n *= DropkickBPDebuff()
 		if(world.time - last_ki_hit_zero < zero_ki_bp_debuff_duration * 10)
 			n *= zero_ki_bp_mult
-			
-		return Math.Max(n, 1)
+		if(n < 1) n = 1
+		return n
 
 	else
-		var/bp = effectiveBaseBp
+		var/bp = bp_mult * Body * (base_bp + hbtc_bp + unlockedBP) * ssj_bp_mult
 		if(anger<=100) bp*=available_potential
 		if(Vampire&&Vampire_Power) bp*=Vampire_Power
-		bp += GodFistBoost() * Mechanics.GetSettingValue("God-Fist Boost Multiplier")
-		bp += buff_transform_bp / Clamp(Powerup_mult()**0.7, 1, 1.#INF)
+		if(Roid_Power) bp*=Roid_Power+1
+		bp += ssj_power() * bp_mult * Body
+		bp += Great_Ape_power()*Body
+		bp += God_Fist_bp() * God_FistMod * Body
+		bp += Frost_Lord_Form_Addition()*Body
+		bp += buff_transform_bp * Body / Clamp(Powerup_mult()**0.7, 1, 1.#INF)
 
-		bp += unlockedBP
-		bp += activeZenkai
-		if(Race == "Majin")
-			bp += majinAbsorbPower * majinPowerModifier
+		bp += God_BP() * bp_mult * Body
 
 		var/sf_count=0
 		if(client) sf_count=SplitformCount()
 		bp/=sf_count+1
 		if(sf_count) if(Race in list("Bio-Android","Majin")) bp*=1.25
 
+		//bp *= ki_mult() * hp_mult()
 		bp *= hp_ki_bp_loss_mult()
 		if(Ki > max_ki) bp *= (Ki / max_ki) ** 0.5
 
 		bp *= Anger_Powerup_SuperGod_Fist_Mix_Mult(factor_powerup)
 
-		if(majinCurse) bp *= 1.2
+		//if(LSD) bp*=sqrt(sqrt(LSD))*1.2
+		if(!KO) for(var/obj/Injuries/I in injury_list) bp*=0.93
 
+		//bp/=weights()**0.3
+		bp /= weights()
+		if(ismystic && ssj && Class != "Legendary Yasai") bp *= 1.15
+
+		var/shikonMod = 1
+		for(var/obj/items/Shikon_Jewel/S in shikon_jewels) if(S.loc==src) shikonMod += S.bp_mult - 1
+		bp *= shikonMod
+		bp+=Zombie_Power
+
+		if(is_ssj_blue) bp *= ssj_blue_mult
+		if(is_ssg) bp *= ssjg_bp_mult
+		if(is_gold_form) bp *= gold_form_mult
 		bp *= LegendaryZeroDefenseBPMult()
 
 		//CYBER BP BLOCK
 		if(cyber_bp) bp *= cyber_bp_cuts_natural_bp_by
-		var/Total_cyber_bp = cyber_bp
-		if(sf_count) if(Race in list("Bio-Android","Majin")) Total_cyber_bp *= 1.25
-		if(bp_mult<1) Total_cyber_bp *= bp_mult
-		if(Overdrive) Total_cyber_bp *= 1.5
-		if(Ki>max_ki) Total_cyber_bp *= (Ki/max_ki) ** 0.5
-		Total_cyber_bp /= sf_count+1
-		bp += Total_cyber_bp
+		var/Total_cyber_bp=cyber_bp * BodySwapBPMult()
+		if(sf_count) if(Race in list("Bio-Android","Majin")) Total_cyber_bp*=1.25
+		if(bp_mult<1) Total_cyber_bp*=bp_mult
+		if(Overdrive) Total_cyber_bp*=1.5
+		if(Ki>max_ki) Total_cyber_bp*=(Ki/max_ki) ** 0.5
+		//else Total_cyber_bp*=(Ki/max_ki)**0.42
+		//if(ssj) for(var/v in 1 to ssj) Total_cyber_bp/=1.35
+		Total_cyber_bp/=sf_count+1
+		bp+=Total_cyber_bp
 
-		if(BPpcnt < 10) hiding_energy=1
-		else hiding_energy=0
+		if(hide_energy_enabled)
+			if(BPpcnt < 10 && (!hero || hero != key)) hiding_energy=1
+			else hiding_energy=0
+		else hiding_energy = 0
 
+		//if(spam_killed) bp*=0.01 //causes 1 bp in tournament bug
 		bp/=time_freeze_divider
-		if(z == 6)
-			switch(Race)
-				if("Demon") bp *= Mechanics.GetSettingValue("Demon Hell BP Multiplier")
-				if("Kai") bp /= Mechanics.GetSettingValue("Demon Hell BP Multiplier")
-				else if(!(locate(/obj/items/Holy_Pendant) in src)) bp *= 0.85
-		if(z == 7 || z == 13)
-			switch(Race)
-				if("Kai") bp *= Mechanics.GetSettingValue("Kai Heaven BP Multiplier")
-				if("Demon") bp /= Mechanics.GetSettingValue("Kai Heaven BP Multiplier")
+		if(Race == "Demon")
+			//if(z == 6 || (z == 7 && map_restriction_on))
+			//	bp *= demon_hell_boost
+			if(z == 6) bp *= demon_hell_boost
+		if(Race=="Kai" && (z==7 || z==13) && (!Tournament || !(src in All_Entrants))) bp*=kai_heaven_boost
 		bp *= Dead_power()
 		bp *= feat_bp_multiplier
 		bp *= BioBPMult()
 		if(goo_trap_obj && goo_trap_obj.z) bp *= goo_trap_bp_mult
 
+		if(battleground_master == src && AtBattlegrounds())
+			bp *= battleground_master_bp_mult
+
+		bp *= DropkickBPDebuff()
+
 		if(world.time - last_ki_hit_zero < zero_ki_bp_debuff_duration * 10)
 			bp *= zero_ki_bp_mult
 
-		if(IsGreatApe())
-			var/obj/Great_Ape/O=Great_Ape_obj
-			bp *= oozaruBPMult * O.powerMult
-			if(O.golden)
-				bp += 100000000
-				bp *= 1.5
+		//no real reason. just ss blue and god in general seemed too weak, and adding it to the God_BP() proc seemed more difficult than adding it here
+		if(IsGod()) bp *= 1.3
+		if(world.realtime - lastGreatApeRevert < 600)
+			bp *= 0.5
 
-		bp *= bp_mod * bp_mult * Body
+		if(bp<1) bp=1
+		return bp
 
-		bp *= HasTrait("Purity of Form") ? 1.6 : 1
-
-		bp += transBPAdd
-		bp *= transBPMult
-
-		if(HasTrait("Fulfilled Potential") && GetUnlockedFormCount() > 0)
-			if(HasActiveForm())
-				bp *= 1 - (GetTraitRank("Fulfilled Potential") * 0.1)
-			else
-				bp *= 1 + (GetTraitRank("Fulfilled Potential") * 0.3)
-
-		bp /= weights()
-
-		return Math.Max(bp, 1)
-
-mob/var/tmp/lastSave = 0
-mob/var/tmp/barWidth = 16
-
-mob/proc/PrimaryPlayerLoop(start_delay)
-	set waitfor = FALSE
-	set background = TRUE
-	if(Status_Running || !client) return
-	Status_Running = 1
-
-	if(Regenerating && z != 15) Regenerating = 0
-	if(resetBP > 0) ResetBPToAmount()
-
-	PopulateScienceTabs()
-	client.PopulateBuildTabs()
-	GenerateInitialAppearances()
-	SetPlayerRace(src)
-
+mob/proc/Player_Loops(start_delay)
+	set waitfor=0
+	if(start_delay) sleep(start_delay)
+	if(Status_Running||(!client&&!battle_test)) return
+	Status_Running=1
+	if(Regenerating&&z!=15) Regenerating=0
+	//Transform_Ascension_Limiter()
+	Recov_mult_decrease()
+	Regen_mult_decrease()
+	EMP_mine_loop()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	villain_timer()
+	killing_spree_loop()
+	Scrap_Absorb_Revert()
+	Activate_NPCs_Loop()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	zenkai_reset()
+	Buff_Drain_Loop()
+	buff_transform_drain()
+	God_Fist_loop()
+	precog_loop()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	LSD()
+	Zombie_Virus_Loop()
+	Steroid_Loop()
+	update_radar_loop()
+	Start_Gravity_Loops()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
 	auto_regen_mobs+=src
 	auto_recov_mobs+=src
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	Fly_loop()
+	ssj_inspire_loop()
+	ssj_drain_loop()
+	Faction_Update()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	spawn if(src) if(Regenerating) death_regen(set_loc=0)
+	Overdrive_Loop()
+	Power_Control_Loop()
+	Limit_Breaker_Loop()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	get_bp_loop()
+	Diarea_Loop()
+	Eye_Injury_Blindness()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	Injury_removal_loop()
+	//spawn if(src) Hell_Tortures()
+	Train_Gain_Loop()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	Health_Reduction_Loop()
+	Energy_Reduction_Loop()
+	Dead_In_Living_World_Loop()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	Final_realm_loop()
+	Ki_shield_revert_loop()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	Dig_loop()
+	Poison_Loop()
+	cyber_bp_Loop()
+	Knowledge_gain_loop()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	Regenerator_loop()
+	Puranto_regen_loop()
+	Onion_Lad_Star()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	SI_List()
+	Vampire_Infection_Rise()
+	Vampire_Power_Fall()
+	AI_Train_Loop()
+	//GOOD
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	calmness_timer()
+	//spawn if(src) Network_Delay_Loop()
+	update_area_loop()
+	Detect_good_people()
+	Match_counterpart_loop()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	Counterpart_died_loop()
+	Refill_grab_power_loop()
+	Meditate_gain_loop()
+	Nanite_repair_loop()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	Cache_equipped_weights()
+	Spam_kill_timer()
+	Taiyoken_Blindness_Timer()
+	Rebuff_timer_countdown()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	Senzu_timer_countdown()
+	Senzu_overload_countdown()
+	Radiation_loop()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	StunDecay()
+	//GOOD
+	Great_Ape_berserk_loop()
+	Give_power_refill_loop()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	Good_attack_good_loop()
+	Evade_meter_refill_loop()
+	SaitamaLoop()
+	UpdateRaceStatsOnlyModeStatsLoop()
+	//GOOD
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	SetOffenseAndDefenseToMatchSpeed()
+	MajinLearnSkill()
+	KikohoDamageLoop()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	BleedLoop()
+	//GOOD
+	StatOverlayUpdateLoop()
+	PopulateBuildTabs()
+	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
+	UpdateSenseArrowPositionsLoop()
+	StaminaRechargeLoop()
+	TrainingTimeRestoreLoop()
+	TrainingTimeDrainLoop()
 
-	spawn(5) update_area()
-
-	DetermineViewSize(Limits.GetSettingValue("Player View Size"))
-	GenerateHUD()
-	var/icon/I = icon(healthBar.maskedBar.icon)
-	barWidth = I.Width()
-	SetupCallbacks()
-
-	if(start_delay) sleep(start_delay)
-	while(src && client)
-		if(last_move + 2.5 < world.time)
-			flight_buildup = 0
-			FlyBoost(1)
-		if(world.time > lastSave + 100)
-			Save()
-			lastSave = world.time
-		if(HasSkill(/obj/Skills/Special/Scrap_Absorb))
-			Scrap_Absorb_Revert()
-		if(!Flying && istype(loc, /turf/liquid))
-			loc:MobSwimming(src)
-		if(client?.buildMode && client?.buildCam)
-			if(!client.buildCam.loc) client.buildCam.loc = src.loc
-		if(!KO)
-			RecoverDetermination()
-			var/obj/Skills/Buff/B = buffed()
-			if(B && B.buff_bp > 1)
-				BuffDrain(B)
-			if("transformation" in active_buff_attributes)
-				BuffTransformDrain()
-			if(God_Fist_level)
-				GodFistDrain()
-			if(src in powerup_mobs)
-				PowerupDrain()
-			TrainGain()
-			if(fly_obj && Flying && !(Cyber_Fly || Class == "Spirit Doll"))
-				is_swimming = 0
-				FlyDrain()
-				if(flight_boosted)
-					if(stamina > BoostedFlightDrain())
-						IncreaseStamina(-BoostedFlightDrain())
-					else FlyBoost(1)
-			if(!God_Fist_level && !IsGreatApe() && powerup_obj)
-				PowerControlTick(powerup_obj)
-			if(Overdrive)
-				OverdriveDrain()
-			if(IsShielding())
-				KiShieldKO()
-			if(Digging)
-				Digging(0.5)
-			if(trainState == "Self")
-				var/drain = (2 + (max_ki ** 0.01))
-				if(drain > Ki)
-					StopTraining()
-				else
-					IncreaseKi(-drain)
-			if(Get_attack_gains())
-				AttackGainTick()
-			if(Regeneration_Skill && Health < 100)
-				RegenerateSkillTick()
-			if(!grabbedObject)
-				GrabPowerTick()
-			if(Nanite_Repair && Health < 50 && (current_area && !istype(current_area,/area/Braal_Core)))
-				NaniteRepairTick()
-			if(IsGreatApe() && !Great_Ape_control)
-				GreatApeBerserkTick()
-			if(power_given && !Giving_Power)
-				GivePowerRefill()
-		else
-			Overdrive_Revert()
-			God_Fist_Revert()
-			Stop_Powering_Up()
-			Land()
-			Buff_Disable(buffed())
-			Shield_Revert()
-			StopTraining()
-			Digging = 0
-			Regeneration_Skill = 0
-			KnockoutWakeTick()
-		if(Is_Cybernetic())
-			Regeneration_Skill = 0
-		if(precog && !precogs)
-			RegeneratePrecogs()
-		if(src in auto_regen_mobs)
-			RecoverHealth()
-		if(src in auto_recov_mobs)
-			RecoverEnergy()
-		if(CanRechargeStamina() && (stamina < max_stamina))
-			RecoverStamina()
-		if(radar_obj && radar_obj.Detects && client.statpanel == "Radar" && current_area)
-			UpdateRadar()
-		TickGravity()
-		if(world.time-last_attacked_time > 400) power_attack_meter=0
-		if(client && client.inactivity < 600)
-			GetBP()
-		ResourceDrainOverCap()
-		Cache_equipped_weights()
-		if(Dead && !Is_In_Afterlife(src))
-			SpiritLivingRealmDrain()
-		if(InFinalRealm())
-			FinalRealm()
-		if(Poisoned)
-			PoisonTick()
-		if(regenerator_obj)
-			RegeneratorTick(regenerator_obj)
-		if(Race == "Onion Lad")
-			PowerStarTick()
-		UpdateSIList()
-		if(Vampire)
-			if(trainState != "Med")
-				VampireInfectionTick()
-			VampirePowerTick()
-		if(Puranto_counterpart)
-			CounterpartMatchTick()
-		if(spam_killed)
-			spam_killed--
-			spam_killed = Math.Max(spam_killed, 0)
-		if(senzu_timer)
-			senzu_timer--
-			senzu_timer = Math.Max(senzu_timer, 0)
-		if(senzu_overload)
-			senzu_overload--
-			senzu_overload = Math.Max(senzu_overload, 0)
-		RadiationTick()
-		StunTickDown()
-		if(kikoho_damage)
-			KikohoDamageTick()
-		CheckAFK()
-		if(IsInHBTC())
-			TimeChamberTick()
-		else
-			TimeChamberCooldown()
-		if(current_area && current_area.type == /area/Space)
-			SpaceDamageTick()
-
-		sleep(5)
 
 mob/proc/Intelligence()
 	if(adminInfKnowledge) return 1.#INF
 	return Intelligence
 
-mob/var/alwaysRegenStamina = 0
+
+
+
 
 mob/var
+	last_majin_auto_learn = 0
 	tmp
 		core_feat_time = 0
 		stamina_recharge_loop
 		last_stamina_drain = -9999
 
-mob/proc/HasMaxHealth()
-	return Health >= 100
-
-mob/proc/HasMaxEnergy()
-	return Ki >= max_ki
-
-mob/proc/HasMaxStamina()
-	return stamina >= max_stamina
-
-mob/proc/HasMaxResources()
-	return HasMaxHealth() && HasMaxEnergy() && HasMaxStamina()
-
 mob/proc
 
-	//var/list/L=list("Half Yasai","Legendary","Alien","Android","Bio-Android",
+	//var/list/L=list("Half Yasai","Legendary Yasai","Alien","Android","Bio-Android",\
 	//"Demigod","Demon","Frost Lord","Human","Kai","Onion Lad","Majin","Puranto","Spirit Doll","Tsujin","Yasai")
 
 	RaceStamBonus()
@@ -412,58 +366,105 @@ mob/proc
 			if("Demon") return 50
 			if("Tsujin") return 35
 			if("Kai") return 50
-			if("Demigod")
-				if(HasTrait("Lasso the Sun")) return 75
-		if(Class == "Legendary") return 50
 		return 0
-	
-	RecoverStamina()
-		var/stam_gain = max_stamina / 9
-		stam_gain *= Clamp(1 + (regen**0.7 * 0.2), 1, 2)
-		if(ultra_instinct) stam_gain *= 2
-		stam_gain *= transStaminaRegen
-		IncreaseStamina(stam_gain)
 
 	StaminaRechargeLoop()
 		set waitfor=0
-		set background = TRUE
 		if(stamina_recharge_loop) return
 		stamina_recharge_loop = 1
 
-		while(src)
-			if(CanRechargeStamina() && (stamina < max_stamina))
-				var/stam_gain = max_stamina / 9
+		while(stamina < max_stamina)
+			var/delay = TickMult(5)
+
+			if(CanRechargeStamina())
+				var/stam_gain = max_stamina / 18 * (delay / 10)
 				stam_gain *= Clamp(1 + (regen**0.7 * 0.2), 1, 2)
 				if(ultra_instinct) stam_gain *= 2
-				stam_gain *= transStaminaRegen
-				IncreaseStamina(stam_gain)
-			
-			sleep(5)
+				if(is_ssg) stam_gain*=ssjg_stamina_regen
+				AddStamina(stam_gain)
+
+			if(stamina >= max_stamina) break
+			else sleep(delay)
 
 		stamina_recharge_loop = 0
 
 	CanRechargeStamina()
-		var/times = (last_stamina_drain + 50 > world.time) || (last_input_move + 50 > world.time)
-		return !disableStamRecovery && (alwaysRegenStamina || times) && (!flight_boosted && !is_swimming && !ultra_instinct && !Regeneration_Skill)
+		if(ultra_instinct) return 1
+		if(world.time - last_stamina_drain < 15) return
+		if(world.time - last_input_move < 10) return
+		return 1
 
-	IncreaseStamina(n = 1)
-		if(client?.buildMode && n < 0) return
+	AddStamina(n = 1)
 		DecideMaxStamina()
+
+		if(fearful)
+			if(n > 0) n *= 0.5
+			else n *= 1.5
 
 		if(n < 0) last_stamina_drain = world.time
 		stamina += n
 		if(ultra_instinct && stamina <= 0) UltraInstinctRevert()
-		stamina = Math.Clamp(stamina, 0, max_stamina)
-		if(client)
-			if(lastResourceUpdate < world.time)
-				resourceCallback.Call()
-			lastResourceUpdate = world.time
+		if(stamina < 0) stamina = 0
+		if(stamina >= max_stamina) stamina = max_stamina
+		if(stamina < max_stamina) StaminaRechargeLoop()
 
+	//i just decided that max_stamina should always be 100 and that how much stamina something drains should be what stats
+	//affect because not all sources of stamina drain are determined by the same stats, for example when auto dodging drains
+	//stamina why should you be able to dodge more just because you have more energy? the drain of auto dodge itself on the static
+	//100 stamina should be what is altered by whatever set of stats AFFECT THAT PARTICULAR THING.
 	DecideMaxStamina()
-		var/new_max_stamina = 50 + 10 * ((GetStatMod("Str") + GetStatMod("Dur") + GetStatMod("Res") + GetStatMod("Spd")) / 4) + RaceStamBonus()
-		stamina *= new_max_stamina / Math.Max(max_stamina, 1)
+		var/new_max_stamina = 100 + RaceStamBonus()
+		new_max_stamina *= StatStamMult()
+		stamina *= new_max_stamina / max_stamina
 		max_stamina = new_max_stamina
-		return Math.Max(max_stamina, 30)
+		return max_stamina * 1.5 //arbitrary
+
+	StatStamMult()
+		var/mult = 1
+		var/def_share = def_share()
+		if(def_share > 1) mult += (def_share - 1) * 1
+		else
+			if(def_share < 0.5) def_share = 0.5
+			mult *= def_share
+		return mult
+
+	MajinLearnSkill()
+		set waitfor=0
+
+		if(Race != "Majin") return
+
+		var/timer = 0.5 * 60 * 60 * 10
+		if(!last_majin_auto_learn) last_majin_auto_learn = world.realtime + timer
+		while(1)
+
+			if(!majin_auto_learn) return //admins have it off
+
+			if(world.realtime - last_majin_auto_learn > timer)
+				var/list/skills = new
+				for(var/mob/m in player_view(7,src)) if(m != src)
+					for(var/obj/o in m) if(o.Teach_Timer && o.teachable && (Race == m.Race || !o.race_teach_only)) skills += o
+				if(skills.len)
+					var/obj/o
+					for(var/obj/o2 in skills)
+						if(locate(o2.type) in src) skills-=o2
+						else if(!o || o2.Teach_Timer > o) o = o2
+					if(o)
+						player_view(15,src) << "[src] has learned [o] just by seeing it"
+						contents += new o.type
+						last_majin_auto_learn = world.realtime
+				sleep(160)
+			else
+				var/sleep_time = last_majin_auto_learn + timer - world.realtime
+				if(sleep_time < 600) sleep_time = 600
+				sleep(sleep_time)
+
+	SetOffenseAndDefenseToMatchSpeed()
+		set waitfor=0
+		return
+		while(1)
+			Off = Spd / spdmod * offmod
+			Def = Spd / spdmod * defmod
+			sleep(20)
 
 	Start_core_loops()
 		set waitfor=0
@@ -529,6 +530,7 @@ mob/proc
 		var/n = 2.3 // * zenkai_mod**0.1
 
 		var/lungs = Lungs
+		if(ultra_pack) lungs--
 		if(lungs) n *= 0.8
 
 		return n
@@ -553,37 +555,16 @@ mob/proc
 			if(istype(a,/area/Braal_Core))
 				var/timer=2
 				if(z==18)
-					if(coreGainsTimer > 0)
-						var/core_gains = CoreGainsMult() * timer
-						Attack_Gain(ToOne(core_gains))
-						coreGainsTimer -= 10 * timer
-					else
-						if(timeOutPrompt)
-							src << "You feel as if there's nothing else to gain from being here."
-							timeOutPrompt = 0
-						sleep(10 * timer)
-						continue
+					var/core_gains = CoreGainsMult() * timer
+					Attack_Gain(ToOne(core_gains))
 				sleep(10 * timer)
-			else
-				if(coreGainsTimer <= 0)
-					spawn CoreGainsTimerRefill()
-				return
-			sleep(2)
-
-	CoreGainsTimerRefill()
-		if(coreTimerRefilling) return
-		coreTimerRefilling = 1
-		sleep(Mechanics.GetSettingValue("Core Gains Time Limit") * 5)
-		coreGainsTimer = Mechanics.GetSettingValue("Core Gains Time Limit")
-		timeOutPrompt = 1
-		src << "You could probably make use of the Core once more."
+			else return
 
 	Braals_core_enemy_spawner()
 		set waitfor=0
-		return
-		/* while(src)
+		while(src)
 			var/area/a=get_area()
-			if(Mechanics.GetSettingValue("Core Demon Spawn Rate") && istype(a,/area/Braal_Core))
+			if(istype(a,/area/Braal_Core))
 
 				var/players_near=0
 				for(var/mob/p in a.player_list) if(getdist(src,p)<20) players_near++
@@ -611,14 +592,12 @@ mob/proc
 						cd.Activate_NPC()
 						cd.Attack_Target(src)
 						Core_demon_delete(cd,120)
-				sleep((230 * Clamp(players_near,1,players_near)) / Mechanics.GetSettingValue("Core Demon Spawn Rate"))
+				sleep(230 * Clamp(players_near,1,players_near))
 			else return
-			sleep(2) */
 
 	Braals_core_explosions()
 		set waitfor=0
-		return
-		/* while(src)
+		while(src)
 			var/area/a=get_area()
 			if(istype(a,/area/Braal_Core))
 
@@ -631,6 +610,8 @@ mob/proc
 					Clamp(rand(y-13,y+13),1,world.maxy),\
 					z)
 					if(t)
+						//for(var/turf/t2 in Circle(3,t))
+						//	spawn(rand(0,9)) t2.TempTurfOverlay('Crack Fire.dmi',rand(15,25))
 						BigCrater(pos = t, maxSize = 3, growTime = 10, fadeTime = 50)
 						sleep(15)
 						for(var/obj/o in view(3,t)) if(o.z&&o.Cost) del(o)
@@ -643,11 +624,11 @@ mob/proc
 							KB=round(KB)
 							m2.Shockwave_Knockback(KB,m2.loc)
 							var/dmg = 45 * (Avg_BP*2/BP)**0.5 * (Stat_Record*2/End)**0.15
-							m2.TakeDamage(dmg, "random explosion!", 1, 1)
+							m2.TakeDamage(dmg)
+							if(m2.Health<=0) if(m2) m2.Death("random explosion!",Force_Death=1,lose_immortality=0,lose_hero=0)
 						Explosion_Graphics(t,5)
 				sleep(rand(0,60)*players_near)
 			else return
-			sleep(2) */
 
 	Braals_core_camera_shake()
 		set waitfor=0
@@ -657,7 +638,6 @@ mob/proc
 				ScreenShake(10,8)
 				sleep(rand(10,70))
 			else return
-			sleep(2)
 
 	Braals_core_gas()
 		set waitfor=0
@@ -668,10 +648,11 @@ mob/proc
 				if(a.icon_state=="Smog")
 					var/dmg=2.4 // /dur_share()**0.3
 					var/lungs=Lungs
+					if(ultra_pack) lungs--
 					if(lungs) dmg/=2
-					TakeDamage(-dmg, "poison acid smog", 1, 1)
+					Health-=dmg
+					if(Health<=0) Death("poison acid smog",Force_Death=1,lose_immortality=0,lose_hero=0)
 				sleep(30)
-
 proc/Core_demon_delete(mob/cd,t=120)
 	set waitfor=0
 	while(cd&&t>0)
@@ -694,6 +675,21 @@ mob/proc/InCore()
 
 mob/var/tmp/zanzoken_uses=0 //REMOVE. no longer needed because we use stamina now so i made this tmp and it can eventually be removed
 
+mob/var/good_person_near
+mob/proc/Detect_good_people()
+	set waitfor=0
+
+	return
+
+	while(src)
+		if(!alignment_on||alignment!="Evil") sleep(600)
+		else
+			var/mob/m
+			if(alignment_on&&alignment=="Evil") for(m in player_view(12,src)) if(m.client&&m.alignment=="Good") break
+			if(m) good_person_near=1
+			else good_person_near=0
+			sleep(200)
+
 mob/proc/update_area_loop()
 	set waitfor=0
 	while(src)
@@ -701,6 +697,10 @@ mob/proc/update_area_loop()
 		sleep(50)
 		if(!client) sleep(200) //slowed down on empty clones due to lag
 
+area/tournament_area
+	Enter(mob/m)
+		if(Tournament&&ismob(m)&&Fighter1!=m&&Fighter2!=m) return
+		return . = ..()
 mob/var/tmp/knock_timer=0
 mob/proc/Refill_grab_power_loop()
 	set waitfor=0
@@ -709,10 +709,6 @@ mob/proc/Refill_grab_power_loop()
 			grab_power+=10
 			if(grab_power>100) grab_power=100
 		sleep(100)
-
-mob/proc/GrabPowerTick()
-	grab_power += 0.5
-	grab_power = Math.Min(grab_power, 100)
 
 mob/proc/calmness_timer()
 	set waitfor=0
@@ -732,20 +728,15 @@ mob/proc/buff_transform_drain()
 			var/drain=1*(max_ki/100/(Eff**0.35))
 			drain*=sqrt(buff_transform_bp/base_bp)
 			if(Ki<drain) Buff_Disable(buffed())
-			else IncreaseKi(-drain)
+			else Ki-=drain
 			sleep(20)
 		else break
 	buff_transform_loop=0
 
-mob/proc/BuffTransformDrain()
-	var/drain=1*(max_ki/100/(Eff**0.35))
-	drain*=sqrt(buff_transform_bp/base_bp)
-	if(Ki<drain) Buff_Disable(buffed())
-	else IncreaseKi(-drain)
-
 mob/var
 	Knowledge=1
 	knowledge_cap_rate=1
+	knowledge_training=0
 
 mob/var/tmp/knowledge_gain_loop
 
@@ -754,84 +745,34 @@ mob/proc/Knowledge_gain_loop()
 	if(knowledge_gain_loop) return
 	knowledge_gain_loop=1
 	while(src)
-		if(Action == "Meditating" && Knowledge < Tech_BP)
+		if(Action=="Meditating"&&knowledge_training&&Knowledge<Tech_BP)
 			while(!client) sleep(300)
 			var/knowledge_gain=(1-Knowledge/Tech_BP)**2
 			knowledge_gain=Clamp(knowledge_gain,0,0.2)
-			knowledge_gain*=Tech_BP/200*knowledge_cap_rate 
+			knowledge_gain*=Tech_BP/200*knowledge_cap_rate
 			Knowledge+=knowledge_gain*2.3
-			Knowledge = Math.Min(Knowledge, Tech_BP * (HasTrait("Pacifist Tendencies") ? 2 : 1))
+			if(Knowledge>Tech_BP) Knowledge=Tech_BP
 
 			if(Knowledge >= Tech_BP * very_high_knowledge_min) GiveFeat("Get Very High Knowledge")
 
 			sleep(10)
 		else break
 
-		if(Knowledge>Tech_BP * (HasTrait("Pacifist Tendencies") ? 2 : 1)) Knowledge=Tech_BP * (HasTrait("Pacifist Tendencies") ? 2 : 1)
+		if(Knowledge>Tech_BP) Knowledge=Tech_BP
 	knowledge_gain_loop=0
-
-mob/proc/GetMaxKnowledge()
-	return Tech_BP * (HasTrait("Pacifist Tendencies") ? 2 : 1)
-
-mob/proc/KnowledgeTick()
-	var/knowledge_gain = (1-Knowledge/Tech_BP) ** 2
-	knowledge_gain = Clamp(knowledge_gain, 0, 0.2)
-	knowledge_gain *= Tech_BP / 200 * knowledge_cap_rate 
-	Knowledge += knowledge_gain * 2.3 * 0.5
-	Knowledge = Math.Min(Knowledge, Tech_BP * (HasTrait("Pacifist Tendencies") ? 2 : 1))
-
-	if(Knowledge >= Tech_BP * very_high_knowledge_min) GiveFeat("Get Very High Knowledge")
 
 mob/var/list/SI_List=new
 
 mob/proc/SI_List(N=6000)
 	set waitfor=0
-	sleep(N+1)
+	sleep(N)
 	while(src)
 		for(var/mob/P in player_view(15,src)) if(P.client&&!(P.Mob_ID in SI_List)) SI_List+=P.Mob_ID
-		sleep(N+1)
-
-mob/proc/UpdateSIList()
-	for(var/mob/P in player_view(30, src))
-		if(P.client && !(P.Mob_ID in SI_List))
-			if(prob(1)) SI_List += P.Mob_ID
+		sleep(N)
 
 mob/var/tmp/obj/regenerator_obj
 
 var/regenerator_damage_mod = 3 //you take this many times more damage from things if you are in a regenerator
-
-mob/proc/RegeneratorTick(obj/items/Regenerator/r)
-	if(!r) r = regenerator_obj
-	if(!r) r = locate(/obj/items/Regenerator) in loc
-	if(!r) return
-	if(Android || Giving_Power || BPpcnt > 100 || Using_Focus || attacking || Digging || Overdrive || counterpart_died) return
-	if(buffed_with_bp() || buff_transform_bp || God_Fist_level || Flying || Action == "Training") return
-	if(istype(get_area(), /area/Braal_Core))
-		player_view(15,src) << "The [r] is destroyed by the acid smog in this place"
-		del(r)
-		return
-	var/N=1
-	if(r.Double_Effectiveness) N*=2
-
-	if(r.cures_radiation)
-		if(radiation_level)
-			radiation_level -= 5 * N
-			if(radiation_level<=0)
-				radiation_poisoned=0
-				radiation_level=0
-				spawn alert(src,"You are now fully cured from your radiation exposure")
-
-	if(Health<100)
-		IncreaseHealth(2 * RegenMod() * N)
-	if(KO&&Health>=100) RegainConsciousness()
-	if(Ki<max_ki&&r.Recovers_Energy)
-		IncreaseKi((max_ki / 50) * recov * N)
-	if(prob(5*N)&&r.Heals_Injuries)
-		if(CheckForInjuries())
-			for(var/injury/I in injuries)
-				I.remove_at -= 0.05 * RegenMod()
-				TryRemoveInjury(I)
-	RegenGrabDrop()
 
 mob/proc/Regenerator_loop(obj/items/Regenerator/r)
 	set waitfor=0
@@ -850,7 +791,7 @@ mob/proc/Regenerator_loop(obj/items/Regenerator/r)
 				player_view(15,src) << "The [r] is destroyed by the acid smog in this place"
 				del(r)
 			else
-				UpdateGravity()
+				Gravity_Update()
 				var/N=1
 				if(r.Double_Effectiveness) N*=2
 
@@ -863,18 +804,19 @@ mob/proc/Regenerator_loop(obj/items/Regenerator/r)
 							spawn alert(src,"You are now fully cured from your radiation exposure")
 
 				if(Health<100)
-					IncreaseHealth(4 * RegenMod() * N)
-				if(KO&&Health>=100) RegainConsciousness()
+					Health += 4 * RegenMod() * N * Server_Regeneration
+					if(Health>100) Health=100
+				if(KO&&Health>=100) UnKO()
 				if(Ki<max_ki&&r.Recovers_Energy)
-					IncreaseKi(2 * (max_ki / 50) * recov * N)
-				if(prob(5*N)&&r.Heals_Injuries)
-					if(CheckForInjuries())
-						for(var/injury/I in injuries)
-							I.remove_at -= 0.05 * RegenMod()
-							TryRemoveInjury(I)
+					Ki+= 2 * (max_ki / 50) * recov * N * Server_Recovery
+					if(Ki>max_ki) Ki=max_ki
+				if(prob(5*N)&&r.Heals_Injuries) for(var/obj/Injuries/I in injury_list)
+					src<<"Your [I] injury has healed from the regenerator"
+					del(I)
+					Add_Injury_Overlays()
+					break
 				if(Gravity>25*N)
-					for(var/mob/M in player_view(15,src))
-						M.SendMsg("The [r] is destroyed by gravity! The maximum it can handle is [25*N]x", CHAT_IC)
+					player_view(15,src)<<"The [r] is destroyed by gravity! The maximum it can handle is [25*N]x"
 					del(r)
 				RegenGrabDrop()
 		if(!client) sleep(100) //empty clones sitting in regenerators lag if there is many of them
@@ -888,40 +830,25 @@ mob/proc/RegenGrabDrop()
 	sleep(5)
 	ReleaseGrab()
 
+mob/proc/Network_Delay_Loop() while(src)
+	return //disabled. doesnt seem to work anyway
+	//if(client) call(".configure delay 0")
+	sleep(30)
+
 mob/var/tmp/Puranto_regen_looping
-
-mob/proc/RegenerateSkillTick()
-	if(current_area && !istype(current_area,/area/Braal_Core))
-		var/Percent=7 * Clamp(RegenMod(), 0.5, 10)
-
-		if(Overdrive||God_Fist_level) Percent/=2
-
-		var/Drain = Percent * (max_stamina * 0.05)
-
-		var/to100 = 100 - Health
-		if(to100 < Percent)
-			var/n = to100 / Percent
-			Percent *= n * 0.5
-			Drain *= n * 0.5
-
-		if(stamina>=Drain)
-			IncreaseStamina(-Drain)
-			IncreaseHealth(Percent)
 
 mob/proc/Puranto_regen_loop()
 	set waitfor=0
 	if(Puranto_regen_looping) return
 	Puranto_regen_looping=1
-	while(Regeneration_Skill && !KO && Health < 100)
-		if(current_area && !istype(current_area,/area/Braal_Core))
-			if(Is_Cybernetic())
-				Regeneration_Skill=0
-				break
+	while(Regeneration_Skill)
+		if(!KO && Health<100 && (current_area && !istype(current_area,/area/Braal_Core)))
+			if(Is_Cybernetic()) Regeneration_Skill=0
 			var/Percent=7 * Clamp(RegenMod(), 0.5, 10)
 
 			if(Overdrive||God_Fist_level) Percent/=2
 
-			var/Drain = Percent * (max_stamina * 0.05)
+			var/Drain=Percent * (max_ki/140) / Clamp(Eff**0.2,0.4,2)
 
 			var/to100 = 100 - Health
 			if(to100 < Percent)
@@ -929,32 +856,14 @@ mob/proc/Puranto_regen_loop()
 				Percent *= n
 				Drain *= n
 
-			if(stamina>=Drain)
-				IncreaseStamina(-Drain)
-				IncreaseHealth(Percent)
+			if(Ki>=Drain)
+				Ki-=Drain
+				Health+=Percent
+				if(Health>100) Health=100
 		sleep(10)
 	Puranto_regen_looping=0
 
 mob/var/tmp/nanite_repair_looping
-
-mob/proc/NaniteRepairTick()
-	if(Is_Cybernetic()) Regeneration_Skill=0
-	var/Percent=4.5 * Clamp(RegenMod(),0.4,10)
-
-	if(Overdrive||God_Fist_level) Percent/=2
-
-	var/Drain=Percent*(max_ki/140)/Clamp(Eff**0.2,0.4,2)
-
-	var/to100=100-Health
-	if(to100<Percent)
-		var/n=to100/Percent
-		Percent*=n
-		Drain*=n
-
-	if(Ki>=Drain)
-		IncreaseHealth(Percent)
-		if(Health>100) Health=100
-		IncreaseKi(-Drain)
 
 mob/proc/Nanite_repair_loop()
 	set waitfor=0
@@ -978,9 +887,9 @@ mob/proc/Nanite_repair_loop()
 				Drain*=n
 
 			if(Ki>=Drain)
-				IncreaseHealth(Percent)
+				Health+=Percent
 				if(Health>100) Health=100
-				IncreaseKi(-Drain)
+				Ki-=Drain
 			if(!nanite_overlays)
 				overlays+='Nanite Repair.dmi'
 				nanite_overlays=1
@@ -993,6 +902,26 @@ mob/proc/Nanite_repair_loop()
 
 mob/proc/Regen_Active() if((Regeneration_Skill&&Health<100)||(Nanite_Repair&&Health<50)) return 1
 
+mob/var/tmp/injury_removal_loop
+
+mob/proc/Injury_removal_loop()
+	set waitfor=0
+	if(injury_removal_loop) return
+	injury_removal_loop=1
+	while(src)
+		var/injury_found
+		for(var/obj/Injuries/I in injury_list)
+			if((I.Wear_Off && Year>=I.Wear_Off) || prob(20*Regenerate) || prob(100 * Regeneration_Skill)||Dead)
+				src<<"<font size=3><font color=red>Your [I] injury has healed on its own"
+				del(I)
+				Add_Injury_Overlays()
+				break
+			injury_found=1
+		if(!injury_found)
+			injury_removal_loop=0
+			return
+		sleep(600)
+
 mob/var/Using_Focus
 
 mob/proc/Has_Active_Freezes() for(var/obj/Time_Freeze_Energy/T in Active_Freezes) return 1
@@ -1001,61 +930,37 @@ mob/var
 	tmp
 		next_energy_increase=0
 		last_ki_hit_zero = -9999
-	
 
-mob/proc/RecoverEnergyLoop()
-	set waitfor = FALSE
-	set background = TRUE
-	while(src)
-		if(src in auto_recov_mobs)
-			var/can_recover_ki = src.Can_recover_ki(ki_limit = src.max_ki)
+proc/Recover_energy_loop()
+	set waitfor=0
+	while(1)
+		for(var/mob/m in auto_recov_mobs)
+			var/can_recover_ki=m.Can_recover_ki(ki_limit=m.max_ki)
 			if(can_recover_ki)
-				if(src.Ki <= 1)
-					src.last_ki_hit_zero = world.time
-				
+				if(m.Ki <= 1)
+					m.last_ki_hit_zero = world.time
+
 				var/n=0.2
-				if(src.Dead) n *= 1.2
-				if(src.Action == "Meditating" && world.time - src.last_shield_use >= 200) n *= 5
-				if(src.z == 10) n *= 2
-				if(src.IsShielding()) n *= 0.15
+				if(m.is_teamer) n*=0.6
+				if(m.Action=="Meditating"&&world.time-m.last_shield_use>=200) n*=5
+				if(m.Dead) n*=1.2
+				if(m.z == 10) n *= 2 //hbtc
+				if(m.OP_build()) n*=1.25
+				if(m.Internally_Injured()) n*=0.25
+				if(m.ki_shield_on()) n*=0.15
+				if(m.ThingC()) n *= 1.26
 
-				n *= 0.5 * (src.max_ki / 100) * src.recov ** 1.1 * src.Recov_Mult / src.Gravity_Health_Ratio()
+				m.Ki+= 0.5 * n*Server_Recovery*(m.max_ki/100) * m.recov**1.1 * m.Recov_Mult/m.Gravity_Health_Ratio()
+				if(m.Ki>m.max_ki) m.Ki=m.max_ki
 
-				if(CheckForInjuries() && GetInjuryTypeCount(/injury/internal_bleeding))
-					n *= 0.85
-
-				src.IncreaseKi(n * (transRecovRate + GetWeaponRecov()))
 		sleep(5)
-
-mob/proc/RecoverEnergy()
-	var/can_recover_ki = src.Can_recover_ki(ki_limit = src.max_ki)
-	if(can_recover_ki)
-		if(src.Ki <= 1)
-			src.last_ki_hit_zero = world.time
-		
-		var/n=0.2
-		if(src.Dead) n *= 1.2
-		if(src.Action == "Meditating" && world.time - src.last_shield_use >= 200) n *= 5
-		if(src.z == 10) n *= 2
-		if(src.IsShielding()) n *= 0.15
-
-		n *= 0.5 * (src.max_ki / 100) * src.recov ** 1.1 * src.Recov_Mult / src.Gravity_Health_Ratio()
-
-		if(CheckForInjuries() && GetInjuryTypeCount(/injury/internal_bleeding))
-			n *= 0.85
-
-		src.IncreaseKi(n * (transRecovRate + GetWeaponRecov()))
-
-mob/var/disableKiRecovery = 0
-mob/var/disableHPRecovery = 0
-mob/var/disableStamRecovery = 0
 
 mob/proc
 	Can_recover_health(health_limit=100)
 		if(radiation_poisoned||KO||Health>=health_limit||Overdrive||Giving_Power||!(!Dead||(Dead&&Is_In_Afterlife(src)))||God_Fist_level||\
 		Gravity>gravity_mastered||regen<=0 || regenerator_obj) return
-		if(bleedStacks.len > 0 || SplitformCount()) return
-		return !disableHPRecovery
+		if(bleed_damage > 0 || SplitformCount()) return
+		return 1
 
 	Can_recover_ki(ki_limit=1.#INF)
 
@@ -1065,7 +970,7 @@ mob/proc
 		if(strangling||Ki>=ki_limit||BPpcnt>100||attacking||KO||(Flying&&Class!="Spirit Doll")||Action=="Training"||Digging||Regen_Active()||\
 		Overdrive||Using_Focus||Giving_Power || !(!Dead || (Dead&&(Is_In_Afterlife(src)||istype(current_area,/area/Prison)))) || counterpart_died||\
 		Has_Active_Freezes()||buffed_with_bp()||buff_transform_bp||God_Fist_level||recov<=0 || Peebagging() || SplitformCount()) return
-		return !disableKiRecovery
+		return 1
 
 mob/var/tmp/logout_timer_loop
 
@@ -1076,109 +981,67 @@ mob/proc/Logout_timer_countdown()
 	logout_timer_loop=1
 	while(src)
 		logout_timer-=10
-		if(InFinalRealm()) logout_timer=60
+		if(Final_Realm()) logout_timer=60
 		if(logout_timer<=0)
 			logout_timer=0
 			//src<<"<font color=cyan>It has been 30 seconds since you were last attacked. You can now log out without your body staying behind."
 			break
-		else sleep(10)
+		else sleep(100)
 	logout_timer_loop=0
+
+mob/var/tmp/next_health_increase=0
 
 var/list
 	auto_regen_mobs = new
 	auto_recov_mobs = new
 
-mob/proc/RecoverHealthLoop()
-	set waitfor = FALSE
-	set background = TRUE
-	while(src)
-		if(src in auto_regen_mobs)
-			var/can_recover_health = src.Can_recover_health(health_limit = 100)
-			if(src.Health <= 0 && !src.KO) src.KnockOut("low health")
+proc/Recover_health_loop()
+	set waitfor=0
+	var/base_sleep_time = 5
+	while(1)
+		for(var/mob/m in auto_regen_mobs) if(world.time >= m.next_health_increase)
 
-			if(src && !src.logout_timer && world.time < src.last_attacked_by_player + 200)
-				src.Logout_timer_countdown()
-				src.logout_timer = 30
-			
+			if(!m) continue
+
+			var/can_recover_health = m.Can_recover_health(health_limit=100)
+
+			//if(m.key && (m.key in epic_list)) m.FullHeal()
+			if(m.Health <= 0 && !m.KO) m.KO("low health")
+
+			if(m && !m.logout_timer && world.time < m.last_attacked_by_player + 200)
+				m.Logout_timer_countdown()
+				m.logout_timer=30
+
+			if(!m) continue
+
 			if(can_recover_health)
 				var/n=1
-				if(src.is_teamer) n *= 0.6
-				if(src.current_area && src.current_area.type==/area/Braal_Core) n /= 100
-				if(src.Action != "Meditating") n /= 3
-				if(src.Dead) n *= 1.2
-				if(src.z == 10) n *= 2 //hbtc
-				n *= 1 * src.RegenMod()
-				n *= 2 * src.Regen_Mult / src.Gravity_Health_Ratio()
-				n *= 0.25 // arbitrary
-				n *= 1 + (GetTraitRank("Fervent Regeneration") * 0.05)
-
-				if(CheckForInjuries() && GetInjuryTypeCount(/injury/internal_bleeding))
-					n *= 0.85
-
-				src.IncreaseHealth(n * (transRegenRate + GetWeaponRegen()))
-				if(src.Health > 100) src.Health = 100
-
-		sleep(5)
-
-mob/proc/RecoverHealth()
-	var/can_recover_health = src.Can_recover_health(health_limit = 100)
-	if(src.Health <= 0 && !src.KO) src.KnockOut("low health")
-
-	if(src && !src.logout_timer && world.time < src.last_attacked_by_player + 200)
-		src.Logout_timer_countdown()
-		src.logout_timer = 30
-	
-	if(can_recover_health)
-		var/n=1
-		if(src.is_teamer) n *= 0.6
-		if(src.current_area && src.current_area.type==/area/Braal_Core) n /= 100
-		if(src.Action != "Meditating") n /= 3
-		if(src.Dead) n *= 1.2
-		if(src.z == 10) n *= 2 //hbtc
-		n *= 1 * src.RegenMod()
-		n *= 2 * src.Regen_Mult / src.Gravity_Health_Ratio()
-		n *= 0.25 // arbitrary
-		n *= 1 + (GetTraitRank("Fervent Regeneration") * 0.05)
-
-		if(CheckForInjuries() && GetInjuryTypeCount(/injury/internal_bleeding))
-			n *= 0.85
-
-		src.IncreaseHealth(n * (transRegenRate + GetWeaponRegen()))
-		if(src.Health > 100) src.Health = 100
+				if(m.is_teamer) n*=0.6
+				if(m.current_area&&m.current_area.type==/area/Braal_Core) n/=100
+				if(m.Action!="Meditating") n/=3
+				if(m.Dead) n*=1.2
+				if(m.z == 10) n *= 2 //hbtc
+				n*=1 * m.RegenMod()
+				if(m.OP_build()) n*=1.25
+				n *= 2 * Server_Regeneration*m.Regen_Mult/m.Gravity_Health_Ratio()
+				if(m.ThingC()) n *= 1.26
+				m.Health += n * 0.25
+				if(m.Health>100) m.Health=100
+		sleep(base_sleep_time)
 
 mob/var/Overdrive
 
-mob/proc/PowerStarTick()
-	if(current_area && current_area.powerComet)
-		if(!HasTrait("Who Needs a Stupid Comet Anyway?") && (!IsShielding()))
-			var/mode_mod=3
-			if(Can_recover_health(health_limit=100)) IncreaseHealth(1.3 * RegenMod() * mode_mod)
-			if(Can_recover_ki(ki_limit=max_ki * 2)) IncreaseKi((max_ki / 40) * recov**0.5 * mode_mod)
-		else if(HasTrait("Who Needs a Stupid Comet Anyway?"))
-			Ki = Math.Min(Ki, max_ki * 0.6)
-	else if (HasTrait("Who Needs a Stupid Comet Anyway?"))
-		if(!IsShielding())
-			if(Can_recover_health(health_limit=100)) IncreaseHealth(1.3 * RegenMod() * 1.5)
-			if(Can_recover_ki(ki_limit=max_ki * 1.3)) IncreaseKi((max_ki / 40) * recov**0.5 * 1.5)
-
 mob/proc/Onion_Lad_Star()
 	set waitfor=0
-	var/obj/Skills/Combat/Ki/Shield/shield
+	var/obj/Shield/shield
 	while(src&&Race=="Onion Lad")
-		if(current_area && current_area.powerComet)
-			if(!shield) if(shield_obj&&shield_obj.Using) shield=shield_obj
-			if(!HasTrait("Who Needs a Stupid Comet Anyway?") && (!shield||!shield.Using))
-				var/mode_mod=3
-				if(Can_recover_health(health_limit=100)) IncreaseHealth(1.3 * RegenMod() * mode_mod)
-				if(Can_recover_ki(ki_limit=max_ki * 2)) IncreaseKi((max_ki / 40) * recov**0.5 * mode_mod)
-			else if(HasTrait("Who Needs a Stupid Comet Anyway?"))
-				Ki = Math.Min(Ki, max_ki * 0.6)
-			sleep(10)
-		else if (HasTrait("Who Needs a Stupid Comet Anyway?"))
+		if(Onion_Lad_Star)
 			if(!shield) if(shield_obj&&shield_obj.Using) shield=shield_obj
 			if(!shield||!shield.Using)
-				if(Can_recover_health(health_limit=100)) IncreaseHealth(1.3 * RegenMod() * 1.5)
-				if(Can_recover_ki(ki_limit=max_ki * 1.3)) IncreaseKi((max_ki / 40) * recov**0.5 * 1.5)
+				var/mode_mod=1
+				if(race_stats_only_mode) mode_mod *= 2
+				if(Can_recover_health(health_limit=100)) Health += 1.3 * RegenMod() * mode_mod
+				if(Can_recover_ki(ki_limit=max_ki * 2)) Ki += (max_ki / 40) * recov**0.5 * mode_mod
 			sleep(10)
 		else sleep(600)
 
@@ -1207,36 +1070,51 @@ mob/proc
 		mod = 1 / mod //invert
 		return mod
 
-var/lastImmortalityZoneCheck = 0
-proc/ImmortalityZoneCheck()
-	set waitfor = 0
-	if(lastImmortalityZoneCheck + 600 > world.time) return
-	lastImmortalityZoneCheck = world.time
-
-	var/area/kaio_area=locate(/area/Kaioshin) in all_areas
-	for(var/mob/m in kaio_area.player_list)
-		if(m.Race=="Kai")
-			if(m.Age>m.Decline+50) m.Age=m.Decline+50
-			if(m.Age>m.Decline) m.Age-=0.2
-
+proc/Immortality_zones()
+	set waitfor=0
 	var/area/hell_area=locate(/area/Hell) in all_areas
-	for(var/mob/m in hell_area.player_list)
-		if(m.Demonic)
-			if(m.Age>m.Decline+50) m.Age=m.Decline+50
-			if(m.Age>m.Decline) m.Age-=0.133
+	var/area/kaio_area=locate(/area/Kaioshin) in all_areas
+	while(1)
 
-mob/proc/scrap_repair()
-	for(var/obj/Module/Scrap_Repair/S in active_modules)
-		if(S.suffix)
-			return 1
+		for(var/mob/m in hell_area.player_list)
+			if(m.Race=="Kai")
+				if(m.Age>m.Decline+50) m.Age=m.Decline+50
+				if(m.Age>m.Decline) m.Age-=0.2
+
+		for(var/mob/m in kaio_area.player_list)
+			if(m.Demonic)
+				if(m.Age>m.Decline+50) m.Age=m.Decline+50
+				if(m.Age>m.Decline) m.Age-=0.133
+
+		sleep(600)
+
+mob/var/tmp/eye_injury_loop
+
+mob/proc/Eye_Injury_Blindness()
+	set waitfor=0
+	if(eye_injury_loop) return
+	eye_injury_loop=1
+	while(src)
+		var/Eyes=2
+		for(var/obj/Injuries/Eye/I in injury_list) Eyes--
+		if(Eyes<=0)
+			if(prob(70)) sight=0 //can see 70% of the time
+			else sight=1
+		if(Eyes==2)
+			eye_injury_loop=0
+			sight=0
+			return
+		sleep(rand(0,40))
+
+mob/proc/scrap_repair() for(var/obj/Module/Scrap_Repair/S in active_modules) if(S.suffix) return 1
 
 mob/proc/death_regen(set_loc=1)
 	if(set_loc) death_regen_loc=list(x,y,z)
 	SafeTeleport(locate(250,250,15))
 	var/time=round(60/Regenerate**0.5)
-	src.SendMsg("You will regenerate in [round(time)] seconds.", CHAT_IC)
+	src<<"You will regenerate in [round(time)] seconds"
 	for(var/v in 1 to time)
-		if(!InFinalRealm()) break
+		if(!Final_Realm()) break
 		sleep(10)
 	if(Dead) return
 	if(!scrap_repair() || Scraps_Exist())
@@ -1250,9 +1128,12 @@ mob/proc/death_regen(set_loc=1)
 			SafeTeleport(A.loc)
 			del(A)
 		update_area()
-		for(var/mob/M in player_view(15,src))
-			M.SendMsg("[src] regenerates back to life!", CHAT_IC)
+		player_view(src,15)<<"[src] regenerates back to life!"
 		if(BPpcnt>100) BPpcnt=100
+		for(var/obj/Injuries/I in injury_list) del(I)
+		Add_Injury_Overlays()
+		Regenerating=0
+		Zombie_Virus=0
 		if(!scrap_repair())
 			if(!logout_timer) Logout_timer_countdown()
 			logout_timer=60
@@ -1261,7 +1142,7 @@ mob/proc/death_regen(set_loc=1)
 			old_overlays.Add(overlays)
 			icon='Death regenerate.dmi'
 			overlays.Remove(overlays)
-			KnockOut(can_anger=0)
+			KO(allow_anger=0)
 			sleep(TickMult(140/Regenerate**0.5))
 			if(Regenerate >= 0.4) FullHeal()
 			else
@@ -1269,58 +1150,53 @@ mob/proc/death_regen(set_loc=1)
 				Ki = 1
 			icon=old_icon
 			overlays.Add(old_overlays)
-		Regenerating=0
-		if(prob(20)) TryUnlockForm("Super Perfect")
 	else
-		src.SendMsg("Your scraps were destroyed, you cannot regenerate back to life.", CHAT_IC)
+		src<<"Your scraps were destroyed, you cannot regenerate back to life."
 		Death("not having any scraps to regenerate from",1)
 
 var/turf/bind_spawn = locate(410,290,6)
 
-var/lastBindCheck = 0
-proc/BindCheck()
-	if(lastBindCheck + 50 > world.time) return
-	lastBindCheck = world.time
-
-	for(var/obj/Curse/c in bind_objects)
-		if(ismob(c.loc))
-			var/mob/m = c.loc
-			if(m.z != 6 && !m.Teleport_nulled() && !m.Prisoner() && !m.InFinalRealm())
-				if(!m.IsTournamentFighter())
-					var/mob/m2 = m.loc
-					if(m2 && ismob(m2))
-						//ignore bind
-					else
-						m << "The bind on you takes effect and you are returned to hell"
-						m.GoToBindSpawn()
+proc/Bind_loop()
+	set waitfor=0
+	while(1)
+		for(var/obj/Curse/c in bind_objects)
+			if(ismob(c.loc))
+				var/mob/m = c.loc
+				if(m.z != 6 && !m.Teleport_nulled() && !m.Prisoner() && !m.Final_Realm())
+					if(!Tournament || !(src in All_Entrants))
+						var/mob/m2 = m.loc
+						if(m2 && ismob(m2))
+							//ignore bind
+						else
+							m << "The bind on you takes effect and you are returned to hell"
+							m.GoToBindSpawn()
+		sleep(50)
 
 mob/var/fly_mastery = 0
 
 mob/proc
 	Fly_Drain()
-		if(IsFusion()) return 5
+
+		//return 5 //just have auto mastered flying for now i think it annoys new players
 
 		var/n = 8 + (max_ki * 3 / (fly_mastery + 1) / Eff)
-		return Math.Min(n, max_ki)
+		if(n > max_ki) n = max_ki
+		return n
 
 	MasterFly(amount = 1)
 		var/n = 3 * amount
 
+		if(key && (key in epic_list)) n *= 100
 		if(Total_HBTC_Time < 2 && z == 10) n *= 5
+		if(alignment_on && alignment == "Evil") n *= 1.25
 		n *= decline_gains()
 		if(Dead) n *= 1.5
 
 		fly_mastery += n
-	
-	BoostedFlightDrain()
-		. = 0
-		if(flight_boosted)
-			. = max_stamina * 0.015
-			. /= Math.Clamp((GetStatMod("Dur") + GetStatMod("Res") + GetStatMod("Str")) / 3, 0.1, 3)
 
 mob/var/tmp
 	fly_loop
-	obj/Skills/Utility/Fly/fly_obj
+	obj/Fly/fly_obj
 
 mob/proc/Fly_loop()
 	set waitfor=0
@@ -1328,25 +1204,47 @@ mob/proc/Fly_loop()
 	fly_loop=1
 	while(src && client && fly_obj && Flying && !Cyber_Fly)
 		if(Ki>=Fly_Drain()&&!KO)
-			if(Class!="Spirit Doll") IncreaseKi(-Fly_Drain() * 2)
+			Flying_Gain(gain_mod=2)
+			if(Class!="Spirit Doll") Ki-=Fly_Drain() * 2
 			MasterFly(2)
 			sleep(20)
 		else
-			src.SendMsg("You stop flying due to lack of energy.", CHAT_IC)
+			src<<"You stop flying due to lack of energy"
 			Ki=0
 			Land()
 			break
 	fly_loop=0
 
-mob/proc/FlyDrain()
-	var/drain = Fly_Drain() * 0.25
-	if(!KO && Ki >= drain)
-		IncreaseKi(-drain * 2)
-		MasterFly(2)
-	else
-		src.SendMsg("You stop flying due to lack of energy.", CHAT_IC)
-		Ki = 0
-		Land()
+mob/proc/Alter_regen_mult(n=0)
+	var/old_regen_mult = Regen_Mult
+	if(Regen_Mult<n) Regen_Mult=n
+	if(old_regen_mult == 1) Regen_mult_decrease()
+
+mob/proc/Regen_mult_decrease()
+	set waitfor=0
+	sleep(5)
+	while(Regen_Mult>1)
+		Regen_Mult-=0.2
+		if(Regen_Mult<1) Regen_Mult=1
+		sleep(60)
+
+mob/proc/Alter_recov_mult(n=0)
+	if(Recov_Mult==1) Recov_mult_decrease()
+	if(Recov_Mult<n) Recov_Mult=n
+
+mob/proc/Recov_mult_decrease()
+	set waitfor=0
+	sleep(5)
+	while(Recov_Mult>1)
+		Recov_Mult-=0.2
+		if(Recov_Mult<1) Recov_Mult=1
+		sleep(60)
+
+mob/proc/Faction_Update()
+	set waitfor=0
+	while(src&&client)
+		sleep(3000)
+		FactionUpdate()
 
 mob/var/tmp/overdrive_loop
 
@@ -1355,22 +1253,18 @@ mob/proc/Overdrive_Loop()
 	if(overdrive_loop) return
 	overdrive_loop=1
 	while(Overdrive)
-		TakeDamage(1.5, "overdrive")
+		Health-=1.5
 		if(KO||Ki<max_ki*0.1) Overdrive_Revert()
 		sleep(20)
 	overdrive_loop=0
 
-mob/proc/OverdriveDrain()
-	TakeDamage(1.5 * 0.25, "overdrive")
-	if(Ki < max_ki * 0.1) Overdrive_Revert()
-
 mob/var/tmp/beamChargeLoop
 
-mob/proc/Beam_Charge_Loop(obj/Skills/Combat/Ki/A)
+mob/proc/Beam_Charge_Loop(obj/Attacks/A)
 	set waitfor = 0
 	if(beamChargeLoop) return
 	beamChargeLoop = 1
-	var/Amount = 1.8
+	var/Amount = 1
 	powerup_mobs -= src
 	if(God_Fist_level||super_God_Fist)
 		if(BPpcnt>100) BPpcnt = 100
@@ -1383,9 +1277,11 @@ mob/proc/Beam_Charge_Loop(obj/Skills/Combat/Ki/A)
 mob/var/max_powerup_acheived=100
 
 mob/proc/powerup_speed(n=1)
-	n *= 2 * Buffless_recovery()**recovery_powerup_exponent
+	n *= 1.56 * Buffless_recovery()**recovery_powerup_exponent
 	if(BPpcnt>max_powerup_acheived)
+		//n/=8/mastery_mod
 		max_powerup_acheived=BPpcnt
+	if(ismystic) n*=1.2
 	if(BPpcnt<100) n=Clamp(BPpcnt/4,1,10)
 	else
 		n *= energy_mod_powerup_soft_cap()
@@ -1394,15 +1290,19 @@ mob/proc/powerup_speed(n=1)
 
 mob/proc/powerup_soft_cap()
 	var/ki_mod = BufflessKiMod()
+	if(lssj_always_angry && Class == "Legendary Yasai") ki_mod /= lssj_ki_mult
 	if(has_modules) for(var/obj/Module/m in active_modules) if(m.Kix>1) ki_mod/=m.Kix
 	var/max_powerup = 27 * (ki_mod ** energy_mod_powerup_exponent) //+100
-	
-	max_powerup *= transPUCap
+	if(lssj_always_angry && Class == "Legendary Yasai") max_powerup *= 0.63
+	if(jirenAlien) max_powerup *= jirenAlienPowerupMult
 
-	if(beaming || charging_beam) max_powerup *= 1.45
+	if(ssj == 1) max_powerup *= 0.8
+	if(ssj == 2) max_powerup *= 0.65
+	if(ssj == 3) max_powerup *= 0.6
+	if(ssj == 4) max_powerup *= ssj4_powerup_mod
+
+	if(beaming || charging_beam) max_powerup *= 2
 	return max_powerup
-
-mob/var/transPUCap = 1
 
 mob/proc/energy_mod_powerup_soft_cap()
 	var/max_powerup = powerup_soft_cap()
@@ -1416,73 +1316,105 @@ mob/proc/energy_mod_powerup_soft_cap()
 mob/proc/PowerupKnockbackEffect(mob/m)
 	set waitfor=0
 	if(!m) return
-	var/kb_dist = 5 + ((GetStatMod("For") * (1 + recov / 2)) * GetTierBonus(0.25)) - (m.GetStatMod("Dur") + m.GetStatMod("Res")) * GetTierBonus(0.5)
-	kb_dist = Math.Floor(Math.Clamp(kb_dist, 0, 9))
+	var/bp_rating = BP
+	if(transing) bp_rating *= 3
+	var/kb_dist = 3 * (bp_rating / m.BP) ** 1 * ((Str + Pow) / (m.End + m.Res))
+	if(kb_dist>9) kb_dist=9
+	if(kb_dist <= 1) kb_dist = 0
 	kb_dist=ToOne(kb_dist)
 	if(kb_dist)
 		var/turf/t=m.loc
-		if(t&&isturf(t)) TimedOverlay(t, 30, 'Sparks LSSj.dmi')
+		if(t&&isturf(t)) t.TempTurfOverlay('Sparks LSSj.dmi',30)
 		player_view(center=src)<<sound('scouterexplode.ogg',volume=20)
 		Explosion_Graphics(m,1)
 		m.Knockback(src, kb_dist, dirt_trail = 0, bypass_immunity = 1)
 
 mob/var/tmp/standing_powerup
 
-mob/proc/PowerupScreenShakeLoop(obj/Skills/Utility/Power_Control/pc)
+mob/proc/PowerupScreenShakeLoop(obj/Power_Control/pc)
 	set waitfor=0
 	while(pc && pc.Powerup == 1)
 		if(standing_powerup)
 			var/offset = 1
+			if(transing) offset = 2
 			for(var/mob/m2 in player_view(15,src)) if(m2.client) m2.ScreenShake(Amount = 10, Offset = offset)
 		sleep(5)
 
-mob/proc/PowerUpKnockAwayLoop(obj/Skills/Utility/Power_Control/A)
+mob/proc/PowerUpKnockAwayLoop(obj/Power_Control/A)
 	set waitfor=0
 	while(A && A.Powerup == 1 && A.PC_Loop_Active)
 		var/delay = world.tick_lag
 		if(BPpcnt > 100)
 			standing_powerup = 0
-			if(!Auto_Attack && world.time - last_attacked_mob_time > 35 && !Giving_Power)
-				if(!charging_beam && !beaming && !attacking)
+			if(!Auto_Attack && world.time - last_attacked_mob_time > 35 && world.time - last_evade_key_press > 30 && world.time - last_block_key_press > 30 && !Giving_Power)
+				if(transing || (!charging_beam && !beaming && !attacking && stand_still_time() >= 20))
 					standing_powerup = 1
 					PowerupDamageGrabber(delay / 1)
 					//this line makes it so you cant just stand there aura knocking someone forever
-					if((BPpcnt < 100 + powerup_soft_cap() * 2) && world.time - last_move > 100)
+					if(BPpcnt < 100 + powerup_soft_cap() * 2)
 						for(var/mob/m in View(2, src))
 							if(isturf(m.loc) && !m.KO && !m.grabber && m != src && (!m.standing_powerup || getdist(src,m) <= 2))
 								PowerupKnockbackEffect(m)
 		if(round(world.time) % 5 == 0)
-			if(IsTournamentFighter() && !IsRoundFighter())
-				Stop_Powering_Up()
+			if(Tournament && Fighter1 != src && Fighter2 != src && (src in All_Entrants)) Stop_Powering_Up()
 		if(regenerator_obj) Stop_Powering_Up()
 		sleep(delay)
 	standing_powerup = 0
 
-mob/proc/PowerControlStart(obj/Skills/Utility/Power_Control/A)
-	if(!A) A = locate(/obj/Skills/Utility/Power_Control) in src
+mob/proc/Power_Control_Loop(obj/Power_Control/A)
+	set waitfor=0
+	var/Amount=1
+	if(powerup_obj&&!A) A=powerup_obj
+	if(!A) for(var/obj/Power_Control/O in src) A=O
 	if(!A) return
+	if(A.PC_Loop_Active) return
+	A.PC_Loop_Active=1
+	PowerupScreenShakeLoop(A)
 	PowerupRisingRocks(A)
-	PowerUpKnockAwayLoop(A)
-	powerup_mobs += src
-	Aura_Overlays()
 
-mob/proc/PowerControlTick(obj/Skills/Utility/Power_Control/A)
-	if(!A) A = locate(/obj/Skills/Utility/Power_Control) in src
-	if(!A) return
-	if(A.Powerup > 0)
-		var/stopAtFull = BPpcnt < 100
-		if(Action != "Meditating" || BPpcnt < 100)
+	spawn(57) while((A&&A.Powerup==1)||BPpcnt>100)
+		if(!ultra_instinct && Action!="Meditating") player_view(10,src)<<sound('Aura.ogg',volume=10)
+		sleep(41)
+
+	//powerup knockaway
+	PowerUpKnockAwayLoop(A)
+
+	var/Stop_At_100
+	if(BPpcnt<100) Stop_At_100=1
+
+	var/soft_cap=powerup_soft_cap()
+
+	var/first_loop=1
+	while((A&&A.Powerup)||BPpcnt>100)
+		if(God_Fist_level||super_God_Fist)
+			A.Powerup=0
+			break
+		if(A&&A.Powerup==1)
+			powerup_mobs-=src
+			powerup_mobs+=src
+
+		if(soft_cap!=powerup_soft_cap() && BPpcnt>100)
+			var/mod=powerup_soft_cap()/soft_cap
+			BPpcnt=((BPpcnt-100)*mod)+100
+		soft_cap=powerup_soft_cap()
+
+		if(KO && A.Powerup) Stop_Powering_Up()
+		if(A && A.Powerup && A.Powerup!=-1 && (Action!="Meditating" || BPpcnt<100))
 			var/pu_mod = 0.85
 			if(!standing_powerup) pu_mod = 0.3
 			if(!charging_beam) //if we are charging a beam then the bppcnt increase is handled elsewhere
-				BPpcnt += powerup_speed(pu_mod * 1.3)
-			if(BPpcnt>100)
-				A.Skill_Increase(3,src)
-			if(BPpcnt>=100 && stopAtFull)
-				src.SendMsg("You reach 100% power and stop powering up.", CHAT_IC)
+				BPpcnt += powerup_speed(Amount * pu_mod * 1.3)
+			if(BPpcnt>100) A.Skill_Increase(3*Amount,src)
+			if(BPpcnt>=100&&Stop_At_100)
+				src<<"You reach 100% power and stop powering up"
 				Stop_Powering_Up()
-	else if(A.Powerup < 0)
-		BPpcnt *= 0.9
+			if(IsGreatApe()) Stop_Powering_Up()
+		else if(A&&A.Powerup==-1) BPpcnt*=0.9
+		if(prob(35)||first_loop) Aura_Overlays() //prob() as a cheap way to preserve some cpu til aura overlays is fixed
+		sleep(Amount*10)
+		first_loop=0
+	if(A) A.PC_Loop_Active=0
+	Aura_Overlays()
 
 mob/proc/Charge_Drain()
 	if(BPpcnt<=100) return 0
@@ -1503,58 +1435,120 @@ mob/proc/Charge_Drain()
 	*/
 	return drain
 
-mob/var/tmp/obj/Skills/Utility/Power_Control/powerup_obj
+mob/var/tmp/obj/Power_Control/powerup_obj
 
 var/list/powerup_mobs = new
 
-mob/proc/PowerupDrain()
-	var/drain = src.Charge_Drain() * 10
-	// loops 4 times more often
-	drain *= 0.25
-	if(!src.KO && src.BPpcnt > 100 && src.Ki >= drain)
-		src.IncreaseKi(-drain)
-	else
-		if(src.BPpcnt > 100)
-			src.SendMsg("You are too tired to power up any more.", CHAT_IC)
-		for(var/obj/Skills/Combat/Ki/a in src.ki_attacks) if(a.Wave && a.charging) src.BeamStream(a)
-		if(src.BPpcnt > 100) src.Stop_Powering_Up()
+proc/Powerup_drain()
+	set waitfor=0
+	while(1)
+		for(var/mob/m in powerup_mobs)
+			var/drain = m.Charge_Drain() * 2.5
+			if(!m.KO && m.BPpcnt > 100 && m.Ki >= drain)
+				m.Ki -= drain
+			else
+				if(m.BPpcnt > 100)
+					if(m.Race in list("Yasai","Half Yasai")) m.Revert()
+					m<<"You are too tired to power up any more"
+				for(var/obj/Attacks/a in m.ki_attacks) if(a.Wave && a.charging) m.BeamStream(a)
+				if(m.BPpcnt > 100) m.Stop_Powering_Up()
+		sleep(20)
 
 mob/proc
 	frc_share()
-		return Pow / getStatTotal() * 7
+		var/total=Swordless_strength()+End+Pow+Res+Spd+Off+Def
+		return Pow/total*7
 	dur_share()
-		return End / getStatTotal() * 7
+		var/total=Swordless_strength()+End+Pow+Res+Spd+Off+Def
+		return End/total*7
 	res_share()
-		return Res / getStatTotal() * 7
+		var/total = Swordless_strength() + End + Pow + Res + Spd + Off + Def
+		return Res / total * 7
 	spd_share()
-		return Spd / getStatTotal() * 7
+		var/total=Swordless_strength()+End+Pow+Res+Spd+Off+Def
+		return Spd/total*7
 	str_share()
-		return Str / getStatTotal() * 7
+		var/total = Swordless_strength() + End + Pow + Res + Spd + Off + Def
+		return Swordless_strength()/total*7
 	def_share()
-		return Def / getStatTotal() * 7
+		var/total=Swordless_strength()+End+Pow+Res+Spd+Off+Def
+		return Def/total*7
+
+mob/proc/Swordless_strength()
+	var/n = Str
+	var/obj/items/Sword/s = using_sword()
+	if(s) n /= s.Damage
+	return n
+
+
+
+
+mob/proc/Limit_Breaker_Loop()
+	set waitfor=0
+	sleep(2)
+	if(limit_breaker_on)
+		sleep(rand(50,1200))
+		Limit_Revert()
 
 mob/var/tmp/Status_Running
 
-mob/proc/FinalRealm()
-	BPpcnt = Math.Min(BPpcnt, 100)
-	if(!Regenerating && !KO)
-		Respawn()
-	FullHeal()
+mob/var/tmp/final_realm_loop
 
-mob/proc/KiShieldKO()
-	if(Ki <= max_ki * 0.05)
-		Shield_Revert()
-		var/mob/ko_reason = Opponent(65)
-		if(!ko_reason || !ismob(ko_reason)) ko_reason="shield"
-		KnockOut(ko_reason)
+mob/proc/Final_realm_loop()
+	set waitfor=0
+	if(final_realm_loop) return
+	final_realm_loop=1
+	while(Final_Realm())
+		if(BPpcnt>100) BPpcnt=100
+		if(!Regenerating&&!KO) Respawn()
+		FullHeal()
+		sleep(40)
+	final_realm_loop=0
 
-mob/proc/PoisonTick()
-	TakeDamage(-15 * Poisoned / Poison_resist(), "poison", 1, 1)
-	Poisoned-=0.1
-	if(Poisoned<0) Poisoned=0
+mob/var/tmp/ki_shield_loop
+
+mob/proc/Ki_shield_revert_loop()
+	set waitfor=0
+	if(ki_shield_loop) return
+	ki_shield_loop=1
+	while(ki_shield_on())
+		if(Ki<=max_ki/20||KO)
+			Shield_Revert()
+			var/mob/ko_reason = Opponent(65)
+			if(!ko_reason || !ismob(ko_reason)) ko_reason="shield"
+			KO(ko_reason)
+		sleep(15)
+	ki_shield_loop=0
+
+mob/var/tmp/dig_loop
+
+mob/proc/Dig_loop()
+	set waitfor=0
+	if(dig_loop) return
+	dig_loop=1
+	while(Digging&&client)
+		Digging(2)
+		sleep(20)
+	dig_loop=0
+
+mob/var/tmp/poison_loop
+
+mob/proc/Poison_Loop()
+	set waitfor=0
+	if(poison_loop) return
+	poison_loop=1
+	while(Poisoned)
+		Health-=30 * Poisoned / Poison_resist()
+		Poisoned-=0.1
+		if(Poisoned<0) Poisoned=0
+		if(Health<=0)
+			Death("poison",Force_Death=1,lose_hero=0)
+		sleep(10)
+	poison_loop=0
 
 mob/proc/Apply_poison(n=1)
 	Poisoned+=n
+	Poison_Loop()
 
 mob/proc/Poison_resist()
 	switch(Race)
@@ -1568,54 +1562,214 @@ mob/proc/Poison_resist()
 		if("Onion Lad") return 1.5
 	return 1
 
-mob/proc/ResourceDrainOverCap()
-	if(Ki > max_ki)
-		IncreaseKi(-(Ki/100))
-		Ki = Math.Max(Ki, max_ki)
-	if(Health > 100)
-		IncreaseHealth(-1)
-		Health = Math.Max(Health, 100)
+mob/proc/Diarea_Loop()
+	set waitfor=0
+	while(src)
+		if(Diarea)
+			Diarea()
+			sleep(TickMult(8))
+		else sleep(300)
+
+mob/proc/Energy_Reduction_Loop()
+	set waitfor=0
+	while(src)
+		var/Reduction=1 //%
+		if(Ki>max_ki)
+			Ki-=(Ki/100)*Reduction
+			if(Ki<max_ki) Ki=max_ki
+		sleep(Reduction*100)
+
+mob/proc/Health_Reduction_Loop()
+	set waitfor=0
+	while(src)
+		var/Reduction=1 //%
+		if(Health>100)
+			Health-=(Health/100)*Reduction
+			if(Health<100) Health=100
+		sleep(Reduction*100)
+
+mob/var/tmp
+	meditate_looping
+	obj/meditate_obj
+
+mob/proc/Meditate_gain_loop()
+	set waitfor=0
+	if(Race=="Majin") return
+	if(meditate_looping) return
+	meditate_looping=1
+	while(Action=="Meditating")
+		var/n=3
+		if(!client) n*=5 //meditating clones lag if there is many of them
+		icon_state="Meditate"
+		var/obj/items/Devil_Mat/D
+		for(D in loc) if(D.z) break
+		if(D&&!Stat_Settings["Rearrange"]) Devil_Mat(n)
+		else if(meditate_obj)
+			Med_Gain(n)
+			if(!knowledge_training) Raise_SP((1 / 60 / 60 / 1) * n) //1 per 1 hours
+		sleep(n*10)
+	meditate_looping=0
+
+mob/proc/Train_Gain_Loop()
+	set waitfor=0
+	while(src)
+		var/Amount=2
+		if(!client) Amount*=5 //training clones lag if there is many of them
+		if(Action=="Training")
+			icon_state="Train"
+			Train_Gain(Amount)
+			Raise_SP((1 / 60 / 60) * Amount) //1 per 1 hours
+			sleep(Amount*10)
+		else sleep(20)
+
+mob/proc/Raise_SP(Amount)
+
+	if(alignment_on&&alignment=="Evil"&&good_person_near) return
+	if(key in epic_list) Amount*=100
+
+	if(ultra_pack) Amount*=3
+	if(Total_HBTC_Time < 2&&z == 10) Amount *= 5
+	Amount *= 25
+	Amount *= SP_Multiplier
+	Amount *= decline_gains()
+	if(alignment_on && alignment=="Evil") Amount *= 1.25
+	Experience += Amount * sp_mod
 
 mob/var
-	bp_loss_from_low_ki = 0.5
-	bp_loss_from_low_hp = 0.5
+	bp_loss_from_low_ki = 1
+	bp_loss_from_low_hp = 1
 
-mob/proc/hp_ki_bp_loss_mult()
-	var/mult, hp = Health / 100, ki = Ki / max_ki
-	mult = bp_loss_from_low_hp * (hp - 1) + bp_loss_from_low_ki * (ki - 1) + 1
-	mult = Math.Clamp(mult, 0.2, 1)
-	return mult
+var
+	max_loss_from_hp = 0.7 //can lose 70% of your bp at 0% health
+	max_loss_from_ki = 0.7
+
+mob/proc
+	AddKi(n = 0)
+		Ki += n
+		if(Ki < 0) Ki = 0
+
+	ki_mult()
+		if(Ki < 0) Ki = 0
+		var/n = 1 - (Ki / max_ki)
+		n *= max_loss_from_ki * bp_loss_from_low_ki
+		var/bpm = 1 - n
+		if(bpm > 1) bpm = bpm**0.5
+
+	hp_mult()
+		if(Health < 0) Health = 0
+		var/n = 1 - (Health / 100)
+		n *= max_loss_from_hp * bp_loss_from_low_hp
+		var/bpm = 1 - n
+		if(bpm > 1) bpm = 1
+
+	//experimental replacement
+	hp_ki_bp_loss_mult()
+		//after watching DB Super and seeing how as a battle continues, their power really only rises, not falls, I'm doing that too
+		//meaning no more power loss from low ki/hp, until ki hits 0 then we have code elsewhere to make your bp fall very low for about 20 seconds
+		return 1
+
+		/*var
+			max_loss = 0.99 //0.7 = lose 70% of your bp
+			health_weight = 1 / bp_loss_from_low_hp
+			ki_weight = 1 / bp_loss_from_low_ki
+			lowest_bp = 1 - ((bp_loss_from_low_hp + bp_loss_from_low_ki) * 0.5) * max_loss
+			hp = Health / 100
+			ki = Ki / max_ki
+			mult = lowest_bp + (((1 - lowest_bp) * ((health_weight * hp) + (ki_weight * ki)) / (health_weight + ki_weight)))
+		return mult*/
+
+/*
+mob/proc/ki_mult()
+	if(Ki<0) Ki=0
+	var/Ratio=(Ki/max_ki)**(0.85*bp_loss_from_low_ki)
+	if(KO) Ratio=1
+	if(Ratio < 0.01) Ratio = 0.01
+	return Ratio
+
+mob/proc/hp_mult()
+	if(Health<0) Health=0
+	var/Ratio=(Health/100)**(0.2*bp_loss_from_low_hp)
+	if(Ratio>1) Ratio=1
+	//if(Health<=10) Ratio*=0.1 //if someone dash attacks you in this state it has the bug-like behavior of dealing
+		//500%+ damage and bypassing your anger causing your opponent to cheaply win a fight they may have otherwise lost
+	if(anger>100) Ratio=1
+	if(KO) Ratio=1
+	if(Ratio<0.01) Ratio=0.01
+	return Ratio
+*/
 
 mob/proc/SplitformCount()
+	var/Amount = 0
 	if(!splitform_list) splitform_list=new/list //runtime error "bad list" for some reason
-	return splitform_list.len
+	if(client) for(var/mob/Splitform/S in splitform_list) Amount++
+	return Amount
 
-mob/var/sent_to_afterlife = 0
-
-mob/proc/SpiritLivingRealmDrain()
-	var/drain = (max_ki / (60 * 5))
-	if(Ki < drain)
-		IncreaseKi(-Ki)
-		src.SendMsg("You have used all your energy and will return to the afterlife in 15 seconds.", CHAT_IC)
-		if(!sent_to_afterlife)
-			sent_to_afterlife = 1
-			spawn(150)
-				if(Dead && !Is_In_Afterlife(src))
-					if(grabber) grabber.ReleaseGrab()
-					ReleaseGrab()
-					for(var/mob/M in player_view(15,src))
-						M.SendMsg("[src] is returned to the afterlife due to lack of energy.", CHAT_IC)
-					SafeTeleport(locate(170,190,5))
-				sent_to_afterlife = 0
-	else
-		IncreaseKi(-drain)
+mob/proc/Dead_In_Living_World_Loop()
+	set waitfor=0
+	while(src)
+		var/sleep_time=2
+		if(!client) sleep_time*=5 //clones lag a lot from this if there is many of them at once
+		if(locate(/area/Prison) in range(0,src)) sleep(300)
+		else
+			if(Dead&&!Is_In_Afterlife(src))
+				Ki-=max_ki/60*sleep_time
+				if(Ki<max_ki*0.1)
+					Ki=0
+					src<<"You have used all your energy and will return to the afterlife in 15 seconds"
+					sleep(150)
+					if(src&&Dead&&!Is_In_Afterlife(src))
+						if(grabber) grabber.ReleaseGrab()
+						player_view(15,src)<<"[src] is returned to the afterlife due to lack of energy"
+						SafeTeleport(locate(170,190,5))
+				sleep(sleep_time*10)
+			else sleep(200)
 
 proc/Is_In_Afterlife(mob/P)
 	var/area/a=P.get_area()
 	if(!a) return
-	if(a.name in list("Hell","Heaven","Checkpoint","Kaioshin","tournament area","Prison",)) return 1
+	if(a.name in list("Hell","Heaven","Checkpoint","Kaioshin","tournament area","Prison","Battlegrounds")) return 1
 
 mob/proc/Gravity_Health_Ratio()
 	var/Ratio=(Gravity/gravity_mastered)**3
 	if(Ratio<1) Ratio=1
 	return Ratio
+
+mob/var/Next_Injury_Regeneration=0
+
+mob/proc/Internally_Injured()
+	for(var/obj/Injuries/Internal/I in injury_list)
+		if(Ki>max_ki*0.1) return 1
+		if(Ki>100) return 1
+		break
+
+
+
+
+
+proc/Health_bar_update_loop()
+	set waitfor=0
+	while(1)
+		for(var/mob/m in players) m.Update_health_bars()
+		sleep(5)
+
+mob/var/tmp/next_health_bar_update=0
+
+mob/proc/Update_health_bars()
+	set waitfor=0
+	if(!client || client.inactivity >= 450 || world.time < next_health_bar_update) return
+	next_health_bar_update = world.time
+
+	//src<<output("Gravity: [round(Gravity,0.1)]x","Bars.Gravity")
+	winset(src,"Bars.Healthbar","value=[round(Health)]")
+	winset(src,"Bars.Energybar","value=[round((Ki/max_ki)*100)]")
+	winset(src, "Bars.zanzo_bar", "value=[Clamp(stamina / max_stamina * 100, 0, 100)]")
+
+	//var/Power=round(hp_mult()*ki_mult()*Anger_Powerup_SuperGod_Fist_Mix_Mult()*100)
+	var/Power = round(hp_ki_bp_loss_mult()*Anger_Powerup_SuperGod_Fist_Mix_Mult()*100)
+	var/bptxt = "BP: [Commas(BP)] ([Power]%)"
+	//src << output("BP: [Commas(BP)] ([Power]%)","Bars.Powerbar")
+	winset(src,"Bars.Powerbar","text=\"[bptxt]\"") //supposedly you can just use single quotes instead of the backslash quote thing
+
+mob/proc/Update_evade_meter()
+	if(!client) return
+	winset(src,"Bars.evade_bar","value=[round(evade_meter)]")

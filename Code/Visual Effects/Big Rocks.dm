@@ -1,20 +1,22 @@
 proc
 	StartupScatterBigRocks()
 		set waitfor=0
-		set background = TRUE
+
+		//return //disabled to see if all these transformed rocks are crashing the server
 
 		sleep(300)
 		for(var/v in 1 to 1000)
 			var/turf/t = locate(rand(1,world.maxx), rand(1,world.maxy), rand(1,world.maxz))
-			if(!t.density && !IsWater(t) && !t.Builder && !istype(t,/turf/Other))
+			if(!t.density && !t.Water && !t.Builder && !istype(t,/turf/Other))
 				var/list/l = list(get_step(t,NORTH), get_step(t,SOUTH), get_step(t,EAST), get_step(t,WEST))
 				for(var/turf/t2 in l)
-					if(t2.density || IsWater(t2) || t2.Builder) continue
+					if(t2.density || t2.Water || t2.Builder) continue
 				new/obj/Big_Rock/Big_Rock1(t)
 				if(v % 5 == 0) sleep(world.tick_lag)
 
 	RockExplode(turf/t)
 		set waitfor=0
+		if(!t || explosions_off) return
 
 		//return //disabled for crashing
 

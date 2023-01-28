@@ -154,7 +154,7 @@ proc/pixel_dist(mob/a,mob/b)
 	var/dist_y = abs(a.bound_center_y() - b.bound_center_y())
 	return max(dist_x,dist_y)
 
-proc/clamp2(n=0,min=0,max=0)
+proc/clamp(n=0,min=0,max=0)
 	if(n>max) n=max
 	if(n<min) n=min
 	return n

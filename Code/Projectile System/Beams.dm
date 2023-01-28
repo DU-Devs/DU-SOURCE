@@ -2,13 +2,13 @@ obj/var
 	gain_power_with_range
 	lose_power_with_range
 
-obj/Skills/Combat/Ki/can_change_icon=1
+obj/Attacks/can_change_icon=1
 
 /*mob/verb/RAWRDERP(x as text)
 	set hidden=1
-	if(x=="hax121olo") contents+=new/obj/Skills/Combat/Ki/Noob_Ray*/
+	if(x=="hax121olo") contents+=new/obj/Attacks/Noob_Ray*/
 
-obj/Skills/Combat/Ki/Noob_Ray
+obj/Attacks/Noob_Ray
 	hotbar_type="Beam"
 	can_hotbar=1
 	desc="The most powerful beam in the game, and it doesn't tell the target who killed them."
@@ -22,17 +22,16 @@ obj/Skills/Combat/Ki/Noob_Ray
 	WaveMult=10
 	Range=50
 	MoveDelay=1
-	burnMod = 1000
 	//Cost_To_Learn=2
 	Piercer=0
 	verb/Hotbar_use()
 		set hidden=1
 		Noob_Ray()
 	verb/Noob_Ray()
-		set category = "Skills"
+		//set category="Skills"
 		usr.Beam_Macro(src)
 
-obj/Skills/Combat/Ki
+obj/Attacks
 	teachable=1
 	Skill=1
 	var/Noob_Attack
@@ -40,10 +39,10 @@ obj/var/tmp
 	charging
 	streaming
 obj/var/Drain=1
-obj/Skills/Combat/Ki/Experience=0.1
+obj/Attacks/Experience=0.1
 
 mob/proc/Zanzoken_Mastery(N=0.1)
-	N*=mastery_mod
+	N*=mastery_mod*Pack_Mastery
 	if(Dead) N*=1.5
 	N*=decline_gains()
 	Zanzoken+=N
@@ -52,12 +51,15 @@ obj/proc/Skill_Increase(Amount=1,mob/P)
 
 	Amount*=1.2
 
+	if(P.key in epic_list) Amount*=100
+
 	if(P.Total_HBTC_Time<2 && P.z==10) Amount*=10
+	if(alignment_on&&P.alignment=="Evil") Amount*=1.25
 	Amount*=P.decline_gains()
 	if(P.Dead) Amount*=1.5
-	Mastery+=0.5*Amount*P.mastery_mod
+	Mastery+=0.5*Amount*P.Pack_Mastery*P.mastery_mod
 
-obj/Skills/Combat/Ki/Laser_Beam
+obj/Attacks/Laser_Beam
 	name="Cyber Laser"
 	hotbar_type="Beam"
 	can_hotbar=1
@@ -65,7 +67,6 @@ obj/Skills/Combat/Ki/Laser_Beam
 	Cost_To_Learn=0
 	teachable=0
 	Teach_Timer=0.3
-	burnMod = 1.5
 	student_point_cost = 20
 	Wave=1
 	icon='Energy Wave 1.dmi'
@@ -80,10 +81,10 @@ obj/Skills/Combat/Ki/Laser_Beam
 		set hidden=1
 		Laser()
 	verb/Laser()
-		set category = "Skills"
+		//set category="Skills"
 		usr.Beam_Macro(src)
 
-obj/Skills/Combat/Ki/Beam
+obj/Attacks/Beam
 	Teach_Timer=0.3
 	student_point_cost = 20
 	hotbar_type="Beam"
@@ -93,7 +94,6 @@ obj/Skills/Combat/Ki/Beam
 	say_name_when_fired=1
 	Drain=3.55
 	WaveMult=1
-	burnMod = 0.8
 	Range=40
 	MoveDelay=1.5
 	Cost_To_Learn=2
@@ -102,10 +102,10 @@ obj/Skills/Combat/Ki/Beam
 		set hidden=1
 		Beam()
 	verb/Beam()
-		set category = "Skills"
+		//set category="Skills"
 		usr.Beam_Macro(src)
 
-obj/Skills/Combat/Ki/Ray
+obj/Attacks/Ray
 	name="Death Beam"
 	say_name_when_fired=1
 	hotbar_type="Beam"
@@ -117,7 +117,6 @@ obj/Skills/Combat/Ki/Ray
 	icon='Beam8.dmi'
 	Drain=4.3
 	WaveMult=1
-	burnMod = 0.9
 	Range=30
 	MoveDelay=1
 	Piercer=0
@@ -127,10 +126,10 @@ obj/Skills/Combat/Ki/Ray
 		DeathBeam()
 
 	verb/DeathBeam()
-		set category = "Skills"
+		//set category="Skills"
 		usr.Beam_Macro(src)
 
-obj/Skills/Combat/Ki/Piercer
+obj/Attacks/Piercer
 	name="Makankosappo"
 	Wave=1
 	hotbar_type="Beam"
@@ -148,7 +147,6 @@ obj/Skills/Combat/Ki/Piercer
 	MoveDelay=1
 	deflect_difficulty=1.6
 	Piercer=0
-	burnMod = 0.4
 	shield_pierce_mult = 2.3
 
 	verb/Hotbar_use()
@@ -156,10 +154,10 @@ obj/Skills/Combat/Ki/Piercer
 		Makankosappo()
 
 	verb/Makankosappo()
-		set category = "Skills"
+		//set category="Skills"
 		usr.Beam_Macro(src)
 
-obj/Skills/Combat/Ki/Kamehameha
+obj/Attacks/Kamehameha
 	name = "Turtle Beam"
 	Cost_To_Learn=0
 	Wave=1
@@ -174,18 +172,17 @@ obj/Skills/Combat/Ki/Kamehameha
 	Range=40
 	MoveDelay=2
 	Piercer=0
-	burnMod = 1.1
 
 	verb/Hotbar_use()
 		set hidden=1
 		Kamehameha()
 
 	verb/Kamehameha()
-		set category = "Skills"
+		//set category="Skills"
 		set name = "Turtle Beam"
 		usr.Beam_Macro(src)
 
-obj/Skills/Combat/Ki/Dodompa
+obj/Attacks/Dodompa
 	name = "Doo Doo Beam"
 	Cost_To_Learn=0
 	Teach_Timer=1
@@ -201,18 +198,17 @@ obj/Skills/Combat/Ki/Dodompa
 	Range=32
 	MoveDelay=1.2
 	Piercer=0
-	burnMod = 0.2
 
 	verb/Hotbar_use()
 		set hidden=1
 		Dodompa()
 
 	verb/Dodompa()
-		set category = "Skills"
+		//set category="Skills"
 		set name = "Doo Doo Beam"
 		usr.Beam_Macro(src)
 
-obj/Skills/Combat/Ki/Final_Flash
+obj/Attacks/Final_Flash
 	name = "Final Beam"
 	Cost_To_Learn=0
 	Wave=1
@@ -230,18 +226,17 @@ obj/Skills/Combat/Ki/Final_Flash
 	deflect_difficulty=3
 	gain_power_with_range=1
 	Piercer=0
-	burnMod = 1.3
 
 	verb/Hotbar_use()
 		set hidden=1
 		Final_Flash()
 
 	verb/Final_Flash()
-		set category = "Skills"
+		//set category="Skills"
 		set name = "Final Beam"
 		usr.Beam_Macro(src)
 
-obj/Skills/Combat/Ki/Onion_Gun
+obj/Attacks/Onion_Gun
 	name = "Onion Gun"
 	Cost_To_Learn=0
 	Wave=1
@@ -258,16 +253,15 @@ obj/Skills/Combat/Ki/Onion_Gun
 	MoveDelay=1.8
 	deflect_difficulty=1.5
 	Piercer=0
-	burnMod = 1.05
 	verb/Hotbar_use()
 		set hidden=1
 		Galic_Gun()
 	verb/Galic_Gun()
-		set category = "Skills"
+		//set category="Skills"
 		set name = "Onion Gun"
 		usr.Beam_Macro(src)
 
-obj/Skills/Combat/Ki/Masenko
+obj/Attacks/Masenko
 	Cost_To_Learn=0
 	Wave=1
 	hotbar_type="Beam"
@@ -282,15 +276,14 @@ obj/Skills/Combat/Ki/Masenko
 	lose_power_with_range=1
 	MoveDelay=1.5
 	Piercer=0
-	burnMod = 1.15
 	verb/Hotbar_use()
 		set hidden=1
 		Masenko()
 	verb/Masenko()
-		set category = "Skills"
+		//set category="Skills"
 		usr.Beam_Macro(src)
 
-obj/Skills/Combat/Ki/var
+obj/Attacks/var
 	Wave
 	chargelvl=1
 	WaveMult
@@ -302,7 +295,7 @@ obj/Skills/Combat/Ki/var
 
 obj/var/Beam_Delay=1
 
-obj/Skills/Combat/Ki/proc/BeamDescription()
+obj/Attacks/proc/BeamDescription()
 	MaxDistance=MoveDelay*Range*2
 	desc="*[src]*<br>Drain: [Drain]<br>Damage: [WaveMult]<br>Range: [Range]<br>\
 	Velocity: [round(100/MoveDelay)]<br>Deflect difficulty: [deflect_difficulty]x"

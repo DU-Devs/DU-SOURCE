@@ -6,13 +6,13 @@ proc
             length = length(string)
             list/words = list()
             position = 1
-        element = findtextEx(string, separator, position)
+        element = findtext(string, separator, position)
         while(position <= length)
             if(element > position || element == 0)
                 words += copytext(string, position, element)
             if(element)
                 position = element + 1
-                element = findtextEx(string, separator, position)
+                element = findtext(string, separator, position)
             else position = length + 1
         return words
 
@@ -31,11 +31,6 @@ mob
 			client.color = list(-1,0,0,0, 0,-1,0,0, 0,0,-1,0, 0,0,0,1, 1,1,1,0)
 			sleep(5)
 			client.color = c
-			return c
-		
-		ResetClientColor()
-			if(!client) return
-			client.color = null
 
 atom/var/transform_size = 1
 
@@ -49,7 +44,7 @@ atom/proc/SetTransformSize(n = 1)
 mob
 	proc/PointArrow(obj/Arrow, atom/Target, MinDistance, ArrowDistance, instant_update = 0, dist_mod = 1, do_rotation = 1)
 
-		if(!client || !Target) return
+		if(!client) return
 
 		if(!MinDistance) MinDistance = client.bound_height * 0.4
 		if(!ArrowDistance) ArrowDistance = client.bound_height * 0.33 * dist_mod
@@ -61,13 +56,6 @@ mob
 		if(dot < MinDistance * MinDistance)
 			Arrow.screen_loc = null
 			return
-		if(!Target.loc || (Target.locz() != src.locz()))
-			Arrow.screen_loc = null
-			return
-		if(ismob(Target) && (Target:current_area && current_area) && (Target:current_area != current_area))
-			Arrow.screen_loc = null
-			return
-
 		Arrow.screen_loc = "CENTER"
 
 		var/matrix/m = new
@@ -86,6 +74,13 @@ mob
 		else
 			animate(Arrow)
 			animate(Arrow, transform = m, time = sense_arrow_update_rate)
+
+
+/*proc/MoveByAngle(mob/m, ang=0, spd=5)
+	var
+		vx = spd * cos(ang)
+		vy = spd * -sin(ang)
+	m.Move(m.loc, 0, m.step_x + vx, m.step_y + vy)*/
 
 atom/movable/var/tmp
 	fraction_x=0
@@ -133,11 +128,8 @@ proc/get_global_angle(mob/a,mob/b)
 	if(ang > 360) ang -= 360
 	return abs(ang)
 
-proc/Shuffle(list/L)
-	var/list/LL
-	while(L.len)
-		if(!LL) LL=new/list
-		var/V=pick(L)
-		LL+=V
-		L-=V
-	return LL
+proc/arctan(x,y)
+	if(!x && !y) return 0
+	var/n = arccos(x / sqrt(x * x + y * y))
+	if(y >= 0) return n
+	else return -n

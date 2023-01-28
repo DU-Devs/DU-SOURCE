@@ -1,10 +1,10 @@
 mob/Admin5/verb/oldTroll()
-	set category="Admin"
+	//set category="Admin"
 	var/Amount=input(src,"How many?") as num
 	while(Amount)
 		Amount-=1
 		var/mob/Troll/P=new(loc)
-		P.UpdateGravity()
+		P.Gravity_Update()
 		if(P.Gravity<P.gravity_mastered) P.gravity_mastered=P.Gravity
 
 mob/proc/Is_Grabbed() return grabber
@@ -29,10 +29,10 @@ mob/Troll/proc/Troll_Beam_Response() while(src)
 				Troll_Stand()
 				dir=get_dir(src,B)
 				var/mob/P=B.Owner
-				var/obj/Skills/Combat/Ki/Beam/O
-				for(var/obj/Skills/Combat/Ki/Z in P.ki_attacks) if(Z.streaming) O=Z
+				var/obj/Attacks/Beam/O
+				for(var/obj/Attacks/Z in P.ki_attacks) if(Z.streaming) O=Z
 				if(P&&O)
-					for(var/obj/Skills/Combat/Ki/Beam/C in ki_attacks)
+					for(var/obj/Attacks/Beam/C in ki_attacks)
 						if(!C.charging && !C.streaming && !attacking)
 							Beam_Macro(C)
 							sleep(rand(0,30))
@@ -80,14 +80,14 @@ mob/Troll
 			Raise_Offense(10)
 			Raise_Resist(10)
 			Raise_Force(10)
-			contents+=new/obj/Skills/Utility/Fly
-			contents+=new/obj/Skills/Utility/Zanzoken
+			contents+=new/obj/Fly
+			contents+=new/obj/Zanzoken
 			Warp=1
 			spawn if(src) if(name==initial(name)) Troll_Name()
-			var/obj/Skills/Combat/Ki/Beam/Z=new(src)
+			var/obj/Attacks/Beam/Z=new(src)
 			Z.icon='Beam - Static Beam.dmi'
 			Z.WaveMult*=5
-			var/obj/Skills/Combat/Ki/Blast/B=new(src)
+			var/obj/Attacks/Blast/B=new(src)
 			B.Spread=3
 			B.Shockwave=1
 			B.Blast_Count=2
@@ -96,7 +96,7 @@ mob/Troll
 			B.icon+=rgb(rand(0,255),rand(0,255),rand(0,255))
 			var/mob/m
 			for(var/mob/p in players) if(!m||m.base_bp<p.base_bp) m=p
-			if(m) LeechOpponent(m)
+			if(m) Leech(m,1000)
 			KB_On=100
 		spawn if(src) Troll_Initialize()
 		spawn if(src) Troll_Stats()
@@ -123,9 +123,9 @@ mob/Troll
 				A.ReleaseGrab()
 		sleep(rand(0,100))
 	proc/Troll_Zanzoken() while(src)
-		if(!KO) if(locate(/obj/Skills/Utility/Zanzoken) in src) if(Target&&Troll_Mode=="Attack")
+		if(!KO) if(locate(/obj/Zanzoken) in src) if(Target&&Troll_Mode=="Attack")
 			if(!(src in view(3,Target))) for(var/turf/T in view(3,Target)) if(T in view(15,src))
-				if(!T.density&&(!IsWater(T)||Flying))
+				if(!T.density&&(!T.Water||Flying))
 					player_view(10,src)<<sound('teleport.ogg',volume=10)
 					flick('Zanzoken.dmi',src)
 					var/OldDir=dir
@@ -384,7 +384,7 @@ mob/Troll
 						var/obj/Edges/E
 						for(E in view(1,src)) break
 						var/Water_Found
-						for(var/turf/T in view(0,src)) if(IsWater(T)) Water_Found=1
+						for(var/turf/T in view(0,src)) if(T.Water) Water_Found=1
 						if(E&&!Flying)
 							Fly()
 							spawn(30) if(src&&Flying) Fly()

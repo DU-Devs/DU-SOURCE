@@ -19,7 +19,7 @@ obj/Goo_Trap
 
 	verb
 		Goo_Trap()
-			set category = "Skills"
+			//set category = "Skills"
 			usr.GooTrap()
 
 		Hotbar_use()
@@ -97,8 +97,7 @@ obj/Majin_Goo
 			goo_last_absorbed_key
 
 	New()
-		majin_goos ||= list()
-		majin_goos |= src
+		majin_goos += src
 		GooAI()
 		. = ..()
 
@@ -151,7 +150,8 @@ obj/Majin_Goo
 
 		IsViableGooTarget(mob/m)
 			if(!m || !m.client || m.key == majins_key || m.Dead || m.key == goo_last_absorbed_key) return
-			if(m.IsTournamentFighter()) return
+			if(alignment_on && both_good(goo_maker, m)) return
+			if(m.InTournament()) return
 			if(goo_maker && !goo_maker.CanGooAbsorb(m)) return
 			if(m.KO) return 1
 			if(GooStrongerThanTarget(m)) return 1
@@ -201,7 +201,7 @@ mob/proc/CanGooAbsorb(mob/M)
 	if(M.Dead)
 		src<<"Dead people can not be absorbed"
 		return
-	if(M.InFinalRealm())
+	if(M.Final_Realm())
 		src<<"You can not absorb in the final realm"
 		return
 	if(locate(/area/Prison) in range(0,src))
@@ -216,6 +216,12 @@ mob/proc/CanGooAbsorb(mob/M)
 		return
 	if(M.client&&client&&M.client.address==client.address)
 		src<<"Alts can not be absorbed"
+		return
+	if(alignment_on&&both_good(src,M))
+		src<<"You can not absorb a fellow good person"
+		return
+	if(Same_league_cant_kill(src,M))
+		src<<"You can not absorb someone in the same league as you"
 		return
 	if(M.spam_killed)
 		src<<"You can not absorb [M] because they are death immune"

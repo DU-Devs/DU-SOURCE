@@ -221,8 +221,8 @@ alignment they want, but if you get a rank you must abide by your alignment.<p>
 Common: Blast, Charge, Beam, Fly, Zanzoken, Power Control, Spin Blast, Explosion, Sokidan, Give Power, Heal,
 Shield, Telepathy, Shockwave.<br><br>
 
-Moderate: Kamehameha, Death Ball, Final Clash, Galic Gun, Homing Finisher, Dodompa, Kienzan,
-Kikoho, Masenko, Piercer, Ray. Focus. Expand. Split Form.<br><br>
+Moderate: Kamehameha, Death Ball, Final Clash, Galic Gun, Homing Finisher, Dodompa, Genocide, Kienzan,
+Kikoho, Makosen, Masenko, Piercer, Ray. Focus. Expand. Split Form.<br><br>
 
 Rare: God_Fist, Genki Dama, Shunkan Ido, Mystic, Majin<br><br>
 
@@ -377,15 +377,7 @@ So admins don't have to as much.<p>
 
 "}
 
-var/Rules={"<html>
-<head>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
-<meta http-equiv="Content-Type" name="viewport" content="width=device-width, initial-scale=1.0">
-<meta charset="UTF-8">
-<meta http-equiv="x-ua-compatible" content="IE=edge">
-<title>Rules</title><body><body bgcolor="#000000"><font size=3><font color="#CCCCCC">
+var/Rules={"<html><head><title>Rules</title><body><body bgcolor="#000000"><font size=3><font color="#CCCCCC">
 
 Roleplaying:<br>
 1) To RP with people most of your name must be pronounceable. It can't be all symbols. That's just 1 example.<br>
@@ -474,20 +466,15 @@ made them, and the abusive server itself, and are permitted by any means necessa
 "}
 
 var/Story={"<html>
-<head>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
-<meta http-equiv="Content-Type" name="viewport" content="width=device-width, initial-scale=1.0">
-<meta charset="UTF-8">
-<meta http-equiv="x-ua-compatible" content="IE=edge">
-<title>Story</title><body>
+<head><title>Story</title><body>
 <body bgcolor="#000000"><font size=2><font color="#CCCCCC">
 
 
 
 </body><html>"}
-
+/*mob/verb/Bill_of_Rights()
+	set category="Other"
+	src<<browse(Game_Rules,"window=Game Rules,size=650x600")*/
 mob/proc/Race_Guide()
 	set category="Other"
 	var/T={"<html><head><body><body bgcolor="#000000"><font size=2><font color="#CCCCCC">
@@ -498,6 +485,7 @@ mob/proc/Race_Guide()
 	for(var/V in L)
 		T=Race_Info(T,V)
 		L-=V
+	T=Race_Info(T,"Elite")
 	src<<browse(T,"window=Race Information;size=650x600")
 
 proc/Race_Info(T,V)
@@ -529,46 +517,93 @@ proc/Race_Info(T,V)
 			M.Elite_Yasai()
 			M.Race="Elite Yasai"
 	M.Racial_Stats(M,0,modless_check=0)
+	M.UpdateRaceStatsOnlyModeStats()
 	M.DecideMaxStamina()
 
-	T+={"
-	[M.Race]<br>
-	[M.Points] Stat Points to use during creation<br>
-	[M.bp_mod]x Battle Power<br>
-	[M.max_stamina] Stamina<br>
-	[M.Eff]x Energy<br>
-	[M.Str]x Strength<br>
-	[M.End]x Durability<br>
-	[M.Pow]x Force<br>
-	[M.Res]x Resistance<br>
-	[M.Spd]x Speed<br>
-	[M.regen]x Regeneration<br>
-	[M.recov]x Recovery<br>
-	[M.max_anger/100]x Anger<br>
-	[M.mastery_mod]x Skill Mastery<br>
-	[M.leech_rate]x Adaptation (How fast you catch up to people your fighting)<br>
-	[M.Intelligence()]x Intelligence (Used for creation of better and cheaper technology)<br>
-	[M.knowledge_cap_rate]x Knowledge cap rate (does not increase cap, only intelligence does)<br>
-	[M.Gravity_Mod]x Gravity Mastery<br>
-	[M.Decline] decline age. [round(M.Lifespan(),0.1)] year lifespan. (Both increase by gaining energy)<br>
-	[M.Regenerate]x Death Regeneration<br>
-	[M.med_mod]x Meditation BP<br>
-	[M.zenkai_mod*M.bp_mod]x Zenkai (How much stronger you get from being defeated (Knocked out or killed))<br>
-	[M.power_absorb_mod()]x Power absorb mod (BP you get from absorbing people)<br>
-	[M.knowledge_absorb_mod()]x Knowledge absorb mod<br>
-	Blast homing chance: [M.Get_blast_homing_chance()]% per step<br>
-	[M.stun_resistance_mod]x stun resistance<br>
-	BP loss from low Ki: [M.Get_bp_loss_from_low_ki()]x (lower is better)<br>
-	BP loss from low Health: [M.Get_bp_loss_from_low_hp()]x (lower is better)<br>
-	"}
+	if(race_stats_only_mode)
+		T+={"
+		[M.Race]<br>
+		[M.Points] Stat Points to use during creation<br>
+		[M.bp_mod]x Battle Power<br>
+		[M.max_stamina] Stamina<br>
+		[M.Eff]x Energy<br>
+		[M.Str]x Strength<br>
+		[M.End]x Durability<br>
+		[M.Pow]x Force<br>
+		[M.Res]x Resistance<br>
+		[M.Spd]x Speed<br>
+		[M.regen]x Regeneration<br>
+		[M.recov]x Recovery<br>
+		[M.max_anger/100]x Anger<br>
+		[M.sp_mod]x Skill Points<br>
+		[M.mastery_mod]x Skill Mastery<br>
+		[M.leech_rate]x Adaptation (How fast you catch up to people your fighting)<br>
+		[M.Intelligence()]x Intelligence (Used for creation of better and cheaper technology)<br>
+		[M.knowledge_cap_rate]x Knowledge cap rate (does not increase cap, only intelligence does)<br>
+		[M.Gravity_Mod]x Gravity Mastery<br>
+		[M.Decline] decline age. [round(M.Lifespan(),0.1)] year lifespan. (Both increase by gaining energy)<br>
+		[M.Regenerate]x Death Regeneration<br>
+		[M.med_mod]x Meditation BP<br>
+		[M.zenkai_mod*M.bp_mod]x Zenkai (How much stronger you get from being defeated (Knocked out or killed))<br>
+		[M.power_absorb_mod()]x Power absorb mod (BP you get from absorbing people)<br>
+		[M.knowledge_absorb_mod()]x Knowledge absorb mod<br>
+		[M.potential_mod()]x hidden potential (amount you gain when unlock potential is used on you)<br>
+		Blast homing chance: [M.Get_blast_homing_chance()]% per step<br>
+		[M.stun_resistance_mod]x stun resistance<br>
+		BP loss from low Ki: [M.Get_bp_loss_from_low_ki()]x (lower is better)<br>
+		BP loss from low Health: [M.Get_bp_loss_from_low_hp()]x (lower is better)<br>
+		"}
 
+	else
+		T+={"
+		[M.Race]<br>
+		[M.Points] Stat Points to use during creation<br>
+		[M.bp_mod]x Battle Power<br>
+		[M.max_stamina] Stamina<br>
+		[M.Eff]x Energy<br>
+		[M.strmod]x Strength<br>
+		[M.endmod]x Durability<br>
+		[M.formod]x Force<br>
+		[M.resmod]x Resistance<br>
+		[M.spdmod]x Speed<br>
+		[M.regen]x Regeneration<br>
+		[M.recov]x Recovery<br>
+		[M.max_anger/100]x Anger<br>
+		[M.sp_mod]x Skill Points<br>
+		[M.mastery_mod]x Skill Mastery<br>
+		[M.leech_rate]x Adaptation (How fast you catch up to people your fighting)<br>
+		[M.Intelligence()]x Intelligence (Used for creation of better and cheaper technology)<br>
+		[M.knowledge_cap_rate]x Knowledge cap rate (does not increase cap, only intelligence does)<br>
+		[M.Gravity_Mod]x Gravity Mastery<br>
+		[M.Decline] decline age. [round(M.Lifespan(),0.1)] year lifespan. (Both increase by gaining energy)<br>
+		[M.Regenerate]x Death Regeneration<br>
+		[M.med_mod]x Meditation BP<br>
+		[M.zenkai_mod*M.bp_mod]x Zenkai (How much stronger you get from being defeated (Knocked out or killed))<br>
+		[M.power_absorb_mod()]x Power absorb mod (BP you get from absorbing people)<br>
+		[M.knowledge_absorb_mod()]x Knowledge absorb mod<br>
+		[M.potential_mod()]x hidden potential (amount you gain when unlock potential is used on you)<br>
+		Blast homing chance: [M.Get_blast_homing_chance()]% per step<br>
+		[M.stun_resistance_mod]x stun resistance<br>
+		BP loss from low Ki: [M.Get_bp_loss_from_low_ki()]x (lower is better)<br>
+		BP loss from low Health: [M.Get_bp_loss_from_low_hp()]x (lower is better)<br>
+		"}
 	if(!(M.Race in list("Yasai","Half Yasai")))
 		T+="Ascension BP: [Commas(M.Ascension_BP_Req()*M.bp_mod)]<br>"
-	T+="Incline Age: [M.incline_age]<br>\
-	Incline Mod: [M.incline_mod] (lower is better)<br>"
+	if(incline_on)
+		T+="Incline Age: [M.incline_age]<br>\
+		Incline Mod: [M.incline_mod] (lower is better)<br>"
 	T+="<br>"
 	//Anger failure chance: [100-M.anger_chance()]%<br>
 	return T
+
+
+
+
+
+
+
+
+
 
 mob/proc/Sagas_Guide()
 	src<<browse(sagas_guide,"window=Sagas Guide;size=700x600")
@@ -615,7 +650,7 @@ Hero rank:<br>
 <li>Leech everyone 2x faster
 <li>Gets up from knockouts 30% quicker
 <li>Will always get anger when needed
-<li>Master all Omega Yasai levels 2x faster
+<li>Master all Super Yasai levels 2x faster
 <li>If the hero dies from anyone other than the villain they lose the hero rank
 <li>If the villain kills the hero there is a 50% chance the hero will lose the rank, and a 50%
 chance they will enter a 'training period', which lasts 30 minutes and has 10x bp gains
@@ -801,6 +836,10 @@ training theme playing at least 70% of the time, you should come out having gain
 
 
 "}
+
+mob/proc/New_player_message()
+	return //no need anymore
+	src<<browse(new_player_message,"window= ;size=400x540")
 
 var/new_player_message={"
 <html><head><body><body bgcolor="#000000"><font size=3><font color="#CCCCCC">

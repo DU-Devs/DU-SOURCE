@@ -13,7 +13,7 @@ var
 	ultra_instinct_speed = 3
 	ultra_instinct_acc = 3
 	ultra_instinct_ref = 3
-	ui_bp_mult = 0.15
+	ui_bp_mult_add = 0.7
 
 	ultra_instinct_idle_aura //set procedurally
 	ultra_instinct_aura
@@ -21,7 +21,6 @@ var
 proc
 	GenerateUltraInstinctGraphics()
 		set waitfor=0
-		set background = TRUE
 		if(!ultra_instinct_idle_aura)
 			ultra_instinct_idle_aura = image(icon = 'vermar UI aura.dmi')
 		if(!ultra_instinct_aura)
@@ -40,14 +39,31 @@ ui reqs:
 have god ki mastered to at least 90%
 be in the top 15% highest base bp's (relative to your bp mod so that all races have equal chance)
 capped energy
-have Omega Bomb
+the bp feats must be 75% completed
+must have wished on dbs at least 3 times
+must have used time chamber at least 3 times
+have God_Fist
+have spirit bomb
+have instant transmission
 */
 	HasUltraInstinctRequirements()
-		var/genReqs = (base_bp >= highest_base_bp * 0.85) && (bpTier >= 100)
-		return genReqs && EnergyCapped()
+		if(!has_god_ki || god_ki_mastery < 90) return
+		if(base_bp / bp_mod < highest_relative_base_bp * 0.85) return
+		if(!EnergyCapped()) return
+		if(BPFeatsCompletionPercent() < 75) return
+		if(wish_count < 3) return
+		if(total_hbtc_uses < 3) return
+		if(!(locate(/obj/God_Fist) in src)) return
+		if(!(locate(/obj/Attacks/Genki_Dama) in src)) return
+		//if(!(locate(/obj/Mystic) in src)) return
+		//if(!(locate(/obj/Majin) in src)) return
+		if(!(locate(/obj/Shunkan_Ido) in src)) return
+		//if(!(locate(/obj/Teleport) in src)) return
+		//if(!(locate(/obj/Materialization) in src)) return
+		return 1
 
 	EnergyCapped()
-		if(max_ki / Eff < Progression.GetSettingValue("Energy Cap") * 0.99) return
+		if(max_ki / Eff < energy_cap * 0.99) return
 		return 1
 
 	CheckTriggerUltraInstinct()
@@ -55,7 +71,7 @@ have Omega Bomb
 
 		//return //disabled to see if it crashes the server
 
-		if(world.time - last_ultra_instinct < Time.FromMinutes(10)) return
+		if(world.time - last_ultra_instinct < 5 * 600) return
 		if(!HasUltraInstinctRequirements()) return
 
 		//sleep(60)
@@ -77,6 +93,7 @@ have Omega Bomb
 	UltraInstinct()
 		set waitfor=0
 		if(ultra_instinct) return
+		Tens("<font size=5><font color=red>[src] has just gone Ultra Instinct!")
 		last_ultra_instinct = world.time
 		ultra_instinct = 1
 		for(var/v in 1 to 6) PowerUpGoNextForm()
@@ -84,6 +101,7 @@ have Omega Bomb
 		UltraInstinctSFX()
 		ApplyStun(time = 50, no_immunity = 1)
 		FullHeal()
+		SSj_Hair()
 		overlays -= ultra_instinct_idle_aura
 		overlays += ultra_instinct_idle_aura
 		overlays -= 'UI_Electricity.dmi'
@@ -95,13 +113,14 @@ have Omega Bomb
 		offmod *= ultra_instinct_acc
 		Def *= ultra_instinct_ref
 		defmod *= ultra_instinct_ref
-		bp_mult += ui_bp_mult
+		bp_mult += ui_bp_mult_add
 
 		UltraInstinctDestroyObstacles()
 		UltraInstinctSideStepLoop()
 		UltraInstinctNoEscapeLoop()
 
-		spawn(1800) UltraInstinctRevert()
+		sleep(1800)
+		UltraInstinctRevert()
 
 	UltraInstinctRevert()
 		set waitfor=0
@@ -116,23 +135,22 @@ have Omega Bomb
 		offmod /= ultra_instinct_acc
 		Def /= ultra_instinct_ref
 		defmod /= ultra_instinct_ref
-		bp_mult -= ui_bp_mult
+		bp_mult -= ui_bp_mult_add
 
 		player_view(50,src) << sound(null)
 		player_view(20,src) << sound('ultra instinct explode.ogg', volume = 50)
 		Explosion_Graphics(src,3)
+		SaitamaBloodEffect(blood_range = 2, blood_chance = 35)
 		ApplyStun(time = 150, no_immunity = 1)
-		
-		var/transformation/T = GetActiveForm()
-		if(T) T.ExitForm(src)
+		Revert()
 		Stop_Powering_Up()
 		God_Fist_Revert()
-		KnockOut("Ultra Instinct")
-		spawn(25)
-			RegainConsciousness()
-			Health = 1
-			Ki = 1
-			IncreaseStamina(-99999)
+		KO()
+		sleep(25)
+		UnKO()
+		Health = 1
+		Ki = 1
+		AddStamina(-99999)
 
 	UltraInstinctSFX()
 		set waitfor=0
@@ -187,6 +205,9 @@ mob/proc/UltraInstinctGraphics()
 		m.ScreenShake(Amount = 25, Offset = 11)
 	spawn while(N&&src)
 		N--
+		//Make_Shockwave(src,7,'Electricgroundbeam2.dmi')
+		//Make_Shockwave(src,7,ultra_instinct_aura)
+		//Make_Shockwave(src,7,'Give Power Effect White.dmi')
 		Make_Shockwave(src,7,'Ultra Instinct Spark Shockwave.dmi')
 		sleep(rand(200,300) / 100)
 	spawn if(src) Ultra_Instinct_Rising_Aura(src,65)

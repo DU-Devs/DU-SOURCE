@@ -7,7 +7,6 @@ obj/Door_kill_blood/cache_for_reuse = 1
 obj/SpaceDebris/cache_for_reuse = 1
 obj/Bounty_Picture/cache_for_reuse = 1
 obj/stretch_arm/cache_for_reuse = 1
-obj/stretch_arm/attackable = 0
 
 obj/var
 	cache_for_reuse

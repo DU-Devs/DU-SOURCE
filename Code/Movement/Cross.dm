@@ -26,7 +26,7 @@ obj
 			if(ismob(a))
 				var/mob/m = a
 				if(!istype(src, /obj/Turfs/Door))
-					if(m.Flying || m.lunge_attacking) return 1
+					if(m.Flying || m.lunge_attacking || m.evading) return 1
 		. = ..()
 
 obj/Blast/Cross(atom/movable/a)
@@ -46,9 +46,6 @@ atom/movable
 			if(istype(a,/obj/Blast))
 				var/obj/Blast/b = a
 				if(b.BlastCross(src)) return 1
-			/* if(istype(a,/projectile))
-				var/projectile/P = a
-				if(P.ProjectileCross(src)) return 1 */
 			if(ismob(a))
 				var/mob/m = a
 				if(m.MobCross(src)) return 1
@@ -131,7 +128,7 @@ turf/Enter(mob/m)
 	//allow flying over dense turfs
 	if(density && ismob(m) && type != /turf/Other/Blank && !istype(src, /turf/Teleporter))
 		if(FlyOverAble || build_category != BUILD_ROOF)
-			if(m.Flying || m.lunge_attacking)
+			if(m.Flying || m.lunge_attacking || m.evading)
 				var/mob/m2
 				for(m2 in src) if(m2 != m) break
 				if(!m2)
@@ -139,6 +136,21 @@ turf/Enter(mob/m)
 					for(d in src) if(d.density && d.Password) break
 					if(!d) return_value = 1
 	return return_value
+
+
+	//original code
+	/*. = ..()
+	//pass over dense turfs when flying
+	if(density)
+		if(ismob(m) && type != /turf/Other/Blank && !istype(src, /turf/Teleporter))
+			if(FlyOverAble || build_category != BUILD_ROOF)
+				if(m.Flying || m.lunge_attacking || m.evading)
+					var/mob/m2
+					for(m2 in src) if(m2 != m) break
+					if(!m2)
+						var/obj/Turfs/Door/d
+						for(d in src) if(d.density && d.Password) break
+						if(!d) return 1*/
 
 mob/proc/DoorPasswordAlert(obj/Turfs/Door/d)
 	set waitfor=0
@@ -181,9 +193,9 @@ mob/proc/MobCross(mob/A)
 					d.Open()
 					return_value = 1
 					needs_password = 0
-				if(d.is_hbtc_door && Mechanics.GetSettingValue("Unlocked Time Chamber")) needs_password = 0
+				if(d.is_hbtc_door && anyone_can_enter_hbtc) needs_password = 0
 				if(needs_password && client && d.Password && !KB) DoorPasswordAlert(d)
-				if(!d.Password || (d.is_hbtc_door && Mechanics.GetSettingValue("Unlocked Time Chamber")))
+				if(!d.Password || (d.is_hbtc_door && anyone_can_enter_hbtc))
 					d.Open()
 					return_value = 1
 
@@ -193,6 +205,11 @@ mob/proc/MobCross(mob/A)
 		if(!ismob(A) && !istype(A,/obj/Blast))
 			if(!(locate(/mob) in A.loc))
 				SideStep(A)
+
+	//if(ismob(A)) Pixel_Align(A)
+
+	if(A && A.type == /obj/King_of_Braal_Throne)
+		BumpKingBraalThrone()
 
 	//for blasts with blast_go_over_owner
 	if(A && istype(A,/obj/Blast) && A.Owner && A.Owner == src)
@@ -204,11 +221,24 @@ mob/proc/MobCross(mob/A)
 
 	A.ExplodeLandMines()
 
+	if(istype(A,/obj/Planet_Restore_Crystal))
+		var/obj/Planet_Restore_Crystal/prc = A
+		if(!destroyed_planets.len)
+			src<<"There are no destroyed planets right now to restore"
+		else
+			var/planet = pick(destroyed_planets)
+			player_view(15,src)<<"[planet] has been restored"
+			spawn restore_planet(planet)
+			prc.DespawnRespawn()
+
+	//if(istype(A,/obj/items/Simulator)) SimBump(A)
+
 	if(istype(A,/obj/items/Regenerator))
-		RegeneratorTick(A)
+		//SafeTeleport(A.loc)
+		Regenerator_loop(A)
 		if(grabbedObject && ismob(grabbedObject))
 			grabbedObject.SafeTeleport(loc)
-			grabbedObject.RegeneratorTick(A)
+			grabbedObject.Regenerator_loop(A)
 		return_value = 1
 
 	if(istype(A,/obj/Kaioshin_Portal))
@@ -231,6 +261,9 @@ mob/proc/MobCross(mob/A)
 	if(istype(A,/obj/Final_Realm_Portal))
 		SafeTeleport(locate(rand(163,173),rand(183,193),5))
 
+	if(istype(A,/obj/God_Realm_Portal) && A.invisibility == 0 && client)
+		SafeTeleport(locate(385,114,11))
+
 	if(istype(A,/obj/Warper))
 		var/obj/Warper/B=A
 		SafeTeleport(locate(B.gotox,B.gotoy,B.gotoz))
@@ -240,12 +273,11 @@ mob/proc/MobCross(mob/A)
 		var/turf/t=Get_step(B,SOUTHEAST)
 		if(!t||loc==t||B.bound_width==32)
 			for(var/obj/Controls/C in ship_controls) if(C.Ship==B.Ship)
-				for(var/mob/M in player_view(15,src))
-					M.SendMsg("[src.name] enters the [A].", CHAT_IC)
-				if(!B.Last_Entry) src.SendMsg("<font color=yellow>Computer: Welcome. You are the first one to enter this ship.", CHAT_IC)
-				else if(GetGlobalYear()-B.Last_Entry>=1) src.SendMsg("<font color=yellow>Computer: Welcome, you are the first person to enter this \
-				ship in the past [round(GetGlobalYear()-B.Last_Entry,0.1)] years", CHAT_IC)
-				B.Last_Entry=GetGlobalYear()
+				player_view(15,src)<<"[src] enters the [A]"
+				if(!B.Last_Entry) src<<"<font color=yellow>Computer: Welcome. You are the first one to enter this ship."
+				else if(Year-B.Last_Entry>=1) src<<"<font color=yellow>Computer: Welcome, you are the first person to enter this \
+				ship in the past [round(Year-B.Last_Entry,0.1)] years"
+				B.Last_Entry=Year
 				for(var/obj/Ship_exit/Se in range(5,C))
 					SafeTeleport(locate(Se.x,Se.y,Se.z))
 					break
@@ -253,7 +285,7 @@ mob/proc/MobCross(mob/A)
 	if(ismob(A))
 		if(type == /mob/Splitform && !A.KO) Melee(A)
 		if(!client && type != /mob/Troll && !istype(src, /mob/new_troll) && type != /mob/Splitform)
-			if(Health < 100/*  || !Docile */)
+			if(Health < 100 || !Docile)
 				if(istype(src,/mob/Enemy) && istype(A,/mob/Enemy)) //mob dont attack mob
 				else if(!drone_module)
 					Melee(A)
@@ -267,6 +299,14 @@ mob/proc/MobCross(mob/A)
 		if(IsGreatApe()) Melee(A)
 
 	if(istype(A,/obj/Planets)) Bump_Planet(A,src)
+
+	if(istype(src,/mob/Enemy) && world.time - src:last_npc_turf_attack > 50)
+		if(!client&&isobj(A)&&!istype(A,/obj/Edges)&&istype(src,/mob/Enemy/Zombie))
+			src:last_npc_turf_attack=world.time
+			Melee(A)
+		if(!client&&isturf(A)&&A.density&&istype(src,/mob/Enemy/Zombie))
+			src:last_npc_turf_attack=world.time
+			Melee(A)
 
 	if(istype(A,/obj/Controls))
 		var/obj/Controls/C=A
