@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "dreammaker",
+			"dme": "DU.dme",
+			"problemMatcher": [
+				"$dreammaker"
+			],
+			"group": "build",
+			"label": "dm: build - DU.dme"
+		}
+	]
+}
