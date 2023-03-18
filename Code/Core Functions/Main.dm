@@ -239,7 +239,7 @@ mob/proc
 			sleep(1)
 			Delete_Save(src)
 
-		Get_Packs(delay = 20)
+		//Get_Packs(delay = 20)
 
 		Rank_Check()
 
@@ -801,21 +801,22 @@ mob/proc/Yasai(Can_Elite=1,force_elite,force_low_class)
 	ssj3at = 600000000
 	gravity_mastered=10
 	base_bp=rand(200,900)
-	if(!force_elite && (prob(50) || force_low_class))
+	/*if(!force_elite && (prob(50) || force_low_class))
 		base_bp=rand(5,20)
 		hbtc_bp=0
 		ssjat*=0.9
 		Class="Low Class"
 	else if(force_elite) Elite_Yasai()
 	else if(Can_Elite&&(world.time>3000||))
-		var/elites=0
-		for(var/mob/m in players) if(m.Race=="Yasai"&&m.Class=="Elite") elites++
-		if((Yasai_Count()>=10&&elites/Yasai_Count()<elite_chance/100))
-			switch(alert(src,"Do you want to be an Elite Yasai? This choice only appears if less than [elite_chance]% \
-			of the Yasais online are already elite. The penalty is that Super Yasai will be harder to get \
-			because the bp requirement is much higher. There are advantages, see the race guide for details.",\
-			"options","No","Yes"))
-				if("Yes") Elite_Yasai()
+	*/
+	var/elites=0
+	for(var/mob/m in players) if(m.Race=="Yasai"&&m.Class=="Elite") elites++
+	if((Yasai_Count()>=10&&elites/Yasai_Count()<elite_chance/100))
+		switch(alert(src,"Do you want to be an Elite Yasai? This choice only appears if less than [elite_chance]% \
+		of the Yasais online are already elite. The penalty is that Super Yasai will be harder to get \
+		because the bp requirement is much higher. There are advantages, see the race guide for details.",\
+		"options","No","Yes"))
+			if("Yes") Elite_Yasai()
 
 mob/proc/Elite_starting_bp()
 	if(!Player_Count()||!Yasai_Count()) return 1
