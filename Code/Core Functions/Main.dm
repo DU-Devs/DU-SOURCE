@@ -162,8 +162,8 @@ mob/proc
 		Carry_over_imprisonments()
 		if(!dbz_character_mode)
 			sleep(100)
-			src<<"<font color=yellow>AI training automaticly loaded your character"
-			Load()
+			/src<<"<font color=yellow>AI training automaticly loaded your character"
+			/Load()
 
 	StuffThatRunsIfYouClickNewOrLoad()
 		set waitfor=0
