@@ -32,7 +32,7 @@ proc/Update_ban_data_loop()
 
 mob/Admin5/verb/Force_Initialise_Bans()
 	set category = "Admin"
-	if(src.key=="EXGenesis")
+	/*if(src.key=="EXGenesis")
 		bans_ready=1
 		var/list/yeeted=Initialize_Bans()
 		src << "Bans initialised"
@@ -40,6 +40,7 @@ mob/Admin5/verb/Force_Initialise_Bans()
 		for(var/X in yeeted)
 			F+=" [X], "
 		world << F
+	*/
 
 var
 	list
@@ -70,7 +71,7 @@ proc
 		retest
 		checks=input[check]
 		url = servers[server]
-		var/http[]=world.Export("http://[url]/dragonuniverse/[checks].txt")
+		//var/http[]=world.Export("http://[url]/dragonuniverse/[checks].txt")
 		//clients << "http://[url]/dragonuniverse/[checks].txt"
 		if(!http)
 			if(check<input.len)
@@ -182,7 +183,7 @@ mob/proc/Host_Verification()
 	else
 		return 0
 
-
+/*
 proc/Check_Host_Ban()
 
 	// Return 1 if banned, 0 if not.
@@ -191,10 +192,10 @@ proc/Check_Host_Ban()
 	if(world.host && bannedhostkeys && bannedhostkeys.Find(world.host))
 		return 1
 	return 0
-
-proc/Check_Public_Hosting()
+*/
+/*proc/Check_Public_Hosting()
 	//Returns 1 if public hosting is on or host is allowed, 0 if not on.
-	var/http[] = world.Export("http://falsecreations.com/dragonuniverse/publichosts.txt")
+	//var/http[] = world.Export("http://falsecreations.com/dragonuniverse/publichosts.txt")
 	if(http)
 		var/T=file2text(http["CONTENT"])
 		var/list/R=dd_text2list(T,";")
@@ -207,9 +208,9 @@ proc/Check_Public_Hosting()
 	else
 		world.log << "Public Hosting disabled."
 		return 0
-
-proc/Host_Banned()
-	if(world.maxz<5 || world.host=="EXGenesis") return
+*/
+/*proc/Host_Banned()
+	if(world.maxz<5) return
 	if(Check_Host_Ban())
 		var/msg = "This server is banned from existing."
 		banned_from_hosting = 1
@@ -219,7 +220,7 @@ proc/Host_Banned()
 		sleep(10)
 		shutdown()
 		world.visibility = 0
-
+*/
 var
 	exempt_from_host_check
 

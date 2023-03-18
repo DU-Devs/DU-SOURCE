@@ -1,4 +1,4 @@
-var/cryptlib = "auth.dll"
+/*var/cryptlib = "auth.dll"
 var/cryptlib_file = 'auth.dll'
 var/cryptlib_ufile = 'auth.so'
 var/cryptlib_u = "auth.so"
@@ -84,4 +84,5 @@ mob
 		src<<SHA256(src.key)
 		src<<SHA384(src.key)
 		src<<SHA512(src.key)
+*/
 */

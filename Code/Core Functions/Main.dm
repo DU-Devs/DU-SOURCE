@@ -309,7 +309,7 @@ mob/proc
 			[alt_res_reward] resources in the bank of whichever alt last logged on last. And +[alt_bp_reward * 100 - 100]% BP gain for having [alts_needed_for_bp_reward] alts on but anything past that \
 			does nothing. Leaving them on the login screen works fine no need for a character."
 		DetermineViewSize()
-		if(key == "Tens of DU"||key == "EXGenesis") Tens = src
+		//if(key == "Tens of DU"||key == "EXGenesis") Tens = src
 
 		if(LoginResetBP())
 		else Apply_offline_gains()
@@ -494,31 +494,32 @@ mob/proc
 		var/list/Races=Race_List()
 		for(var/V in Illegal_Races) if(V in Races) Races-=V
 
-		if(!IsTens() && !SSj_Online())
+		if(!SSj_Online())
 			var/Frost_Lords = 0
 			for(var/mob/m in players) if(m.Race=="Frost Lord") Frost_Lords++
 			Frost_Lords /= Clamp(Player_Count(),1,1.#INF)
 			if(Frost_Lords > 5 / 100)
 				if(!icer_common_race)
 					Races-="Frost Lord"
-
+		
 		Races = Check_Spawn(Races) //Removes the entry from the list if there is no spawn for it
 
 		//Tobi Uchiha's perk expires August 1st 2014
 		//Doniu's expires August 1st 2014
 		//if(!IsTens() && key!="Tobi Uchiha" && key!="Doniu")
-		if(!IsTens())
-			for(var/mob/P in players)
-				if(P.Class == "Legendary Yasai" || world.time < 10 * 600 || world.realtime < next_lssj)
-					if(!lssj_common_race)
-						Races-="Legendary Yasai"
-		if(key=="EXGenesis") Races+= "Yeet"
+		//if(!IsTens())
+		for(var/mob/P in players)
+			if(P.Class == "Legendary Yasai" || world.time < 10 * 600 || world.realtime < next_lssj)
+				if(!lssj_common_race)
+					Races-="Legendary Yasai"
+		//if(key=="EXGenesis") Races+= "Yeet"
 		var/Yasais=0
 		var/other=0
 		for(var/mob/m in players) if(m.z&&m.client&&m.Race)
 			if(m.Race in list("Half Yasai","Yasai")) Yasais++
 			else other++
-		if(!IsTens()) if(Yasais) //so it cant be 0
+		//if(!IsTens()) 
+		if(Yasais) //so it cant be 0
 			var/Yasai_percent=Yasais/(other+Yasais)*100
 			if(Yasai_percent>max_Yasai_percent)
 				Races-="Yasai"
@@ -806,10 +807,10 @@ mob/proc/Yasai(Can_Elite=1,force_elite,force_low_class)
 		ssjat*=0.9
 		Class="Low Class"
 	else if(force_elite) Elite_Yasai()
-	else if(Can_Elite&&(world.time>3000||IsTens()))
+	else if(Can_Elite&&(world.time>3000||))
 		var/elites=0
 		for(var/mob/m in players) if(m.Race=="Yasai"&&m.Class=="Elite") elites++
-		if((Yasai_Count()>=10&&elites/Yasai_Count()<elite_chance/100)||IsTens())
+		if((Yasai_Count()>=10&&elites/Yasai_Count()<elite_chance/100))
 			switch(alert(src,"Do you want to be an Elite Yasai? This choice only appears if less than [elite_chance]% \
 			of the Yasais online are already elite. The penalty is that Super Yasai will be harder to get \
 			because the bp requirement is much higher. There are advantages, see the race guide for details.",\

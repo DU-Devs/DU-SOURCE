@@ -711,12 +711,6 @@ obj/Blast
 							//we dont want it cutting thru at full speed. so 75% of the time even tho your winning, it'll revert to tie status
 							//if(prob(70) && dist_to_owner > 1 && dist_to_enemy > 1)
 							//	winning = 0
-
-							if(Owner.key == "EXGenesis")
-								if(winning == 1) Owner << "Winning"
-								if(winning == 0) Owner << "Tied"
-								if(winning == -1) Owner << "Losing"
-
 							if(winning == 1) //winning
 								for(var/obj/Blast/B in Get_step(A, turn(A.dir, 180)))
 									if(B.dir == A.dir && B.Owner == Owner)
@@ -1083,7 +1077,7 @@ obj/proc/Shockwave_Knockback(Amount,turf/A)
 mob/proc/Shockwave_Knockback(Amount,turf/A, bypass_immunity)
 	set waitfor=0
 
-	if(is_saitama || key == "EXGenesis") return
+	if(is_saitama) return
 	if(!z) return //prevent body swap bug knocking them out of body
 	if(regenerator_obj && regenerator_obj.base_loc() == base_loc()) return
 

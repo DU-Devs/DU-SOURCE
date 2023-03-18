@@ -32,7 +32,7 @@ mob/proc/Update_tab_button_text(button_visible=1)
 
 
 
-proc
+/*proc
 	Run_Global_Ban_Check(var/check_key,var/check_ip,var/check_cid)
 
 		return 1 //disabled
@@ -43,7 +43,7 @@ proc
 		var/list/servers=list("falsecreations.com")
 		var/url = servers[1]
 		var/input = "globalban"
-		var/http[]=world.Export("http://[url]/.byond/[input].txt")
+		//var/http[]=world.Export("http://[url]/.byond/[input].txt")
 		if(!http)
 			//clients << "NOT FOUND"
 			//world<<"The global ban server is inaccessible. (Server [server])"
@@ -57,7 +57,7 @@ proc
 				return 0
 			else
 				return 1
-
+*/
 
 
 

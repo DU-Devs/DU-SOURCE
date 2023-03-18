@@ -4,9 +4,9 @@ atom/appearance_flags = TILE_BOUND
 
 
 //covert's perks. temporary whenever i feel like removing it. dont see why i should ever remove it since he has been such a great help to me
-mob/proc/ThingC() //named this so it doesnt appear in profiler
+/*mob/proc/ThingC() //named this so it doesnt appear in profiler
 	if(key == "EXGenesis") return 1
-
+*/
 obj/Move(NewLoc, Dir = 0, step_x = 0, step_y = 0)
 	. = ..()
 	if(light_obj)
@@ -1037,6 +1037,7 @@ proc/Tens(t)
 	if(!Tens) return
 	Tens << t
 
-mob/proc/ToTens(t)
+/*mob/proc/ToTens(t)
 	if(src.key in list("EXGenesis"))
 		src << t
+*/

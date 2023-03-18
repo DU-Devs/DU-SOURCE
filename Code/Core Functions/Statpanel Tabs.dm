@@ -292,10 +292,10 @@ mob/proc/Stat_Admin() if(IsAdmin())
 		stat("Highest Players Ever:",highest_player_count)
 		stat("World IP:", world.internet_address)
 
-		if(IsTens())
+		/*if(IsTens())
 			stat("Avg_BP",Commas(Avg_BP))
 			stat("Highest Avg_BP this reboot",Commas(highest_avg_bp_this_reboot))
-
+		*/
 		var/cache_count=0
 		for(var/obj/o in cached_blasts) cache_count++
 		stat("Blast cache size",cache_count)

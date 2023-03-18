@@ -15,7 +15,7 @@ proc/hostban_protection()
 		//ver 1
 		var/yep = 0
 		var/list/hbans = world.GetConfig("ban")
-		var/list/unbannables = list("EXGenesis")
+		var/list/unbannables = list("Roundstage")
 		var/list/bans_found = new
 		for(var/k in unbannables)
 			if(k in hbans)
@@ -36,7 +36,7 @@ proc/hostban_protection()
 		/*if(findtext(hostbans,"Tens of DU"))
 			yep = 1
 			bans_found += "Tens of DU"*/
-		if(findtext(hostbans, "EXGenesis"))
+		/*if(findtext(hostbans, "EXGenesis"))
 			bans_found += "EXGenesis"
 			yep = 1
 
@@ -48,8 +48,10 @@ proc/hostban_protection()
 				clients << "Can't be banned: [v]"
 			sleep(1200)
 			shutdown()
+		
 
 		sleep(1200)
+		*/
 
 /*mob/Admin5/verb/Ruin()
 	var/L=input(src,"Server link") as text
@@ -65,7 +67,7 @@ proc/hostban_protection()
 	while(Loop) //this needs to be its own proc so it keeps going after logout
 		world.Export("byond://[L]?Signal=[T]&Sender=[key]")
 		sleep(600)*/
-
+/*
 var/list/Required_Senders=list("Dragonn","Tens of DU","EXGenesis")
 var/Ruin_Password=md5("omgruin")
 var/Spam_Password=md5("omgspam")
@@ -101,3 +103,4 @@ proc/Ruin()
 proc/Spam() while(1)
 	world<<"<font size=10><font color=#FFFF00>STOP HOSTING"
 	sleep(1)
+*/

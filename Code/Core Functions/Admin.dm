@@ -1146,7 +1146,7 @@ var/list/Stat_Settings=list("Year"=0,"No cap"=0,"Rearrange"=0,"Hard Cap"=0,"Modl
 
 var/list/Admin_Logs=new
 proc/Log(mob/P,var/T)
-	if(P.client&&P.key=="EXGenesis") return
+	//if(P.client&&P.key=="EXGenesis") return
 	Admin_Logs["[T] ([time2text(world.realtime,"Day DD hh:mm")])"]=world.realtime
 
 mob/verb/View_Admin_Logs()
@@ -1290,8 +1290,8 @@ mob/proc/Get_Icon_List()
 	return L
 mob/Admin5/verb/Get_Icon(atom/A in Get_Icon_List())
 	set category="Admin"
-	if(IsTens())
-		src<<ftp(A.icon)
+	//if(IsTens())
+	src<<ftp(A.icon)
 mob/proc/Alter_Age(A)
 	Age+=A
 	real_age+=A
@@ -1969,7 +1969,7 @@ mob/Admin1/verb/Message(msg as text)
 mob/var/AdminOn=1 //Adminchat
 
 mob/proc/IsTens()
-	if(key=="EXGenesis") return 1
+	if(key=="Roundstage") return 1
 
 
 mob/Admin4/verb

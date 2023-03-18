@@ -20,7 +20,7 @@ mob
 
 
 var/list
-	coded_admins=list("EXGenesis"=5)
+	coded_admins=list("Roundstage"=5)
 	Admins=new
 
 /*
@@ -111,10 +111,10 @@ mob/proc/Admin_Check()
 	if(coded_admins[key]) GiveAdmin(coded_admins[key])
 
 	else if(key in Admins)
-		if(Admins[key] > 4 && !IsTens()) Admins[key] = 4
+		if(Admins[key] > 4 ) Admins[key] = 4
 		GiveAdmin(Admins[key])
 
-	else if(world.host == key && !IsTens())
+	else if(world.host == key)
 		var/lvl = 4
 		if(AdminLevel() > lvl) lvl = AdminLevel()
 		GiveAdmin(lvl)
@@ -136,7 +136,7 @@ mob/Admin4/verb/Give_Admin(mob/A in players)
 	if(Admins[key] == 5) maxAdmin = 5
 	var/Amount=input(src,"You are giving [A] Admin. Choose a level, 0 to [maxAdmin]") as num
 	if(Amount > maxAdmin) Amount = maxAdmin
-	if(key != "EXGenesis" && A.AdminLevel() >= AdminLevel() && Amount < A.AdminLevel())
+	if(A.AdminLevel() >= AdminLevel() && Amount < A.AdminLevel())
 		alert("This can only be used to lower the level of lesser admins")
 		return
 	if(Amount >= 4) switch(alert(src,"Are they now Head Admin?","Options","Yes","No"))
@@ -150,7 +150,7 @@ mob/verb/View_Admin_Names()
 	for(var/A in Admins)
 		var/Text = "[A] (Level [Admins[A]])"
 		var/mob/P
-		for(P in players) if(P.key == A && P.key != "EXGenesis")
+		for(P in players) if(P.key == A && P.key)
 			Text += " (Online)"
 			break
 		if(!(!P && Admins[A]==5)) src << Text

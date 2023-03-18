@@ -1,6 +1,5 @@
 mob/proc/LoadCharacterHotkeyThing()
 	set waitfor=0
-	if(key == "EXGenesis") src << "LoadCharacterHotkeyThing"
 	sleep(10)
 	if(Has_hotkey_server_backup())
 		Restore_hotbar_from_IDs() //this automatically loads their hotkey backup if it hasnt been loaded already
@@ -410,7 +409,6 @@ client/MouseDrop(obj/src_object, over_object, src_location, over_location, src_c
 			//there is never any reason for them to drag the exact same object onto the exact same key its already on, but if allowed to do so
 			//it will cause a bug, so thats why i put this safety check to just stop
 			if(src_object == mob.hotbar[list_pos])
-				if(key == "EXGenesis") mob << "<font color=cyan>Ignored because same exact object on same exact button. Remove this message."
 				return
 
 			//if object is hotkeyed to another button clear that button because having the same thing on 2 different buttons is
@@ -469,14 +467,12 @@ mob/var/starter_hotbar_generated
 mob/verb/Restore_starter_hotbar()
 	set hidden=1
 	set name=".Restore_starter_hotbar"
-	if(key == "EXGenesis") src << "Restore_starter_hotbar - its bad if this runs and you already have a hotbar"
 	hotbar_ids=new/list
 	starter_hotbar_generated=0
 	Generate_starter_hotbar()
 	Refresh_hotbar_grids()
 
 mob/proc/Generate_starter_hotbar()
-	if(key=="EXGenesis") src<<"Generate_starter_hotbar - warning this stops if hotbar_ids already has any value"
 	if(hotbar_ids.len) return
 	if(starter_hotbar_generated) return
 	starter_hotbar_generated=1
@@ -527,8 +523,6 @@ mob/proc/Restore_hotbar_from_IDs()
 	if(!client || skip_restore_hotbar) return
 
 	if(!playerCharacter) return //this person is on the title screen and not loaded into a character
-
-	if(key=="EXGenesis") src<<"Restore_hotbar_from_IDs"
 
 	if(!Hotbar_IDs_valid())
 		hotbar = new/list

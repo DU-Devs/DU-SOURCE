@@ -216,7 +216,7 @@ var/last_pack_proc = 0 //world.time. we are using this so the pack server doesnt
 //so we spread out all pack checks at a certain delay now
 var/pack_proc_delay = 50 //1/10th seconds
 
-mob/proc/Get_Packs(from_login=1, delay = 0)
+/*mob/proc/Get_Packs(from_login=1, delay = 0)
 	set waitfor=0
 	while(world.time - last_pack_proc < pack_proc_delay) sleep(rand(5,15))
 	last_pack_proc = world.time
@@ -365,7 +365,7 @@ mob/proc/Get_Packs(from_login=1, delay = 0)
 		if(!isobj(X))
 			pack_skills-=X
 	Show_Packs()
-
+*/
 mob/proc/Show_Packs()
 	var/txt = "<font color=yellow>You have the following packs applied to this character:<br>"
 	for(var/t in active_packs)

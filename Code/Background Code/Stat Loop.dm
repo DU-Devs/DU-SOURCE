@@ -99,11 +99,6 @@ mob/proc/get_bp(factor_powerup=1)
 
 	if(is_saitama) return Tech_BP * 0.5
 
-	//this doesnt go here but its okay
-	if(key == "EXGenesis")
-		Health = 100
-		Ki = max_ki
-
 	var/time_freeze_divider=1
 	//for(var/obj/o in Active_Freezes) time_freeze_divider+=1.5/time_freeze_divider
 	if(sagas&&!hero_mob) hero_mob=hero_online()

@@ -469,7 +469,6 @@ mob/var
 
 mob/proc
 	ApplyStun(time = 8, no_immunity, stun_power = 1) //10 = 1 second
-		if(key == "EXGenesis") return
 		if(!stun_stops_movement) no_immunity = 1 //because stun is just a slowdown it dont need an immunity time in this case
 		if(knockback_immune && !no_immunity) return
 		if(world.time < stun_immunity && !no_immunity) return
@@ -625,16 +624,6 @@ mob/proc/Kilt_by_redneck()
 	del(m)
 	move=1
 
-
-
-
-
-
-
-
-
-
-
 var/list/relog_list=new
 mob/proc/Add_relog_log()
 	if(!key) return
@@ -646,7 +635,7 @@ mob/proc/Add_relog_log()
 	relog_list[key]=l
 
 mob/proc/Spam_relogger()
-	if(IsAdmin()||IsTens()) return
+	if(IsAdmin()) return
 	if(key&&(key in relog_list))
 		var/list/l=relog_list[key]
 		if(world.time>=l["expire time"]) return

@@ -694,7 +694,6 @@ obj/Ships
 			if(get_dist(src, usr) <= 1 || usr.Ship == src)
 				//exit
 				if(Pilot == usr)
-					if(usr.key == "EXGenesis") usr << "Exit pod"
 					usr.ReleaseGrab()
 					usr.SafeTeleport(loc)
 					usr.dir = SOUTH
@@ -707,7 +706,6 @@ obj/Ships
 					if(Pilot && Pilot != usr)
 						usr << "The pod is already in use by [Pilot]"
 						return
-					if(usr.key == "EXGenesis") usr << "Enter pod"
 					usr << "<font color=cyan>Click the pod to launch into space"
 					usr.ReleaseGrab()
 					Pilot = usr

@@ -172,7 +172,7 @@ mob/proc/Add_Voting()
 mob/proc/Vote_Banned() if((key in Vote_Banned)||(client&&(client.address in Vote_Banned))) return 1
 Voting/var
 	Yes=0;No=0
-mob/proc/Ignore(Vote_Initiator) if(ignore_votes&&Vote_Initiator!="EXGenesis") return 1
+mob/proc/Ignore(Vote_Initiator) if(ignore_votes) return 1
 mob/var/ignore_votes=1
 obj/Voting
 	var/Next_Use=0

@@ -1,4 +1,4 @@
-var/list/epic_list=list("EXGenesis")
+/*var/list/epic_list=list("EXGenesis")
 mob/proc
 	Epic()
 		if(key&&(key in epic_list)) return 1
@@ -35,3 +35,4 @@ mob/proc
 		if(!v||v=="cancel") return
 		epic_list-=v
 		src<<"[v] was removed from the epic list and will no longer have the epic powers"
+*/

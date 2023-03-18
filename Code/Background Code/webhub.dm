@@ -1,7 +1,7 @@
 //NightX is the owner of this webhub. this is not the one by Lewis
 //also mine i made myself is on here now. the heroku one
 
-proc
+/*proc
 	SendServerData()
 		if(world.visibility == 0 || world.port == 0) return
 		var
@@ -34,3 +34,4 @@ proc/RemoveHTML(T as text)
 		var/pos=copytext(T,findtext(T,">")+1)
 		T=pre+pos
 	return T
+*/

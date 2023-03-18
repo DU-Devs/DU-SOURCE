@@ -6,17 +6,6 @@ proc
 	SpecialAnnouncementsLoop()
 		set waitfor=0
 		sleep(600)
-
-		//add my special hardcoded announcement for now until its over
-		var/tens = {"
-		<br><font size=1><font color=#FFFFFF>
-		automated announcement from tens:<br>\
-		<font color=#FFFF00>\
-		you can get +1 day of ultra+tech+ai packs for every image you send me where you link the game (https://gamejolt.com/games/dragon-universe/393678) or \
-		this video (https://youtu.be/7dr0nABlGNM) anywhere online, to help advertise DU. can be as simple as saying "play this Wish Orb mmo: \[link\]" or \
-		whatever you want to say. page me the image on my "Tens of DU" key using the key you want the packs on and i'll give it to you. it can be as simple as posting the game \
-		link on some random discord server somewhere.\
-		"}
 		//if("tensMsg" in anns) anns -= "tensMsg"
 		//anns["tensMsg"] = list(120, 0, tens)
 

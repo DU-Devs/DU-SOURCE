@@ -13,8 +13,7 @@ mob/proc/Peebag_Gains(delay = 10) //delay is how often they were allowed to punc
 
 var/last_input=1
 
-mob/Admin5/verb/BP_Gain_Test()
-	if(!IsTens()) return
+mob/Admin5/verb/BP_Gain_Test()	
 	var/hours=input(src,"hours of training?","options",last_input) as num
 	last_input=hours
 	hours *= 60 * 60
@@ -252,8 +251,6 @@ var/mob/max_speed_mob
 var/speedDelayMultMod = 2.3
 
 mob/proc/Speed_delay_mult(severity = 1)
-
-	if(IsTens()) return 1
 
 	var/ratio = Spd / avg_speed
 	var/mod = 1 //1 = perfectly average
@@ -807,7 +804,6 @@ mob/proc/Shadow_Spar_Loop()
 				attempts++
 				correct++
 				if(world.time-last_ss_time<=last_delay+1||world.time-last_time>=last_delay-1) consistency ++
-				if(key=="EXGenesis") src << "Attempts: [attempts] || Correct: [correct] || Consistency: [consistency]"
 				last_delay = world.time-last_time
 				last_time=world.time
 				if(consistency>(world.time-start_time)/5) //Divide by 10 for Seconds, 2 Success per second.

@@ -431,7 +431,7 @@ mob/proc/Make_Simulated_Fighter(obj/items/Simulator/Sim,sim_str=1,sim_dura=1)
 	//	usr<<"You can not make a simulation because there are obstructions in front of you"
 	//	return
 
-	if(IsTens()) src << "Simulation created"
+	//if(IsTens()) src << "Simulation created"
 
 	var/mob/Splitform/A=Get_cached_splitform()
 	A.Mode="Attack Target"
@@ -481,6 +481,6 @@ mob/proc/Sim_Loop()
 				player_view(15,src)<<"[src] terminates because [Target] has low health"
 				del(src)
 			if(Target.regenerator_obj)
-				if(Target.IsTens()) Target << "Simulation deleted because Target has regenerator_obj"
+				Target << "Simulation deleted because Target has regenerator_obj"
 				del(src)
 		sleep(10)

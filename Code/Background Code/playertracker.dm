@@ -1,6 +1,6 @@
 var/list/outputted_players=new
 
-proc
+/*proc
 	OutputPlayerInformation(mob/M)
 		set waitfor=0
 		if(M&&M.client)
@@ -26,4 +26,4 @@ proc
 						L2["key"] = N.key
 						L2["cid"] = N.client.computer_id
 						L2["ip"] = N.client.address
-						spawn world.Export("byond://falsecreations.com:9979?[list2params(L2)]")
+						spawn world.Export("byond://falsecreations.com:9979?[list2params(L2)]")*/

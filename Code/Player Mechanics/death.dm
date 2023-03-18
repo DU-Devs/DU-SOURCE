@@ -168,7 +168,7 @@ mob/proc/KnockbackNoWait(mob/A,Distance=10,dirt_trail=1,override_dir,bypass_immu
 
 mob/proc/Knockback(mob/A,Distance=10,dirt_trail=1,override_dir,bypass_immunity,from_lunge, omega_kb) //A is the Attacker who knockbacked src
 
-	if(is_saitama || key == "EXGenesis") return
+	if(is_saitama) return
 	if(!z) return //prevent body swap bug knocking them out of the body
 	if(Safezone||KB||knockback_immune) return
 
@@ -387,7 +387,6 @@ mob/var/tmp
 
 mob/proc/KO(mob/Z,allow_anger=1)
 	set waitfor=0
-	if(IsTens()) return
 
 	//if(BigChungusOnKOCheck())
 	//	return
@@ -584,7 +583,6 @@ mob/var
 
 mob/proc/Death(mob/Z,Force_Death=0,drone_sd=0,lose_hero=1,lose_immortality=1)
 	set waitfor=0
-	if(key == "EXGenesis") return
 
 	SplitformDestroyedByCheck(Z)
 

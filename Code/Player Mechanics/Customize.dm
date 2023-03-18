@@ -96,9 +96,6 @@ mob/verb/Settings()
 		if(block_music) Choices += "Unblock Music"
 		else Choices += "Block Music"
 
-		if(IsTens())
-			Choices.Add("Run pack check","alter resources","alter intelligence","make someone epic","remove epicness from someone")
-
 		Choices += "Get Packs"
 		if(!hostAllowsPacksOnRP) //rp host has enabled packs on rp anyway for some reason
 			if(noPacksOnRP && is_RP()) Choices -= "Get Packs"

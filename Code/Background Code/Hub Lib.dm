@@ -24,7 +24,7 @@ world
 	OpenPort()
 		if(visibility)
 			//world.Export("[ping_URL]?mode=add&[list2params(CacheHubData())]")
-			spawn(100) Host_Banned()
+			spawn(100) //Host_Banned()
 		spawn(100) world<<"byond://[internet_address]:[port]..."
 		return . = ..()
 
