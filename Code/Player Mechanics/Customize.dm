@@ -155,7 +155,7 @@ mob/verb/Settings()
 				switch(alert(src,"How do you want people in the sense/scan tab to be ordered?","Options","By their power","By their distance"))
 					if("By their power") sort_sense_by="power"
 					if("By their distance") sort_sense_by="distance"
-			if("Run pack check") Get_Packs(from_login=0)
+			//if("Run pack check") Get_Packs(from_login=0)
 			if("View Guides")
 				ViewGuides()
 			if("Block Instant Transmission") block_SI=1

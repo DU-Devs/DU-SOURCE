@@ -125,7 +125,7 @@ mob/Login() if(client)
 		//src<<"<font color=red>This server is rated [Server_Rating()] by other players."
 		TextColor = GetRandomTextColor()
 		//Choose_Login()
-	else Get_Packs(delay = 20)
+	//else Get_Packs(delay = 20)
 	if(client)
 		client.show_map=1
 		client.show_verb_panel=1
