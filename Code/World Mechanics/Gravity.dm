@@ -23,7 +23,7 @@ mob/proc/Gravity_Mastery()
 			if(Opponent(65)) gain*=5
 			if(Total_HBTC_Time<2 && z==10) gain *= 10
 			if(Action=="Training") gain*=1.5
-			if(ultra_pack) gain*=2
+			//if(ultra_pack) gain*=2
 
 			gain *= gravity_mastery_mod
 			if(gain>gravity_mastered*0.1) gain=gravity_mastered*0.1

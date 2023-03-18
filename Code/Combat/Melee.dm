@@ -92,23 +92,23 @@ mob/proc/AllAttacksDamageModifiers(mob/target) //target = who you are attacking
 	var/n = 1
 	if(target && ismob(target))
 		n *= GetRevengeDmgMod(target)
-	if(ThingC() && Health < 100)
-		var/mult = Health / 100
-		mult = mult ** 0.5
-		if(mult < 0.4) mult = 0.4
-		n /= mult
+	//if(ThingC() && Health < 100)
+	//	var/mult = Health / 100
+	//	mult = mult ** 0.5
+	//	if(mult < 0.4) mult = 0.4
+	//	n /= mult
 	return n
 
 mob/proc/TakeDamage(n = 0)
 	if(grabbedObject && strangling && GrabAbsorber()) n *= 1.3 //take way more damage if busy grab absorbing someone's energy
 
-	if(ThingC() && Health < 100)
-		var/hp = Health
-		if(hp < 1) hp = 1 //prevent error
-		var/mult = hp / 100
-		mult = mult ** 0.5
-		if(mult < 0.4) mult = 0.4
-		n *= mult
+	//if(ThingC() && Health < 100)
+	//	var/hp = Health
+	//	if(hp < 1) hp = 1 //prevent error
+	//	var/mult = hp / 100
+	//	mult = mult ** 0.5
+	//	if(mult < 0.4) mult = 0.4
+	//	n *= mult
 
 	if(stun_level || Frozen)
 		n *= stun_damage_mod
@@ -472,7 +472,7 @@ mob/proc/get_melee_damage(mob/m, count_sword = 1, for_strangle, allow_one_shot =
 			dmg = 2 * (BP/100)
 			if(isturf(m)) dmg/=10
 		else
-			if(WallBreakPower() > m.Health || Epic())
+			if(WallBreakPower() > m.Health)
 				dmg=1.#INF
 				if(isturf(m) && !Is_wall_breaker()) dmg=0
 				if(m.Health == 1.#INF) dmg = 0
@@ -669,7 +669,7 @@ mob/proc/GetSkillDrain(mod = 1, is_energy = 0)
 	if(s)
 		d *= 1 + (s.Damage - 1) * sword_drain_mult
 
-	if(ThingC()) d *= 0.5
+	//if(ThingC()) d *= 0.5
 
 	return d * mod
 
@@ -681,8 +681,8 @@ mob/proc/get_melee_knockback_distance(mob/m)
 	if(!new_combat && !knockback_on) return 0
 	if(istype(src,/mob/Splitform)) return 0 //sims shouldnt kb people
 
-	if(auto_train)
-		return 0
+	//if(auto_train)
+	//	return 0
 	//if(m.type==/mob/Splitform && m.Maker==src) return 0
 	//if(type==/mob/Splitform && Maker==m) return 0
 

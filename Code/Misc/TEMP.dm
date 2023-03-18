@@ -32,37 +32,6 @@ mob/proc/Update_tab_button_text(button_visible=1)
 
 
 
-/*proc
-	Run_Global_Ban_Check(var/check_key,var/check_ip,var/check_cid)
-
-		return 1 //disabled
-
-		//clients << "RUNNING"
-
-		//var/server=1
-		var/list/servers=list("falsecreations.com")
-		var/url = servers[1]
-		var/input = "globalban"
-		//var/http[]=world.Export("http://[url]/.byond/[input].txt")
-		if(!http)
-			//clients << "NOT FOUND"
-			//world<<"The global ban server is inaccessible. (Server [server])"
-			//world.log<<"The global ban server is inaccessible. (Server [server])"
-			return 1
-		if(http)
-			var/T=file2text(http["CONTENT"])
-			//world.log << T
-			//clients << "LOGGED"
-			if((check_key&&findtext(T,check_key))||(check_ip&&findtext(T,check_ip))||(check_cid&&findtext(T,check_cid)))
-				return 0
-			else
-				return 1
-*/
-
-
-
-
-
 obj
 	Noxian_Guillotine
 		var

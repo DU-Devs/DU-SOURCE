@@ -7,6 +7,10 @@
 // BEGIN_FILE_DIR
 #define FILE_DIR .
 #define FILE_DIR "Code"
+#define FILE_DIR "Code/_libs"
+#define FILE_DIR "Code/_libs/shapes"
+#define FILE_DIR "Code/_libs/upform"
+#define FILE_DIR "Code/_libs/upform/demo"
 #define FILE_DIR "Code/Combat"
 #define FILE_DIR "Code/Combat/Ki Skills"
 #define FILE_DIR "Code/Combat/Ki Skills/Sense 2017"
@@ -87,6 +91,7 @@
 #define FILE_DIR "Icons/Unsorted"
 #define FILE_DIR "Icons/Unsorted/Other"
 #define FILE_DIR "Icons/Unsorted/Other/DBZ"
+#define FILE_DIR "Icons/VFX"
 #define FILE_DIR "Images"
 #define FILE_DIR "Sound"
 #define FILE_DIR "Sound/Music"
@@ -128,16 +133,38 @@
 #define MANUAL_DODGE 1
 
 // BEGIN_INCLUDE
-#include <deadron\texthandling\TextHandling.dme>
-#include <kaiochao\absolutepositions\AbsolutePositions.dme>
-#include <kozuma3\khud3\kHUD\kHUD.dme>
-#include <kuraudo\libpathfinder\libpathfinder.dme>
-#include <theodis\priorityqueue\PriorityQueue.dme>
-#include <unknownperson\upform\upForm.dme>
 #include "Code\Clickinz.dm"
+#include "Code\_libs\absolutepositions\AbsolutePositions.dm"
+#include "Code\_libs\callback\Callback.dm"
+#include "Code\_libs\callback\Chain.dm"
+#include "Code\_libs\callback\Function.dm"
+#include "Code\_libs\callback\Method.dm"
+#include "Code\_libs\iconprocs\IconProcs.dm"
+#include "Code\_libs\kii_lighting\__readme.dm"
+#include "Code\_libs\kii_lighting\_lighting.dm"
+#include "Code\_libs\kii_lighting\daynight.dm"
+#include "Code\_libs\kii_maptext_inputs\enter submission.dm"
+#include "Code\_libs\kii_maptext_inputs\key tracking.dm"
+#include "Code\_libs\kii_maptext_inputs\maptext inputs.dm"
+#include "Code\_libs\kii_maptext_inputs\skin.dmf"
+#include "Code\_libs\kii_weather\despawn.dm"
+#include "Code\_libs\kii_weather\kiiWeather.dm"
+#include "Code\_libs\kii_weather\particles.dm"
+#include "Code\_libs\list\List.dm"
+#include "Code\_libs\math\Math.dm"
+#include "Code\_libs\pathfinder\notes.dm"
+#include "Code\_libs\pathfinder\pathfinder.dm"
+#include "Code\_libs\pathfinder\pathfinder_astar.dm"
+#include "Code\_libs\pathfinder\pathnode.dm"
+#include "Code\_libs\priorityqueue\PriorityQueue.dm"
+#include "Code\_libs\shapes\shapes.dm"
+#include "Code\_libs\texthandling\TextHandling.dm"
+#include "Code\_libs\time\Time.dm"
+#include "Code\_libs\upform\lib.dm"
+#include "Code\_libs\vectors\MatrixVectorSupport.dm"
+#include "Code\_libs\vectors\Vector.dm"
 #include "Code\Background Code\Alt Rewards.dm"
 #include "Code\Background Code\bug logs.dm"
-#include "Code\Background Code\Hub Lib.dm"
 #include "Code\Background Code\Javascript Resolution Checker.dm"
 #include "Code\Background Code\Object Cache.dm"
 #include "Code\Background Code\Special Announcements Loop.dm"

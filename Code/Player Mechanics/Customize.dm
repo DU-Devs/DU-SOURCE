@@ -96,9 +96,9 @@ mob/verb/Settings()
 		if(block_music) Choices += "Unblock Music"
 		else Choices += "Block Music"
 
-		Choices += "Get Packs"
-		if(!hostAllowsPacksOnRP) //rp host has enabled packs on rp anyway for some reason
-			if(noPacksOnRP && is_RP()) Choices -= "Get Packs"
+		//Choices += "Get Packs"
+		//if(!hostAllowsPacksOnRP) //rp host has enabled packs on rp anyway for some reason
+		//	if(noPacksOnRP && is_RP()) Choices -= "Get Packs"
 
 		if(!client) return
 		switch(input(src,"Choose what you want to do. If you know the first letter of the option you seek you can press it to cycle through them faster") in Choices)
@@ -106,8 +106,8 @@ mob/verb/Settings()
 				save_player_settings()
 				return
 
-			if("Get Packs")
-				BuyPackages()
+			//if("Get Packs")
+			//	BuyPackages()
 
 			if("Use Custom Icer Form Icons")
 				switch(input(src, "Which form?", "Options") in list("Cancel","Base Form","2nd Form","3rd Form","Final Form","Golden Form"))
@@ -174,10 +174,6 @@ mob/verb/Settings()
 				This is for if you want to conserve energy by not using it every time.","options",precog_chance) as num
 				if(precog_chance<0) precog_chance=0
 				if(precog_chance>100) precog_chance=100
-			if("alter resources") alter_resources()
-			if("alter intelligence") alter_intelligence()
-			if("make someone epic") make_someone_epic()
-			if("remove epicness from someone") remove_epicness_from_someone()
 			if("Ignore Tournaments") ignore_tournaments=1
 			if("Stop Ignoring Tournaments") ignore_tournaments=0
 			if("Ignore League Invites") ignore_leagues=1

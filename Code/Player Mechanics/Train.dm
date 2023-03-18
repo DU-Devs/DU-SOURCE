@@ -131,7 +131,7 @@ mob/proc/Raise_BP(Amount=1,apply_hbtc_gains=1)
 		if(!trainingTime || trainingTime <= 0) return
 	lastRaiseBP = world.time
 
-	if(auto_train) Amount *= 0.8
+	//if(auto_train) Amount *= 0.8
 
 	if(alt_rewards && AltCount() >= alts_needed_for_bp_reward) Amount *= alt_bp_reward
 
@@ -316,7 +316,7 @@ mob/proc/Stat_Gain()
 
 			if(Stat_Gain<min_gain) Stat_Gain=min_gain
 
-			if(key in epic_list) Stat_Gain*=10
+			//if(key in epic_list) Stat_Gain*=10
 
 		if(Stat_Gain>stat_avg/50) Stat_Gain=stat_avg/50
 		return Stat_Gain
@@ -338,7 +338,7 @@ mob/proc/Raise_Stats(Amount=1,F) //F = Stat Focus
 
 	if(Safezone) Amount*=0.25
 	if(!F) F=Stat_Focus
-	if(ultra_pack) Amount*=2
+	//if(ultra_pack) Amount*=2
 	Amount*=decline_gains()
 	Amount=round(Amount)
 	if(Amount<0) Amount=0
@@ -518,10 +518,10 @@ mob/proc/Leech(mob/P,N=1,no_adapt=0,give_as_hbtc_bp=0,android_matters=1,weights_
 			else N*=0.9
 	if(hero==key) N*=2
 	if(Android&&P.Android) N*=4
-	N*=pack_leech**0.3
+	//N*=pack_leech**0.3
 	if(Total_HBTC_Time<2&&z==10) N*=10
 	if(!P.client) N/=2
-	if(key in epic_list) N*=25
+	//if(key in epic_list) N*=25
 	N*=decline_gains()
 	if(android_matters) if(cyber_bp || has_modules()) N /= 10
 	for(var/obj/items/Force_Field/ff in item_list) N/=2

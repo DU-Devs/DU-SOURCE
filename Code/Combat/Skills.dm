@@ -2173,7 +2173,7 @@ obj/Self_Destruct
 		player_view(10,usr)<<sound('basicbeam_fire.ogg',volume=20)
 		Make_Shockwave(usr,sw_icon_size=512)
 		var/Dist=10
-		for(var/N=0,N<5,N++) for(var/turf/T in view(Dist)) if(T.opacity&&(T.Health<usr.BP||usr.Epic())&&usr.Is_wall_breaker())
+		for(var/N=0,N<5,N++) for(var/turf/T in view(Dist)) if(T.opacity&&(T.Health<usr.BP)&&usr.Is_wall_breaker())
 			T.Health=0
 			T.Destroy()
 		for(var/turf/T in view(Dist))
@@ -2196,7 +2196,7 @@ obj/Self_Destruct
 							P.TakeDamage(dmg)
 						if(P.Regenerate&&!P.KO&&usr.BP>P.BP*P.Regenerate) P.Death(usr,1)
 						else P.Death(usr)
-			if(usr && T) if((T.Health < usr.WallBreakPower() || usr.Epic()) && usr.Is_wall_breaker())
+			if(usr && T) if((T.Health < usr.WallBreakPower()) && usr.Is_wall_breaker())
 				if(T.Health != 1.#INF)
 					T.Health=0
 					T.Destroy()

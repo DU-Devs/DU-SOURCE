@@ -2470,7 +2470,7 @@ obj/var/Money
 
 mob/proc/MaxItems() //max items you can carry
 	var/n = max_items
-	if(HasAnyPack()) n += 20
+	//if(HasAnyPack()) n += 20
 	return n
 
 obj/items/verb/Drop()

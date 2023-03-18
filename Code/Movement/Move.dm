@@ -483,5 +483,5 @@ mob/proc/Cease_training()
 	set waitfor=0
 	if(Action=="Training") Train()
 	if(Action=="Meditating") Meditate()
-	if(auto_train) AI_Train()
+	//if(auto_train) AI_Train()
 	if(Shadow_Sparring) Shadow_Spar()

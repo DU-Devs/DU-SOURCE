@@ -672,7 +672,7 @@ obj/Blast
 							//up with the head of the beam then that also deletes itself
 							if(!Owner.beaming && getdist(src,Owner) > 2)
 								if(!(locate(/obj/Blast) in Get_step(src,turn(dir,180))))
-									Owner.ToTens("1")
+									//Owner.ToTens("1")
 									SafeTeleport(null)
 									del(src)
 							//if any of your own beams are ahead of you, make sure this segment takes on the appearance of a "tail"
@@ -699,11 +699,11 @@ obj/Blast
 								for(var/obj/Blast/b in loc)
 									if(b != src && b.Owner == A.Owner)
 										b.SafeTeleport(null)
-										Owner.ToTens("2")
+										//Owner.ToTens("2")
 										del(b)
 								for(var/obj/Blast/b in get_step(src,dir))
 									if(b != src && b.Owner == A.Owner)
-										Owner.ToTens("3")
+										//Owner.ToTens("3")
 										b.SafeTeleport(null)
 										del(b)
 
@@ -717,7 +717,7 @@ obj/Blast
 										B.icon_state = "struggle"
 								if(!A.delete_on_next_move)
 									A.delete_on_next_move = 1
-									Owner.ToTens("4")
+									//Owner.ToTens("4")
 
 							if(winning == 0) //tied
 								icon_state = "struggle"
@@ -727,27 +727,27 @@ obj/Blast
 											B.icon_state = "struggle"
 									if(!A.delete_on_next_move)
 										A.delete_on_next_move = 1
-										Owner.ToTens("5")
+										//Owner.ToTens("5")
 									if(!delete_on_next_move)
 										delete_on_next_move = 1
-										Owner.ToTens("6")
+										//Owner.ToTens("6")
 
 							if(winning == -1) //losing
 								icon_state = "struggle"
 								SafeTeleport(null)
-								Owner.ToTens("7")
+								//Owner.ToTens("7")
 								del(src)
 
 				var/turf/t = loc
 				if(t && isturf(t) && t.density)
-					if((t.Health <= wall_breaking_power || Owner.Epic()) && (!ismob(Owner) || (ismob(Owner) && Owner.Is_wall_breaker())))
+					if((t.Health <= wall_breaking_power) && (!ismob(Owner) || (ismob(Owner) && Owner.Is_wall_breaker())))
 						if(t.Health != 1.#INF)
 							t.Health=0
 							t.Destroy()
 					if(t) if(!Piercer && t.density)
 						icon_state="struggle"
 						delete_on_next_move=1
-						Owner.ToTens("8")
+						//Owner.ToTens("8")
 
 				for(var/obj/A in loc) if(!istype(A,/obj/Blast) && !istype(A,/obj/Edges))
 					if(!A.takes_gradual_damage)
@@ -763,7 +763,7 @@ obj/Blast
 					if(A) if(!Piercer&&A.density)
 						icon_state="struggle"
 						delete_on_next_move=1
-						Owner.ToTens("9")
+						//Owner.ToTens("9")
 					break
 			//sleep(TickMult(loop_delay))
 			sleep(world.tick_lag)
@@ -821,7 +821,7 @@ obj/Blast
 						del(am)
 		Explosion_Graphics(Get_step(src,dir),Explosive)
 		for(var/turf/A in TurfCircle(Explosive,src))
-			if((A.Health <= wall_breaking_power || (ismob(Owner) && Owner.Epic())) && (!ismob(Owner) || (ismob(Owner) && Owner.Is_wall_breaker())))
+			if((A.Health <= wall_breaking_power || (ismob(Owner))) && (!ismob(Owner) || (ismob(Owner) && Owner.Is_wall_breaker())))
 				if(A.Health != 1.#INF)
 					A.Health=0
 					if(A.density) A.Destroy()
@@ -1045,7 +1045,7 @@ obj/Blast
 			var/turf_destroyed = 0
 			var/destroy_blast_anyway = 0
 			if(A.Health != 1.#INF)
-				if((A.Health <= wall_breaking_power || (Owner && ismob(Owner) && Owner.Epic())) && (!Owner || !ismob(Owner) || (ismob(Owner) && Owner.Is_wall_breaker())))
+				if((A.Health <= wall_breaking_power || (Owner && ismob(Owner))) && (!Owner || !ismob(Owner) || (ismob(Owner) && Owner.Is_wall_breaker())))
 					if(A.Health != 1.#INF)
 						var/turf/t=A
 						if(t.destroy_blast_anyway) destroy_blast_anyway = 1

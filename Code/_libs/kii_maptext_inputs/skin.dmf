@@ -1,0 +1,35 @@
+macro "keytracking"
+	elem 
+		name = "Return"
+	elem 
+		name = "Any"
+		command = "key-down [[*]]"
+	elem 
+		name = "Any+UP"
+		command = "key-up [[*]]"
+
+
+window "main-window"
+	elem "main-window"
+		type = MAIN
+		pos = 281,0
+		size = 544x544
+		anchor1 = -1,-1
+		anchor2 = -1,-1
+		is-default = true
+		saved-params = "pos;size;is-minimized;is-maximized"
+		statusbar = false
+		can-minimize = false
+		can-resize = false
+		macro = "keytracking"
+	elem "gamemap"
+		type = MAP
+		pos = 0,0
+		size = 544x544
+		anchor1 = 0,0
+		anchor2 = 100,100
+		font-family = "sans-serif"
+		is-default = true
+		saved-params = "icon-size"
+		zoom = 1
+

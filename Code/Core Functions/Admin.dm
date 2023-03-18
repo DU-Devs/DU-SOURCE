@@ -1305,8 +1305,7 @@ mob/proc/Remove_Duplicate_Moves()
 		if(!istype(o,/obj/items) && !o.Duplicates_Allowed)
 			for(var/obj/o2 in src)
 				if(o && o2 && o.type == o2.type && o != o2)
-					if(o2.is_pack) del(o)
-					else del(o2)
+					del(o2)
 
 mob/Admin4/verb/Purge_Old_Saves()
 	set category="Admin"
@@ -1859,7 +1858,7 @@ mob/Admin2/verb/GiveItem(mob/A in world)
 			if(B)
 				B.referenceObject = 1
 			if(B && B.Givable && !istype(B,/obj/items/Clothes))
-				if((key in coded_admins) || (B.type != /obj/Auto_Shadow_Spar && B.type != /obj/AI_Training))
+				if((key in coded_admins) || (B.type != /obj/Auto_Shadow_Spar && B.type))
 					Give_List+=B
 	var/obj/O=input(src,"Choose what to give [A]") in Give_List
 	if(O=="Cancel") return

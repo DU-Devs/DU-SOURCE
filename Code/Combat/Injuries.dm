@@ -4,9 +4,9 @@ mob/verb/Injure()
 	//set category="Skills"
 	var/mob/P=src
 	for(var/mob/M in Get_step(src,dir)) if(M.client) P=M
-	if(P.key in epic_list)
-		src<<"[P] is immune to injuries"
-		return
+	//if(P.key in epic_list)
+	//	src<<"[P] is immune to injuries"
+	//	return
 	if(tournament_override(fighters_can=0)) return
 	Injury_Options(P)
 

@@ -1,4 +1,4 @@
-mob/proc/AI_Train_Loop()
+/*mob/proc/AI_Train_Loop()
 	set waitfor=0
 	var/obj/SplitForm/SF
 	while(src)
@@ -61,3 +61,4 @@ mob/proc/AI_Train()
 		src<<"Your character has stopped AI training"
 		if(Auto_Attack) AutoAttack()
 		Destroy_Splitforms()
+*/

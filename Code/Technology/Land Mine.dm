@@ -103,7 +103,7 @@ mob/proc
 		var/dmg = 40 * (Tech_BP * 1.63 / BP) ** 1
 		//var/dmg = 100 * (highest_relative_base_bp * 0.63 / (base_bp / bp_mod))**5
 
-		if(ThingC()) dmg *= 0.25
+		//if(ThingC()) dmg *= 0.25
 
 		TakeDamage(dmg)
 		if(Health <= 0)

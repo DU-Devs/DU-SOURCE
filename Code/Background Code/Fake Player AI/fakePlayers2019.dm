@@ -7,7 +7,7 @@ proc
 		return
 
 		sleep(600)
-		if(is_RP()) return
+		//if(is_RP()) return
 		for(var/v in 1 to 20)
 			var/mob/new_troll/nt = new(locate(222,222,4))
 			nt.troll_joins_tournaments = 0

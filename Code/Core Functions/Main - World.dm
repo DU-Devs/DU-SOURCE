@@ -74,20 +74,9 @@ proc/FilterServerName()
 
 var/list/players=new
 
-mob/proc
-	LoginBanCheckThing()
-		set waitfor=0
-		if(client && !Run_Global_Ban_Check(key,client.address,client.computer_id))
-			del(src)
-			return
-		if(client && Check_Player_Ban())
-			del(src)
-			return
-
 //any if(!loc) means it only runs if they are just entering a mob, instead of switching mobs. it stops it from running when theyre only switching mobs
 mob/Login() if(client)
 	client.Ban_Check()
-	LoginBanCheckThing()
 
 	//stops the streaming browser music
 	//no longer needed because of the JSresolutionCheck() accomplishes the same effect
@@ -97,7 +86,7 @@ mob/Login() if(client)
 	if(!loc)
 		UpdateHighestPlayerCount()
 		Admin_Login_Message()
-		OutputPlayerInformation(src)
+		//OutputPlayerInformation(src)
 
 	/*if(!allow_guests&&findtext(key,"guest"))
 		alert(src,"Guest keys are not allowed on this server")

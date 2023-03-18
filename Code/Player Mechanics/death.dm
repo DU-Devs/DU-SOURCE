@@ -256,7 +256,7 @@ mob/var/tmp/last_knockbacked=0
 
 mob/proc/KB_Destroy(mob/A,Dir) //A is the Attacker
 	var/turf/T = Get_step(src,Dir)
-	if(!A.is_saitama) if(T && (T.Health < A.WallBreakPower() || A.Epic()) && A.Is_wall_breaker() && !T.Water)
+	if(!A.is_saitama) if(T && (T.Health < A.WallBreakPower()) && A.Is_wall_breaker() && !T.Water)
 		if(T.Health != 1.#INF)
 			T.Health = 0
 			if(T.density)
@@ -404,11 +404,11 @@ mob/proc/KO(mob/Z,allow_anger=1)
 			Ki=max_ki
 			return
 
-		if(key in epic_list) return
+		//if(key in epic_list) return
 		var/anger_wait = 3000
 
 		if(!Z || !ismob(Z) || !Z.is_saitama)
-			if(Z != src && can_anger() && allow_anger && (prob(anger_chance()) || hero == key || ultra_pack))
+			if(Z != src && can_anger() && allow_anger && (prob(anger_chance()) || hero == key))
 				var/can_anger
 				if(Z && ismob(Z) && Z.client && !(Z.ckey in anger_reasons))
 					can_anger = 1
@@ -482,7 +482,7 @@ mob/proc/KO(mob/Z,allow_anger=1)
 
 		var/KO_Timer = 800 / Clamp((regen**0.4),0.5,2)
 		if(z==10) KO_Timer/=6
-		if(ultra_pack) KO_Timer/=1.4
+		//if(ultra_pack) KO_Timer/=1.4
 		if(hero==key) KO_Timer*=0.7
 		koCount++
 		var/thisKOcount = koCount
@@ -607,7 +607,7 @@ mob/proc/Death(mob/Z,Force_Death=0,drone_sd=0,lose_hero=1,lose_immortality=1)
 		if(Safezone||Prisoner()) return //original above. changed 10/11/2019 to fix clone tanks
 	if(Clone_Tank()) return //10/11/2019
 
-	if(key in epic_list) return
+	//if(key in epic_list) return
 
 	ObserveDeathSpot()
 
@@ -1133,7 +1133,7 @@ mob
 
 			grab_resist *= Clamp((Def/grabber.Off)**0.35,1,2)
 			grab_resist *= 11 * grab_struggle_mod
-			if(ThingC()) grab_resist *= 1.75
+			//if(ThingC()) grab_resist *= 1.75
 
 			if(grabbed_from_behind && Tail)
 				//grab_resist /= 2**(1 / tail_level)

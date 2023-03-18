@@ -393,7 +393,6 @@ mob/proc
 	NewLoadPromptClassic()
 		if(!classic_ui) return
 		if(playerCharacter) return
-		if(AutoTrainInSave()) return //let ai training auto load their character
 		while(!can_login || world.time < 100) sleep(10)
 		switch(alert(src, "Hello [key]", "", "New Character", "Load Character"))
 			if("New Character") NewClicked()

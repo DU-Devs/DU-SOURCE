@@ -3119,7 +3119,7 @@ mob/proc/revive_time()
 	if(auto_revive_timer == 0) return 0
 	var/n = death_time + (auto_revive_timer * 600 * revive_modifier())
 	if(Race == "Android") n = death_time + (auto_revive_timer * 600)
-	if(ThingC()) n *= 0.45
+	//if(ThingC()) n *= 0.45
 	return n
 
 mob/proc/Revival_altar()

@@ -160,7 +160,7 @@ mob/proc
 					del(src)
 					return
 		Carry_over_imprisonments()
-		if(!dbz_character_mode && AutoTrainInSave())
+		if(!dbz_character_mode)
 			sleep(100)
 			src<<"<font color=yellow>AI training automaticly loaded your character"
 			Load()

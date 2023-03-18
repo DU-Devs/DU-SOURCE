@@ -279,12 +279,12 @@ mob/proc
 		A.Def = Def * 0.8
 		A.offmod = offmod
 		A.defmod = defmod
-		if(auto_train)
-			A.Pow *= 0.3
-			A.Str *= 0.3
-			A.End *= 2
-			A.Res *= 2
-			A.KB_On = 0
+		//if(auto_train)
+		//	A.Pow *= 0.3
+		//	A.Str *= 0.3
+		//	A.End *= 2
+		//	A.Res *= 2
+		//	A.KB_On = 0
 		A.gravity_mastered = gravity_mastered
 		A.SafeTeleport(get_step(src,dir)) //if you change this it will make ai train not work
 		A.dir = turn(dir,180)

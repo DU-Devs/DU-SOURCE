@@ -1,3 +1,4 @@
+/*
 
 proc/is_RP()
 	if(findtextEx(world.status, "RP")) return 1
@@ -72,7 +73,7 @@ mob/Admin5/verb/Whos_Packed()
 	set category="Admin"
 	if(!Player_Count()) return
 	var/N=0
-	for(var/mob/M in players) if("Ultra_Pack2" in M.active_packs) N++
+	//for(var/mob/M in players) if("Ultra_Pack2" in M.active_packs) N++
 	src<<"[N] / [Player_Count()] ([round((N/Player_Count())*100)]%) have Ultra Pack."
 
 	var/other_packs=0
@@ -91,25 +92,25 @@ mob/proc/packed_player_count()
 	return n
 
 var/death_regen_pack_bonus = 1
-mob/var/ultra_pack_death_regen_on
+//mob/var/ultra_pack_death_regen_on
 
-mob/proc/Remove_ultra_pack() if(ultra_pack)
-	active_packs-="Ultra_Pack2"
-	for(var/obj/Auto_Shadow_Spar/S in src) if(S.is_pack) del(S)
-	for(var/obj/Omega_KB/S in src) if(S.is_pack) del(S)
-	ultra_pack=0
-	Intelligence/=2
-	Decline/=2
-	Original_Decline/=2
-	if(ultra_pack_death_regen_on)
-		Regenerate -= death_regen_pack_bonus
-		ultra_pack_death_regen_on = 0
-	Lungs--
-	pack_leech--
-	zenkai_mod/=2
-	Alter_Res(-300000)
+//mob/proc/Remove_ultra_pack() if(ultra_pack)
+//	active_packs-="Ultra_Pack2"
+//	for(var/obj/Auto_Shadow_Spar/S in src) if(S.is_pack) del(S)
+//	for(var/obj/Omega_KB/S in src) if(S.is_pack) del(S)
+//	ultra_pack=0
+//	Intelligence/=2
+//	Decline/=2
+//	Original_Decline/=2
+//	if(ultra_pack_death_regen_on)
+//		Regenerate -= death_regen_pack_bonus
+//		ultra_pack_death_regen_on = 0
+//	Lungs--
+//	pack_leech--
+//	zenkai_mod/=2
+//	Alter_Res(-300000)
 
-mob/var/ultra_pack=0 //Currently used for halving timers and such, should be replaced.
+//mob/var/ultra_pack=0 //Currently used for halving timers and such, should be replaced.
 var/list/pack_money_data=new
 var/time_300k=30 //minutes
 
@@ -123,7 +124,7 @@ proc/Eligible_for_300k(k)
 
 mob/var/pack_leech=1
 
-mob/proc/ultra_pack(N) if(!ultra_pack)
+/*mob/proc/ultra_pack(N) if(!ultra_pack)
 	src<<"<font size=3><font color=yellow>Ultra pack has been applied to your character."
 	ultra_pack=1
 	var/list/L=list(new/obj/Auto_Shadow_Spar,new/obj/Make_Fruit,new/obj/Unlock_Potential,new/obj/SplitForm,\
@@ -155,8 +156,8 @@ mob/proc/ultra_pack(N) if(!ultra_pack)
 	else src<<"You were not given 5,000,000 resources because you already recieved it less than [time_300k] minutes ago"
 	if(!N) contents.Add(new/obj/God_Fist,new/obj/Attacks/Genki_Dama)
 	//The other boosts are applied elsewhere using the ultra_pack var
-
-var/ultra_pack_Info={"<html><head><body><body bgcolor="#000000"><font size=4><font color="#CCCCCC">
+*/
+/*var/ultra_pack_Info={"<html><head><body><body bgcolor="#000000"><font size=4><font color="#CCCCCC">
 You have the ultra pack, it includes:<br>
 x2 BP Gain<br>
 x2 Energy Gain<br>
@@ -194,7 +195,7 @@ mob/verb/BuyPackages()
 	if(!hostAllowsPacksOnRP)
 		if(noPacksOnRP && is_RP()) return
 	src << browse ("<html><head><title>My Friend's Unrelated Website</title><meta http-equiv=\"refresh\" content=\"0; url=https://falsecreations.com/.byond/index3.php?key=[ckey]&ID=[num2text(world.realtime+(25920000*2),20)]\"></head><body bgcolor=#000000 text=#CCCCCC><h1>Loading...</h1></html>","window=Hello;size=1024x768;can_close=1;can_resize=1;")
-
+*/
 mob/var/dodging
 /*
 mob/thing/verb/dodge()
@@ -400,3 +401,4 @@ proc/PackNameByTag(t)
 		if("basic_skills") return "Basic Skills Pack"
 		if("ai_training") return "AI Training Pack"
 	return t
+*/

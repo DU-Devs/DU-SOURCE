@@ -4,7 +4,7 @@ proc/Hostban_check_loop()
 	sleep(600)
 	while(1)
 		sleep(600)
-		Host_Banned()
+		//Host_Banned()
 
 proc/Recursive_Hash(F,X)
 	for(,X>0,X--)
@@ -18,7 +18,7 @@ proc/Update_ban_data_loop()
 	var/f
 	sleep(400)
 	while(1)
-		f=Initialize_Bans()
+		//f=Initialize_Bans()
 		if(istext(f))
 			if(f=="fail")
 				fail++
@@ -59,92 +59,6 @@ var
 // New data gathering proc, data is stored in memory in case of failing future checks.
 // Just put this in a loop as you see fit, I recommend a three minute interval.
 var/bans_ready=0
-proc
-	Initialize_Bans()
-		var/list/servers=list("falsecreations.com","209.141.38.222")
-		var/server = 1
-		var/url
-		var/list/input = list("bannedkeys","bannedips","bannedcids","bannedhostkeys","bannedhostips","bannedhostcids","bannedadminkeys","bannedadminips","bannedadmincids","dmbauth")
-		var/check = 1
-		var/checks
-		//if(text2num(servers[2])!=209.141) shutdown()
-		retest
-		checks=input[check]
-		url = servers[server]
-		//var/http[]=world.Export("http://[url]/dragonuniverse/[checks].txt")
-		//clients << "http://[url]/dragonuniverse/[checks].txt"
-		if(!http)
-			if(check<input.len)
-				check ++
-				goto retest
-			else
-				if(server<servers.len)
-					check = 1
-					server ++
-					goto retest
-				else
-					//clients << "Loaded Bans ([(bannedips.len)+(bannedkeys.len)+(bannedcids.len)+(bannedhostkeys.len)+(bannedhostips.len)+(bannedhostcids.len)+(bannedadminkeys.len)+(bannedadmincids.len)+(bannedadminips.len)])"
-					return "fail"
-		if(http)
-			var/T=file2text(http["CONTENT"])
-		//	clients << "Content: [T]"
-		//	clients << "Site: [url]"
-		//	clients << "Check [check]"
-			var/list/R=dd_text2list(T,";")
-		//	clients << "List2Params: [list2params(R)]"
-			switch(checks)
-				if("bannedkeys")
-					bannedkeys = R
-					//clients << "Loaded Key ban information."
-				if("bannedips")
-					bannedips = R
-					//clients << "Loaded IP ban information."
-				if("bannedcids")
-					bannedcids = R
-					//clients << "Loaded Computer ID ban information."
-				if("bannedadminkeys")
-					bannedadminkeys = R
-					//clients << "Loaded Admin Key ban information."
-				if("bannedadminips")
-					bannedadminips = R
-					//clients << "Loaded Admin IP ban information."
-				if("bannedadmincids")
-					bannedadmincids = R
-					//clients << "Loaded Admin Computer ID ban information."
-				if("bannedhostkeys")
-					bannedhostkeys = R
-					//clients << "Loaded Host Key ban information."
-				if("bannedhostips")
-					bannedhostips = R
-					//clients << "Loaded Host IP ban information."
-				if("bannedhostcids")
-					bannedhostcids = R
-					//clients << "Loaded Host Computer ID ban information."
-				if("dmbauth")
-					dmbauth = R
-
-				/*if("superbans")
-					superbans = R*/
-
-			if(check<input.len)
-				check ++
-				goto retest
-			else
-				if(server<servers.len)
-					check = 1
-					server ++
-					goto retest
-				else
-					//clients << "Loaded Bans ([(bannedips.len)+(bannedkeys.len)+(bannedcids.len)+(bannedhostkeys.len)+(bannedhostips.len)+(bannedhostcids.len)+(bannedadminkeys.len)+(bannedadmincids.len)+(bannedadminips.len)])"
-					var/list/yeeted
-					if(bans_ready)
-						for(var/mob/B in players)
-							if(B.client)
-								if(bannedkeys.Find(B.ckey))
-									yeeted+=B.ckey
-									del(B)
-					bans_ready=1
-					return yeeted
 
 mob/proc/Check_Admin_Ban()
 	// Returns 1 if banned, 0 if not.

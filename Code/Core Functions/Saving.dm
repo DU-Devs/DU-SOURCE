@@ -153,8 +153,8 @@ proc/Initialize()
 	AverageSpeedUpdater()
 	DestroyShipsInShipsLoop()
 	GodKiRealmKillLoop()
-	WebhubLoop()
-	InitFakePlayers()
+	//WebhubLoop()
+	//InitFakePlayers()
 	SpecialAnnouncementsLoop()
 	ToggleBraalGym(wait = 300)
 	CheckDeleteHellAltar(wait = 0)
@@ -234,10 +234,10 @@ mob/proc/Cant_Remake() if(fexists("Save/[key]"))
 	F["Can_Remake"]>>Can_Remake
 	if(Can_Remake==0) return 1 //Cant use if(!Can_Vote) because if its 1 its the initial value and the entry is null
 
-mob/proc/AutoTrainInSave() if(client&&fexists("Save/[key]"))
+/*mob/proc/AutoTrainInSave() if(client&&fexists("Save/[key]"))
 	var/savefile/F=new("Save/[key]")
-	if(F["auto_train"]) return 1
-
+	//if(F["auto_train"]) return 1
+*/
 var/player_saving_on=1
 
 mob/proc/RemoveOverlaysThatDontSaveCorrectly()
@@ -369,7 +369,7 @@ proc/Save_Misc()
 	S["death_setting"]<<death_setting
 	S["max_gravity"]<<max_gravity
 	S["reincarnation_recovery"]<<reincarnation_recovery
-	S["epic_list"]<<epic_list
+	//S["epic_list"]<<epic_list
 	S["allow_age_choosing"]<<allow_age_choosing
 	S["cyber_bp_mod"]<<cyber_bp_mod
 	S["leech_strongest"]<<leech_strongest
@@ -574,7 +574,7 @@ proc/Load_Misc()
 	S["death_setting"]>>death_setting
 	S["max_gravity"]>>max_gravity
 	S["reincarnation_recovery"]>>reincarnation_recovery
-	S["epic_list"]>>epic_list
+	//S["epic_list"]>>epic_list
 	S["allow_age_choosing"]>>allow_age_choosing
 	S["cyber_bp_mod"]>>cyber_bp_mod
 	S["leech_strongest"]>>leech_strongest

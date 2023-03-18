@@ -123,12 +123,12 @@ proc/vector_step(mob/a, ang = 0, step_speed)
 //where north is 0 and it goes clockwise to 360. if b is directly above a then it will be 0
 proc/get_global_angle(mob/a,mob/b)
 	if(!a || !b) return 0
-	var/ang = arctan(b.bound_center_y() - a.bound_center_y(), b.bound_center_x() - a.bound_center_x())
+	var/ang = arctanD(b.bound_center_y() - a.bound_center_y(), b.bound_center_x() - a.bound_center_x())
 	ang += 360
 	if(ang > 360) ang -= 360
 	return abs(ang)
 
-proc/arctan(x,y)
+proc/arctanD(x,y)
 	if(!x && !y) return 0
 	var/n = arccos(x / sqrt(x * x + y * y))
 	if(y >= 0) return n

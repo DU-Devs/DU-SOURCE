@@ -42,7 +42,7 @@ obj/var/Drain=1
 obj/Attacks/Experience=0.1
 
 mob/proc/Zanzoken_Mastery(N=0.1)
-	N*=mastery_mod*Pack_Mastery
+	N*=mastery_mod
 	if(Dead) N*=1.5
 	N*=decline_gains()
 	Zanzoken+=N
@@ -51,13 +51,13 @@ obj/proc/Skill_Increase(Amount=1,mob/P)
 
 	Amount*=1.2
 
-	if(P.key in epic_list) Amount*=100
+	//if(P.key in epic_list) Amount*=100
 
 	if(P.Total_HBTC_Time<2 && P.z==10) Amount*=10
 	if(alignment_on&&P.alignment=="Evil") Amount*=1.25
 	Amount*=P.decline_gains()
 	if(P.Dead) Amount*=1.5
-	Mastery+=0.5*Amount*P.Pack_Mastery*P.mastery_mod
+	Mastery+=0.5*Amount*P.mastery_mod
 
 obj/Attacks/Laser_Beam
 	name="Cyber Laser"

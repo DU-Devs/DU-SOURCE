@@ -283,7 +283,7 @@ mob/proc/Player_Loops(start_delay)
 	SI_List()
 	Vampire_Infection_Rise()
 	Vampire_Power_Fall()
-	AI_Train_Loop()
+	//AI_Train_Loop()
 	//GOOD
 	sleep(world.tick_lag) //just to break up this huge wall of procs from executing in 1 frame when someone logs in
 	calmness_timer()
@@ -525,7 +525,7 @@ mob/proc
 		var/n = 2.3 // * zenkai_mod**0.1
 
 		var/lungs = Lungs
-		if(ultra_pack) lungs--
+		//if(ultra_pack) lungs--
 		if(lungs) n *= 0.8
 
 		return n
@@ -643,7 +643,7 @@ mob/proc
 				if(a.icon_state=="Smog")
 					var/dmg=2.4 // /dur_share()**0.3
 					var/lungs=Lungs
-					if(ultra_pack) lungs--
+					//if(ultra_pack) lungs--
 					if(lungs) dmg/=2
 					Health-=dmg
 					if(Health<=0) Death("poison acid smog",Force_Death=1,lose_immortality=0,lose_hero=0)
@@ -943,7 +943,7 @@ proc/Recover_energy_loop()
 				if(m.OP_build()) n*=1.25
 				if(m.Internally_Injured()) n*=0.25
 				if(m.ki_shield_on()) n*=0.15
-				if(m.ThingC()) n *= 1.26
+				//if(m.ThingC()) n *= 1.26
 
 				m.Ki+= 0.5 * n*Server_Recovery*(m.max_ki/100) * m.recov**1.1 * m.Recov_Mult/m.Gravity_Health_Ratio()
 				if(m.Ki>m.max_ki) m.Ki=m.max_ki
@@ -1019,7 +1019,7 @@ proc/Recover_health_loop()
 				n*=1 * m.RegenMod()
 				if(m.OP_build()) n*=1.25
 				n *= 2 * Server_Regeneration*m.Regen_Mult/m.Gravity_Health_Ratio()
-				if(m.ThingC()) n *= 1.26
+				//if(m.ThingC()) n *= 1.26
 				m.Health += n * 0.25
 				if(m.Health>100) m.Health=100
 		sleep(base_sleep_time)
@@ -1181,7 +1181,7 @@ mob/proc
 	MasterFly(amount = 1)
 		var/n = 3 * amount
 
-		if(key && (key in epic_list)) n *= 100
+		//if(key && (key in epic_list)) n *= 100
 		if(Total_HBTC_Time < 2 && z == 10) n *= 5
 		if(alignment_on && alignment == "Evil") n *= 1.25
 		n *= decline_gains()
@@ -1620,9 +1620,9 @@ mob/proc/Train_Gain_Loop()
 mob/proc/Raise_SP(Amount)
 
 	if(alignment_on&&alignment=="Evil"&&good_person_near) return
-	if(key in epic_list) Amount*=100
+	//if(key in epic_list) Amount*=100
 
-	if(ultra_pack) Amount*=3
+	//if(ultra_pack) Amount*=3
 	if(Total_HBTC_Time < 2&&z == 10) Amount *= 5
 	Amount *= 25
 	Amount *= SP_Multiplier

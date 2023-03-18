@@ -160,7 +160,7 @@ turf/Click(turf/T) if(isturf(T))
 								if(!B.client) B.Death(usr)
 								else B.KO("[usr]")
 							if(B&&B.drone_module) B.Drone_Attack(usr,lethal=1)
-					if((A.Health<usr.WallBreakPower()||usr.Epic())&&usr.Is_wall_breaker())
+					if((A.Health<usr.WallBreakPower())&&usr.Is_wall_breaker())
 						if(A.Health != 1.#INF)
 							A.Health=0
 							A.Destroy()
