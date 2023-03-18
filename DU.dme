@@ -172,7 +172,7 @@
 #include "Code\Communication\Communication.dm"
 #include "Code\Core Functions\aaa main vars.dm"
 #include "Code\Core Functions\Admin v2.dm"
-#include "Code\Core Functions\Admin.dm""
+#include "Code\Core Functions\Admin.dm"
 #include "Code\Core Functions\DB Mode Admin.dm"
 #include "Code\Core Functions\DB Mode Characters.dm"
 #include "Code\Core Functions\DB Mode Core.dm"

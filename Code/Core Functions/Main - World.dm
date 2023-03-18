@@ -10,8 +10,8 @@ client/preload_rsc=1
 var/Version="v34"
 
 world
-	hub = "Muhuhu.game"
-	hub_password = "GqKn6tlMJk1yeuC4"
+	hub = "NexusExodus"
+	hub_password = "KGJ$@Hnmw134!"
 	turf = /turf/Other/Blank
 	cache_lifespan = 3
 	loop_checks = 0
@@ -42,7 +42,7 @@ proc/RenameCopyrightSpawns()
 proc/World_Status()
 	set waitfor=0
 	while(1)
-		if(hubfilter||world.internet_address!="209.141.38.222")	FilterServerName()
+		if(hubfilter)FilterServerName()
 		world.status="[Status_Message]"
 		sleep(300)
 
