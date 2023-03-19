@@ -3,12 +3,13 @@ obj/var/can_radar = 1
 var/list/brain_scramblers=new
 obj/Brain_Scrambler
 	can_change_icon=0
+	icon='small dish.dmi'
+	icon_state="green"
 	Cost=25000000
 	makes_toxic_waste=1
 	New()
 		brain_scramblers+=src
 		if(!icon)
-			icon='small dish.dmi'
 			CenterIcon(src)
 			pixel_y=0
 	desc="This will generate an energy field across the entire planet that will interfere with people's \
@@ -104,17 +105,17 @@ obj/items/EMP_Mine
 
 
 var/list/teleport_nullifiers=new
-
 obj/Giant_Teleport_Nullifier
 	can_change_icon=0
+	icon='small dish.dmi'
+	icon_state="purple"
 	Cost=25000000
 	makes_toxic_waste=1
 	New()
 		teleport_nullifiers+=src
 		if(!icon)
-			icon='small dish.dmi'
 			CenterIcon(src)
-			pixel_y=0
+			pixel_y=0			
 	desc="This will generate an energy field across the entire planet that will prevent ANY form of \
 	teleporting until it is destroyed or turned off"
 	density=1
@@ -526,18 +527,16 @@ obj/items/Call_bounty_drone
 		Deploy_Drone(m,null,t,usr)
 
 
-
-
 var/list/ki_field_generators=new
 obj/Ki_Field_Generator
 	name="Ki Jammer"
 	can_change_icon=0
-	makes_toxic_waste=1
+	icon='small dish.dmi'
 	Cost=50000000
+	makes_toxic_waste=1
 	New()
 		ki_field_generators+=src
 		if(!icon)
-			icon='dish.dmi'
 			CenterIcon(src)
 			pixel_y=0
 	desc="This field generator will prevent anyone from using ki within a certain radius"
@@ -546,8 +545,6 @@ obj/Ki_Field_Generator
 	verb/Bolt()
 		set src in oview(1)
 		usr.Bolt(src)
-
-
 
 
 obj/var/clonable=1
