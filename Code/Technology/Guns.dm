@@ -3,15 +3,15 @@ mob/Admin3/verb/DestroyTurretsOfThisPerson(obj/Turret/t in Turrets)
 	var/maker = t.Builder
 	for(var/obj/Turret/t2 in Turrets) if(t2.Builder == maker) del(t2)
 
-var/lastTurretTargetUpdate = 0
-proc/TurretTargetUpdate()
-	set waitfor = 0
-	if(lastTurretTargetUpdate + 15 > world.time) return
-	lastTurretTargetUpdate = world.time
+proc/Turret_loop()
+	set waitfor=0
+	while(1)
+		for(var/obj/Turret/t in Turrets)
+			for(var/mob/m in player_view(t.Range,t))
+				t.Turret_Target()
+		sleep(15)
 
-	for(var/obj/Turret/t in Turrets)
-		for(var/mob/m in player_view(t.Range,t))
-			t.Turret_Target()
+var/Gun_Power=1
 
 var/list/Turrets=new
 
@@ -23,7 +23,6 @@ obj/Turret
 	Cost=400000
 	density=1
 	Knockable=0
-	Bolted = 1
 	var/Turret_Power=400
 	var/Range=12
 	var/Turret_Refire=20
@@ -31,16 +30,6 @@ obj/Turret
 	var/Turret_Force=1000
 	takes_gradual_damage=1
 	Dead_Zone_Immune=1
-
-	proc/TargetLoop()
-		set waitfor = FALSE
-		set background = TRUE
-		if(src.referenceObject)
-			return
-		while(1)
-			for(var/mob/M in range(src, Range))
-				src.Turret_Target()
-			sleep(15)
 
 	verb/Upgrade()
 		set src in view(1)
@@ -89,6 +78,7 @@ obj/Turret
 
 	New()
 		spawn(5) if(src&&z)
+			Turrets += src
 
 			if(src&&z==7)
 				for(var/obj/Fighter_Spot/f in Fighter_Spots) if(f.z==z&&getdist(f,src)<=40) del(src)
@@ -107,10 +97,6 @@ obj/Turret
 				player_view(15,src)<<"Turrets can not be built closer than 3 tiles from each other"
 				del(src)
 				return
-			if(!src.referenceObject)
-				Turrets += src
-
-			//spawn src.TargetLoop()
 
 	Del()
 		Turrets-=src
@@ -134,10 +120,34 @@ obj/Turret
 					spawn if(T) T.Turret_Target()
 		Turret_Target()
 
+	/*proc/Turret_Target()
+		set waitfor=0
+		sleep(1)
+		if(!Password) return
+		var/list/targetable_mobs=new
+		var/area/a = get_area()
+		if(a) for(var/mob/m in a.mob_list)
+			if(m.z && !m.KO && getdist(src,m) <= Range && viewable(m,src))
+				targetable_mobs+=m
+				for(var/obj/items/Door_Pass/d in m.item_list) if(d.Password==Password)
+					targetable_mobs-=m
+					Target=null
+					return
+				if(m.drone_module && m.drone_module.Password==Password) targetable_mobs-=m
+
+				var/list/league_ids=m.League_turret_IDs()
+				if(Password in league_ids)
+					targetable_mobs-=m
+					Target=null
+					return
+
+		if(!Target) Turret_Fire_Loop()
+		Target=null
+		if(targetable_mobs.len) Target=pick(targetable_mobs)*/
+
 	//this new one is just changed to (hopefully) target players in pods too instead of ignore them
 	proc/Turret_Target()
 		set waitfor=0
-		set background = TRUE
 		sleep(1)
 		if(!Password) return
 		var/list/targetable_mobs=new
@@ -153,6 +163,12 @@ obj/Turret
 					Target=null
 					return
 				if(m.drone_module && m.drone_module.Password==Password) targetable_mobs -= targ
+
+				var/list/league_ids=m.League_turret_IDs()
+				if(Password in league_ids)
+					targetable_mobs -= targ
+					Target=null
+					return
 
 		if(!Target) Turret_Fire_Loop()
 		Target=null
@@ -203,7 +219,7 @@ obj/Turret
 			B.icon='Missile Small.dmi'
 			B.BP=Turret_Power
 			B.Force=Turret_Force*2
-			B.percent_damage = 5 * Mechanics.GetSettingValue("Gun Power Multiplier") * 0.75
+			B.percent_damage=5*Gun_Power
 			B.Offense=4*Turret_Offense
 			B.Shockwave=50
 			B.dir=dir
@@ -387,14 +403,14 @@ obj/items/Gun
 			Update_Gun_Description()
 
 	verb/Shoot()
-		set category = "Skills"
+		//set category="Skills"
 		Gun_Fire(usr)
 
 	proc/Gun_Fire(mob/P)
 		if(ismob(P)&&Ammo<=0) for(var/obj/items/Ammo/A in P.item_list)
 			A.Reload(P,src)
 			break
-		if(ongoingTournament?.skillTournament && usr.tournament_override(fighters_can=0))
+		if(usr.tournament_override(fighters_can=0)&&skill_tournament)
 			usr<<"Guns can not be used in skill tournaments"
 			return
 		if(ismob(P)&&P.cant_blast()) return
@@ -436,7 +452,7 @@ obj/items/Gun
 			var/Offense_Formula=2*Offense*Precision
 			A.BP=BP_Formula
 			A.Force=Force
-			A.percent_damage = 1 * bp_mod * Mechanics.GetSettingValue("Gun Power Multiplier") * 0.75
+			A.percent_damage=1*bp_mod*Gun_Power
 			A.wall_breaking_power=0
 			A.Distance=Range
 			A.Offense=Offense_Formula

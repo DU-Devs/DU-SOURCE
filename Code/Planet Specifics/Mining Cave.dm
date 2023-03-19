@@ -34,7 +34,9 @@ turf/Mining_Rock
 	var
 		rock_hits = 0
 
-	Enter() return 0
+	Enter(atom/A)
+		//if(Roof_Enter(A)) return . = ..()
+		return 0
 
 	Del()
 		rock_hits++
@@ -47,5 +49,6 @@ turf/proc
 	MiningRockRespawn()
 		set waitfor=0
 		sleep(20 * 600)
-		if(proxyTag == "{/build_proxy/turf}/turf/ground:(GroundSandDark)")
-			new/turf/Mining_Rock(src)
+		if(type == /turf/GroundSandDark)
+			var/turf/Mining_Rock/mr = new(src)
+			mr.name = mr.name //get rid of "unused" compile warning

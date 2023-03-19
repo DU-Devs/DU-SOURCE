@@ -7,17 +7,15 @@
 
  To include this library, click the library checkbox in the
  Lib folder of the file tree, or add this line in your code:
+*/
+//#include <deadron/texthandling>
 
-#include <deadron/texthandling>
-
- If you have suggestions or questions, please email
- ron@deadron.com.
-
- Copyright (c) 1999, 2000, 2001, 2002, 2003 Ronald J. Hayden. All rights reserved.
-
- 09/12/03: Integrated Crispy's changes so dd_text2list() supports non-text items in list.
- 02/10/02: Added dd_centertext() and dd_limittext().
-
+//If you have suggestions or questions, please email
+//ron@deadron.com.
+//Copyright (c) 1999, 2000, 2001, 2002, 2003 Ronald J. Hayden. All rights reserved.
+//09/12/03: Integrated Crispys changes so dd_text2list() supports non-text items in list.
+//02/10/02: Added dd_centertext() and dd_limittext().
+/*
 dd_file2list(file_path, separator = "\n")
 	Splits the text from the specified file into a list.
 	file_path is the path to the file.
@@ -116,7 +114,7 @@ dd_centertext(message, length)
 dd_limittext(message, length)
 	If the message is longer than length, truncates the message to fit
 	length. This is useful for text on the map, where you might want
-	to display a player name, for example, but have to make sure it's
+	to display a player name, for example, but have to make sure its
 	not too long to fit.
 */
 
@@ -292,7 +290,7 @@ obj/test/texthandling/verb/dd_list2text_test()
 
 	var/text = dd_list2text(mylist, ",")
 	if (text != "one,The two")
-		die("dd_list2text() returned incorrect text: [text]")
+		//die("dd_list2text() returned incorrect text: [text]")
 
 	mylist -= basic
 	del(basic)

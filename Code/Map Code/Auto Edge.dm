@@ -22,10 +22,8 @@ mob/Admin5/verb
 
 turf/var
 	edge_icon = 'Edges6.dmi'
-	cliff_type = "{/build_proxy/turf}/turf/wall:(Wall7)"
+	cliff_type = /turf/Wall7
 	wave_icon = 'Surf2.dmi'
-
-	auto_gen_eligible = 1
 
 	auto_edge = 1
 	auto_cliff = 1
@@ -48,14 +46,14 @@ turf/proc
 	GenerateEdges()
 		set waitfor=0
 
-		if(IsWater(src) || density || !auto_edge || !edge_icon) return
+		if(Water || density || !auto_edge || !edge_icon) return
 
 		var/list/ts = list(get_step(src,NORTH), get_step(src,EAST), get_step(src,WEST))
 		if(do_south_edge) ts += get_step(src,SOUTH)
 
 		for(var/turf/t in ts)
 			var/d = get_dir(src,t)
-			if(IsWater(t) || (t.proxyTag == cliff_type && (d == EAST || d == WEST)))
+			if(t.Water || (t.type == cliff_type && (d == EAST || d == WEST)))
 				switch(d)
 					if(NORTH)
 						edge_image.icon = edge_icon
@@ -77,28 +75,22 @@ turf/proc
 
 	GenerateShoreWaves()
 		set waitfor=0
-		if(IsWater(src) || !auto_wave || !wave_icon) return
+		if(Water || !auto_wave || !wave_icon) return
 		var/turf/t = get_step(src,SOUTH)
-		if(t && IsWater(t) && t.wave_icon)
+		if(t && t.Water && t.wave_icon)
 			overlays += t.wave_icon
 			t.wave_icon_applied = t.wave_icon
 
 	GenerateCliffs()
 		set waitfor=0
-		if(IsWater(src) || density || !auto_cliff || !cliff_type) return
+		if(Water || density || !auto_cliff || !cliff_type) return
 		var/turf/t = get_step(src,SOUTH)
-		if(t && IsWater(t))
+		if(t && t.Water)
 
 			//think about it like this, if there is some ground, then below that some water, then below that more ground, and we replace
 			//the water with a cliff, its gonna look funny to have a cliff between 2 grounds, so to make it not look funny we make the bottom
 			//ground into water
 			var/turf/t2 = get_step(t,SOUTH)
-			if(t2 && t2.proxyTag != t.proxyTag)
-				var/build_proxy/B = turfPalette[t.proxyTag]
-				B?.Print(t2.x, t2.y, t2.z)
-				for(var/i in CARDINAL_DIRECTIONS)
-					var/turf/check = get_step(t2, i)
-					check?.GenerateFeatures()
+			if(t2 && t2.type != t.type) new t.type(t2)
 
-			var/build_proxy/B = turfPalette[cliff_type]
-			B?.Print(t.x, t.y, t.z)
+			new cliff_type(t)

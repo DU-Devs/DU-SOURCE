@@ -12,6 +12,7 @@ var
 	myDecorLimit = 30 //how many custom decor blueprints this person can have assigned to their key
 	obj
 		addNewButton //the button you click
+	customBuildAllowed = 1
 
 mob/Admin4/verb
 	Clear_All_Custom_Decors()
@@ -52,13 +53,9 @@ obj/AddNewCustomDecorButton
 		usr.TryNewCustomDecorBlueprint()
 
 mob/proc
-	DecorPlaceCost()
-		return customDecorBuildCost * (1 - (Intelligence / 4)) * \
-				Mechanics.GetSettingValue("Building Price Multiplier") * ((IsAdmin() && Social.GetSettingValue("Admins Build Free")) ? 0 : 1)
-
 	TryNewCustomDecorBlueprint()
 		if(MyDecorCount() >= myDecorLimit) return
-		if(!Limits.GetSettingValue("Custom Decorations"))
+		if(!customBuildAllowed)
 			alert("The custom build system is disabled on this server")
 			return
 		NewCustomDecorBlueprintProc()
@@ -71,10 +68,10 @@ mob/proc
 		return count
 
 	NewCustomDecorBlueprintProc(obj/Turfs/Custom/copyThis) //copyThis is when you are right clicking someone else's to have the blueprint for yourself to use too
-		if(Res() < DecorPlaceCost() * 3)
-			alert(src, "You need [DecorPlaceCost() * 3] resources")
+		if(Res() < newDecorBlueprintCost)
+			alert(src, "You need [newDecorBlueprintCost] resources")
 			return
-		Alter_Res(-DecorPlaceCost() * 3)
+		Alter_Res(-newDecorBlueprintCost)
 		var/obj/CustomDecorBlueprint/c = new
 		c.creator = ckey
 		c.lastUsed = world.realtime
@@ -96,7 +93,7 @@ mob/proc
 			del(c) //they didnt set it up with a custom icon so get rid of it since its just spam
 			return
 		customDecors += c
-		PopulateTab(win = "TabBuildCustom", cat = BUILD_CUSTOM)
+		PopulateBuildTab(win = "TabBuildCustom", cat = BUILD_CUSTOM)
 		if(!copyThis)
 			alert(src, "If you set it up wrong, simply right click it in the menu and click Customize to try again")
 
@@ -106,7 +103,7 @@ mob/proc
 			switch(cant)
 				if("resources") alert(src, "You need [customDecorBuildCost] resources")
 			return
-		if(!Limits.GetSettingValue("Custom Decorations"))
+		if(!customBuildAllowed)
 			alert("The custom build system is disabled on this server")
 			return
 		BuildCustomDecor(c)
@@ -169,7 +166,7 @@ mob/proc
 		customDecors -= c
 		c.reallyDelete = 1
 		del(c)
-		usr.PopulateTab(win = "TabBuildCustom", cat = BUILD_CUSTOM)
+		usr.PopulateBuildTab(win = "TabBuildCustom", cat = BUILD_CUSTOM)
 
 	CustomizeDecor(obj/CustomDecorBlueprint/c)
 		if(!istype(c, /obj/CustomDecorBlueprint))
@@ -179,7 +176,7 @@ mob/proc
 			return
 		alert(usr, "Now you will set up the custom decoration, including its name and custom icon. The icon must be on your PC already.")
 		var/icon/i = input(usr, "Choose an icon from your computer for the custom objects", "Options") as icon|null
-		if(findtextEx("[i]", ".gif"))
+		if(findtext("[i]", ".gif"))
 			alert(usr, "gifs are not allowed due to lag")
 			return
 		var/toobigmsg = IconTooBigMsg(IconTooBig(i))

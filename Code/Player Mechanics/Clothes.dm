@@ -1,5 +1,4 @@
 proc/PopulateClothesChoices()
-	set background = TRUE
 	for(var/A in typesof(/obj/items/Clothes)) if(A != /obj/items/Clothes)
 		var/obj/items/Clothes/c = new A
 		c.underlays += pick('BaseHumanTan.dmi','BaseHumanPale.dmi','BaseHumanDark.dmi')
@@ -18,6 +17,7 @@ mob/proc/Clothes_Equip(obj/A) if(A.loc==src)
 	else
 		overlays-=A.icon
 		A.suffix=null
+	Add_Injury_Overlays()
 
 mob/proc/Clothes_Proc(obj/A)
 	if(A in Clothing)
@@ -34,6 +34,7 @@ obj/items/Clothes
 	clonable = 1
 	Savable=0
 	can_change_icon=1
+	ignore_body_swap=1
 
 	verb/Hotbar_use()
 		set hidden=1

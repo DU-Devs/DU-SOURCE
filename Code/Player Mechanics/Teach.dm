@@ -32,9 +32,30 @@ mob/proc
 	set_next_knowledge_teach(n=1)
 		next_knowledge_teach = world.realtime + (1 * 60 * 60 * 10 * n)
 
+	CanTeachGlobal(msg)
+		if(body_swapped())
+			if(msg) src<<"You can not teach while body swapped"
+			return
+
+		/*for(var/obj/Injuries/Brain/i in injury_list)
+			if(msg) src << "You can not teach because you have a brain injury"
+			return*/
+
+		return 1
+
 	CanTeachMob(mob/m, msg)
 		if(!m)
 			if(msg) src<<"There must be a player in front of you to teach"
+			return
+
+		/*for(var/obj/Injuries/Brain/i in m.injury_list)
+			if(msg)
+				src << "[m] has a brain injury and cannot learn anything now"
+				m << "[src] tries to teach you but you have a brain injury so they can't"
+			return*/
+
+		if(alignment_on && m.alignment=="Evil" && alignment=="Good")
+			if(msg) src<<"Good people can not teach evil people"
 			return
 
 		if(!(ckey in m.student_points))
@@ -46,11 +67,12 @@ mob/proc
 	TeachProc()
 
 		if(!next_knowledge_teach) set_next_knowledge_teach(1)
-		
+
+		if(!CanTeachGlobal(msg = 1)) return
 		var/mob/m = locate(/mob) in Get_step(src,dir)
 		if(!CanTeachMob(m, msg = 1)) return
 
-		if(!src.IsFusion() && !m.IsFusion()) TeachMob(m)
+		TeachMob(m)
 
 	TeachMob(mob/m)
 
@@ -107,15 +129,15 @@ mob/proc
 					var/obj/s = l[o]
 					if(!m.HasEnoughStudentPointsFrom(s, src)) return
 
-					m.student_points[ckey] -= m.StudentPointCost(s)
-					m.spent_student_points[ckey] += m.StudentPointCost(s)
+					m.student_points[ckey] = m.student_points[ckey] - m.StudentPointCost(s)
+					m.spent_student_points[ckey] = m.spent_student_points[ckey] + m.StudentPointCost(s)
 
 					CheckStudentFeat(m)
 
 					player_view(15,src) << "<font size=3><font color=[rgb(255,150,0)]>[src] has taught [m] the [s]"
 
 					var/obj/s2
-					if(s.type == /obj/Skills/Buff)
+					if(s.type == /obj/Buff)
 						Save_Obj(s)
 						s2 = GetCachedObject(s.type)
 						Load_Obj(s2)
@@ -123,7 +145,7 @@ mob/proc
 					else s2 = GetCachedObject(s.type)
 
 					s2.Taught=1
-					if(istype(s2,/obj/Skills/Combat/Ki)) s2.icon=s.icon
+					if(istype(s2,/obj/Attacks)) s2.icon=s.icon
 
 					m.contents += s2
 					m.Restore_hotbar_from_IDs()
@@ -137,12 +159,12 @@ mob/proc
 
 	CanTeachSkillTo(mob/m, obj/o)
 		if(!m) return
-		if(o.type == /obj/Skills/Buff && m.Buff_count() >= max_buffs) return
+		if(o.type == /obj/Buff && m.Buff_count() >= max_buffs) return
 		if(Race != m.Race && o.race_teach_only) return
-		if(o.type == /obj/Skills/Divine/Kai_Teleport && m.Race != "Kai") return
-		if(o.type == /obj/Skills/Divine/Demon_Contract && m.Race != "Demon") return
-		if(o.type == /obj/Skills/Divine/Unlock_Potential && !RaceCanHaveUnlockPotential(m.Race)) return
-		if(o.type == /obj/Skills/Combat/Ki/Piercer && m.Race != "Puranto") return
+		if(o.type == /obj/Teleport && m.Race != "Kai") return
+		if(o.type == /obj/Demon_Contract && m.Race != "Demon") return
+		if(o.type == /obj/Unlock_Potential && !RaceCanHaveUnlockPotential(m.Race)) return
+		if(o.type == /obj/Attacks/Piercer && m.Race != "Puranto") return
 
 		return 1
 
@@ -154,7 +176,7 @@ proc/RaceCanHaveUnlockPotential(r)
 
 mob/verb
 	Teach()
-		set category = "Skills"
+		//set category = "Skills"
 		TeachProc()
 
 obj/proc/update_teach_timer()

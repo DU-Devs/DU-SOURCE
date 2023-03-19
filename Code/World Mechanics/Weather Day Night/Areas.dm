@@ -1,70 +1,78 @@
-var/list/all_areas
+var/list/all_areas=new
+
+var
+	map_restriction_on = 0
+	new_death_spawn = locate(361, 449, 7)
+	new_bind_spawn = locate(413, 143, 7)
+
+proc
+	RestrictedMapLoop()
+		set waitfor=0
+		sleep(300)
+
+		/*var/turf/atlantis_cave = locate(118,427,4)
+		for(var/turf/t3 in orange(9, atlantis_cave))
+			new/turf/GroundDirt(t3)
+		new/turf/GroundDirt(atlantis_cave)*/
+
+		while(1)
+			for(var/mob/m in players)
+				if(m.OnRestrictedMap())
+					/*var/turf/t = m.base_loc()
+					if(t && isturf(t))
+						var/area/a = t.loc
+						if(a && isarea(a) && a.restricted_area)
+							for(var/turf/t2 in range(10,m))
+								var/area/a2 = t2.loc
+								if(a2 && isarea(a2) && a2.type == a.type)
+									new/turf/Other/Blank(t2.loc)*/
+					m.GoToDeathSpawn()
+			sleep(30)
 
 mob/proc
+	OnRestrictedMap()
+		if(!current_area) return
+		//if(current_area.ship_restricted_area) return 1
+		if(map_restriction_on && current_area.restricted_area) return 1
+
 	GoToDeathSpawn()
-		var/pos = locate(death_x + rand(-20,20), death_y + rand(-15,15), death_z)
-		SafeTeleport(pos)
+		if(map_restriction_on) SafeTeleport(new_death_spawn)
+		else
+			var/pos = locate(death_x + rand(-20,20), death_y + rand(-15,15), death_z)
+			SafeTeleport(pos)
 
 	GoToBindSpawn()
-		SafeTeleport(bind_spawn)
+		if(map_restriction_on)
+			SafeTeleport(new_bind_spawn)
+		else
+			SafeTeleport(bind_spawn)
 
 area
-	var/global/initializer/_initializer = new
-
+	//icon='Weather.dmi'
 	mouse_opacity=0
+
+	Enter(mob/m)
+		if(ismob(m))
+			//if(m.IsTens()) m<<"You entered [name] area"
+			m.update_area()
+		return . = ..()
 
 	var
 		Value=0
 		can_has_dragonballs=0
-		canHaveMoon = 1
-		canHaveComet = 1
-		powerComet = 0
-		powerCometMonth = 0
 		has_resources=0
 		resource_refill_mod=1000
-		Year = 1
-		Month = 1
-		powerOrbExists = 0
-		monthsPerYear = 10
-		baseYearSpeed = 12
-		lastYearUpdate = 0
+		can_planet_destroy=0
+		zombies_can_reproduce_here = 1
+
+		restricted_area
+		ship_restricted_area
 
 	New()
+		DayNightLoop()
 		layer=99
-		all_areas ||= list()
-		all_areas |= src
-	
-	proc/TimeLoop()
-		set waitfor=0
-		set background = TRUE
-		while(1)
-			sleep(Time.FromHours(src.baseYearSpeed / src.monthsPerYear)/Social.GetSettingValue("Year Speed"))
-			src.Month++
-			if(src.Month > src.monthsPerYear)
-				src.Month = 1
-				src.Year++
-			spawn for(var/mob/M in player_list) if(M.client&&M.loc)
-				M.Age_Update(fromArea = 1)
-			if(src.canHaveMoon && IsFullMoon()) FullMoonTrans()
-	
-	proc/IsFullMoon()
-		return (src.monthsPerYear % src.Month == 2)
-	
-	proc/FullMoonTrans(fromPowerOrb = 0)
-		if(!fromPowerOrb && (!canHaveMoon || !IsFullMoon())) return
-		spawn for(var/mob/M in player_list)
-			if(fromPowerOrb)
-				M.SendMsg("A false moon rises high in the sky!", CHAT_IC)
-			else
-				M.SendMsg("A full moon rises high in the sky!", CHAT_IC)
-			if(M.Great_Ape_obj)
-				if(!M.Tail&&M.Age<16) M.Tail_Add()
-				if(M.Great_Ape_obj.Setting)
-					if(fromPowerOrb) M.Great_Ape(Mechanics.GetSettingValue("Power Orb Great Ape Multiplier"))
-					else M.Great_Ape()
-	
-	proc/PowerCometVisible()
-		return global.Month == src.powerCometMonth
+		all_areas+=src
+		//. = ..()
 
 	proc/Poison_gas_loop()
 		set waitfor=0
@@ -80,7 +88,7 @@ area
 	proc/Space_meteors_loop(delay_override=0)
 		set waitfor=0
 		while(src)
-			var/amount=ToOne(Mechanics.GetSettingValue("Meteor Spawn Density"))
+			var/amount=ToOne(meteor_density)
 			if(delay_override) amount=ToOne(delay_override)
 			if(amount) for(var/v in 1 to amount)
 				player_list=remove_nulls(player_list)
@@ -116,33 +124,28 @@ area
 	ship_area
 		icon = null
 		has_daynight_cycle = 0
-		canHaveMoon = 0
-		canHaveComet = 0
+		restricted_area = 1
+		ship_restricted_area = 1
 
 	Inside
 		icon = null
-		canHaveMoon = 0
-		canHaveComet = 0
 		has_daynight_cycle = 0
 
 	Prison
 		has_resources=1
-		canHaveMoon = 0
-		canHaveComet = 0
 		resource_refill_mod=1000
 
 	Earth
 		has_resources=1
 		can_has_dragonballs=1
 		resource_refill_mod=2000
-		monthsPerYear = 12
-		powerCometMonth = 1
+		can_planet_destroy=1
 
 	Battlegrounds
 		has_resources = 0
 		can_has_dragonballs = 0
-		canHaveMoon = 0
-		canHaveComet = 0
+		can_planet_destroy = 0
+		zombies_can_reproduce_here = 0
 		has_daynight_cycle = 1
 		hours_of_day = 4
 		hours_of_night = 8
@@ -152,19 +155,16 @@ area
 		has_resources=1
 		can_has_dragonballs=1
 		resource_refill_mod=1000
-		monthsPerYear = 8
-		powerCometMonth = 4
-		baseYearSpeed = 24
+		can_planet_destroy=1
 
 		has_daynight_cycle = 0
+		//restricted_area = 1
 
 	Braal
 		has_resources=1
 		can_has_dragonballs=0
 		resource_refill_mod=1400
-		monthsPerYear = 9
-		powerCometMonth = 2
-		baseYearSpeed = 16
+		can_planet_destroy=1
 
 		day_color = rgb(100,0,0,40)
 		night_color = rgb(100,0,0,70)
@@ -176,31 +176,28 @@ area
 		has_resources=1
 		can_has_dragonballs=0
 		resource_refill_mod=1000
-		monthsPerYear = 7
-		powerCometMonth = 5
-		baseYearSpeed = 4
+		can_planet_destroy=1
 
 		hours_of_day = 3
 		hours_of_night = 6
 
 		firefly_color = rgb(200,70,255)
+		restricted_area = 1
 
 	Checkpoint
 		has_resources=1
 		can_has_dragonballs=0
-		canHaveMoon = 0
-		canHaveComet = 0
 		resource_refill_mod=250
 
 		hours_of_day = 17
 		hours_of_night = 8
+		restricted_area = 1
 
 	Heaven
 		has_resources=1
-		canHaveMoon = 0
-		canHaveComet = 0
 		can_has_dragonballs=0
 		resource_refill_mod=250
+		zombies_can_reproduce_here = 0
 
 		//firefly_color = rgb(70,240,255)
 		firefly_color = rgb(70,255,120)
@@ -208,8 +205,6 @@ area
 	Hell
 		has_resources=1
 		can_has_dragonballs=0
-		canHaveMoon = 0
-		canHaveComet = 0
 		resource_refill_mod=250
 
 		hours_of_day = 20
@@ -221,14 +216,13 @@ area
 		//firefly_color = rgb(255,160,70)
 		firefly_color = rgb(70,255,120)
 		has_fireflies = 0
+		restricted_area = 1
 
 	Ice
 		has_resources=1
 		can_has_dragonballs=0
 		resource_refill_mod=1000
-		monthsPerYear = 20
-		powerCometMonth = 7
-		baseYearSpeed = 8
+		can_planet_destroy=1
 
 		hours_of_day = 18
 		hours_of_night = 9
@@ -237,11 +231,11 @@ area
 		dawndusk_color = rgb(0,100,150,60)
 
 		firefly_color = rgb(70,140,255)
+		restricted_area = 1
 
 	Space
 		has_resources=1
 		resource_refill_mod=1300
-		canHaveMoon = 0
 		has_daynight_cycle = 0
 		New()
 			. = ..()
@@ -250,8 +244,7 @@ area
 	Braal_Core
 		has_resources=0
 		resource_refill_mod=300
-		canHaveMoon = 0
-		canHaveComet = 0
+		zombies_can_reproduce_here=0
 		has_daynight_cycle = 0
 		New()
 			. = ..()
@@ -261,68 +254,104 @@ area
 	Android
 		has_resources=1
 		resource_refill_mod=1000
-		canHaveMoon = 0
-		canHaveComet = 0
+		can_planet_destroy=1
 		has_daynight_cycle = 0
+		restricted_area = 1
 
 	Jungle
 		has_resources=1
 		resource_refill_mod=1000
-		monthsPerYear = 15
-		powerCometMonth = 9
-		baseYearSpeed = 30
+		can_planet_destroy=1
 
 		firefly_color = "rainbow"
+		restricted_area = 1
 
 	Desert
 		has_resources=1
 		resource_refill_mod=1000
-		monthsPerYear = 14
-		powerCometMonth = 10
-		baseYearSpeed = 28
+		can_planet_destroy=1
+		restricted_area = 1
 
 	Sonku
 		has_resources=1
 		resource_refill_mod=1000
+		zombies_can_reproduce_here=0
 
 		firefly_color = "rainbow"
 
 	SSX
 		has_resources=1
 		resource_refill_mod=1000
+		zombies_can_reproduce_here=0
 
 		firefly_color = "rainbow"
 
 	Kaioshin
 		has_resources=1
-		canHaveMoon = 0
-		canHaveComet = 0
-		can_has_dragonballs = 1
 		resource_refill_mod=125
 
 		firefly_color = "rainbow"
+		restricted_area = 1
 
 	Atlantis
 		has_resources=1
 		resource_refill_mod=1000
-		canHaveMoon = 0
-		canHaveComet = 0
+		can_planet_destroy=1
 		has_daynight_cycle = 0
+		restricted_area = 1
 
 	Final_Realm
 		has_resources=0
-		canHaveMoon = 0
-		canHaveComet = 0
+		zombies_can_reproduce_here=0
 		has_daynight_cycle = 0
 
 	God_Ki_Realm
 		has_resources=0
-		canHaveMoon = 0
-		canHaveComet = 0
+		zombies_can_reproduce_here=0
 		has_daynight_cycle = 0
 
 	Mining_Cave
 		has_resources=0
-		canHaveMoon = 0
-		canHaveComet = 0
+		zombies_can_reproduce_here=0
 		has_daynight_cycle = 0
+
+proc/Weather() while(1)
+
+	return
+
+	for(var/area/A in all_areas) if(!(A.name in destroyed_planets))
+		if(istype(A,/area/Kaioshin))
+			if(prob(80)) A.icon_state=""
+			else A.icon_state=pick("Storm","Fog")
+		if(istype(A,/area/Earth))
+			if(prob(90)) A.icon_state=""
+			else A.icon_state=pick("Rain","Puranto Rain","Snow","Dark","Fog","Storm","Night Snow")
+		if(istype(A,/area/Puranto))
+			if(prob(90)) A.icon_state=""
+			else A.icon_state=pick("Puranto Rain","Fog","Storm")
+		if(istype(A,/area/Braal))
+			if(prob(95)) A.icon_state=""
+			else A.icon_state=pick("Storm","Smog")
+		if(istype(A,/area/Arconia))
+			if(prob(90)) A.icon_state=""
+			else A.icon_state=pick("Rain","Puranto Rain","Storm","Dark","Snow","Night Snow")
+		if(istype(A,/area/Checkpoint))
+			if(prob(90)) A.icon_state=""
+			else A.icon_state=pick("Snow","Dark","Storm","Night Snow")
+		if(istype(A,/area/Heaven))
+			if(prob(90)) A.icon_state=""
+			else A.icon_state=pick("Rain","Puranto Rain","Snow","Dark","Storm","Night Snow")
+		if(istype(A,/area/Hell))
+			if(prob(70)) A.icon_state=""
+			else A.icon_state=pick("Blood Rain","Storm","Smog")
+		if(istype(A,/area/Ice))
+			if(prob(65)) A.icon_state=""
+			else A.icon_state=pick("Snow","Fog","Storm","Night Snow","Blizzard")
+		if(istype(A,/area/Jungle))
+			if(prob(65)) A.icon_state=""
+			else A.icon_state=pick("Fog","Storm")
+		if(istype(A,/area/Desert))
+			if(prob(65)) A.icon_state=""
+			else if(prob(40)) A.icon_state="Dark"
+			else A.icon_state=pick("Storm")
+	sleep(36000)

@@ -13,11 +13,18 @@ mob/proc/HasRebuildRequirements()
 				return
 	return 1
 
-mob/proc/CanRebuild()
-	return Android && HasRebuildRequirements() && (locate(/obj/Module/Rebuild) in active_modules)
-
 mob/proc/AlreadyHasModule(t)
 	for(var/obj/Module/m in active_modules) if(m.type == t) return 1
+
+mob/proc/Firewall(mob/P)
+	for(var/obj/Module/Firewall/F in active_modules)
+		P.TakeDamage(50)
+		P.SafeTeleport(loc)
+		Make_Shockwave(src,sw_icon_size=256)
+		player_view(15,src)<<"[P] tried to jump into [src]'s body, but they are repelled and take damage from the firewall!"
+		P.Shockwave_Knockback(5,loc)
+		return 1
+
 
 mob/var
 	Android
@@ -39,7 +46,11 @@ mob/proc/Generator_reduction(is_melee)
 
 	//putting armor module in here too
 	if(is_melee&&armor_module&&armor_module.suffix)
-		n += armor_module.EndP
+		n*=armor_module.Endx
+
+	//and regular armor
+	if(is_melee&&armor_obj&&armor_obj.suffix)
+		n*=armor_obj.Armor
 
 	//and blast absorb
 	if(blast_absorb_module&&blast_absorb_module.suffix)
@@ -47,35 +58,60 @@ mob/proc/Generator_reduction(is_melee)
 
 	return n
 
+mob/var/has_body_swap
+
 obj/Module
 	icon='Modules.dmi'
 	icon_state="2"
 	Duplicates_Allowed = 1
 	var
 		Requires_Password
+		body_swap_ver = 0
 
 	Extendo_arm
 		Cost=200000
 		desc="A mechanical arm that shoots out to grab and attack things"
-		New()
-			del src
 
 	BP_Scanner
 		Cost=1000000
 		desc="An integrated BP Scanner that can scan infinite amounts of BP."
 		Scanner=1
 
+	Giant_Version //OLD ONE
+		Cost=0
+		Android_Only=1
+		desc="Scale up the design of your body, which will have x1.3 strength and durability, \
+		0.7x speed"
+		Giant=1;Strx=1.3;Endx=1.3;Spdx=0.7
+		New()
+			. = ..()
+			spawn(5) del(src)
+
 	Giant_Version_New
 		name = "Giant Version"
 		Cost=1000000
 		Android_Only=1
-		desc="Scale up the design of your body, which will have +1 strength, +2 durability, +2 resistance, \
-		and -2 speed"
-		Giant=1
-		StrP=1
-		EndP=2
-		ResP=2
-		SpdP=-2
+		desc="Scale up the design of your body, which will have x1.15 strength, 1.3x durability, 1.3x resistance, \
+		and 0.5x speed"
+		Giant=1;Strx=1.15;Endx=1.3;Spdx=0.5;Resx=1.3
+
+	Body_Swap
+		Cost=10000000
+		Android_Only=1
+		makes_toxic_waste=1
+		desc="This gives you the ability that Bebi had, to jump into other people's bodies. It will decrease \
+		durability, resistance, and defense by 5%"
+		Icon_Change='Bio Experiment.dmi'
+		//BPx=0.5
+		Abilities=list(new/obj/Body_Swap)
+		Endx=0.95
+		Resx=0.95
+		Defx=0.95
+
+	Firewall
+		Cost=1000000
+		desc="This provides protection against Body Swaps, if you have this installed and someone tries to jump into \
+		your body, they will be repelled and take damage."
 
 	Scrap_Repair
 		Cost=3000000
@@ -90,7 +126,7 @@ obj/Module
 		Android_Only=1
 		desc="This is an ability like Android 13 had. The ability to absorb the scraps of destroyed Androids to \
 		increase your own power."
-		Abilities=list(new/obj/Skills/Special/Scrap_Absorb)
+		Abilities=list(new/obj/Scrap_Absorb)
 
 	Breath_In_Space
 		Cost=50000
@@ -104,7 +140,7 @@ obj/Module
 
 	Drone_AI
 		var/list/Commands=new
-		Cost=0 //5000000
+		Cost=5000000
 		Requires_Password=1
 		Android_Only=1
 		desc="Installing this on an Android/Cyborg will allow you to command them to do certain things. You must \
@@ -114,8 +150,7 @@ obj/Module
 		verb/Set() if(src in usr)
 			Password=input("Set the frequency for the [src] Module.") as text
 		New()
-			drone_list ||= list()
-			drone_list |= src
+			drone_list+=src
 			spawn(5) if(ismob(loc)&&suffix)
 				var/mob/m=loc
 				m.drone_module=src
@@ -136,20 +171,20 @@ obj/Module
 	Manual_Absorb
 		Cost=5000000
 		desc="This will give you the ability to absorb people to increase your own power"
-		Abilities=list(new/obj/Skills/Utility/Absorb)
+		Abilities=list(new/obj/Absorb)
 
 	Blast_Absorb
 		Cost=1500000
 		desc="This allows you to absorb blasts, but only if they come at you from the front or front-sides. \
 		Absorbing blasts increases your energy. Remember, you can only hold a maximum of 200% energy, after that \
-		you will take damage. Your energy, recovery and regeneration will \
-		decrease by 5% and resistance + durability will decrease by 1 with this module installed. Your shield ability will be weakened by 20%"
+		you will take damage. Your resistance, durability, energy, recovery and regeneration will \
+		decrease by 5% with this module installed. Your shield ability will be weakened by 20%"
 		Blast_Absorb=1
 		Kix=0.95
+		Endx=0.95
+		Resx=0.95
 		Regx=0.95
 		Recx=0.95
-		EndP=-1
-		ResP=-1
 		New()
 			spawn if(suffix)
 				var/mob/m=loc
@@ -193,40 +228,63 @@ obj/Module
 		desc="When you are damaged, nanites will begin repairing you, at the cost of some energy."
 		Nanite_Repair=1
 
+	Brute //OLD
+		Cost=0
+		desc="x1.3 strength, x0.5 regeneration and recovery, 0.9x defense and force"
+		Strx=1.3;Regx=0.5;Recx=0.5;Defx=0.9;Powx=0.9
+		New()
+			. = ..()
+			spawn(5) del(src)
+
 	Brute_New
 		name = "Brute"
 		Cost=1000000
-		desc="+2 strength, x0.5 regeneration and recovery, -1 defense"
-		StrP=2
-		DefP=-1
-		Regx=0.5
-		Recx=0.5
+		desc="x1.15 strength, x0.5 regeneration and recovery, 0.9x defense"
+		Strx=1.15;Regx=0.5;Recx=0.5;Defx=0.9
+
+	Armor //OLD
+		name="Cybernetic Armor"
+		Cost=0
+		desc="x1.3 durability, x0.5 regeneration and recovery, x0.95 force and energy"
+		Endx=1.3;Regx=0.5;Recx=0.5;Powx=0.95;Kix=0.95
+		New()
+			spawn if(suffix)
+				var/mob/m=loc
+				if(m&&ismob(m)) m.armor_module=src
+			. = ..()
+			spawn(5) del(src)
 
 	Armor_New
 		name="Cybernetic Armor"
 		Cost=1000000
-		desc="+2 durability and resistance, x0.5 regeneration and recovery, -1 force and 0.8x energy"
-		EndP=2
-		ResP=2
-		PowP=-1
-		Regx=0.5
-		Recx=0.5
-		Kix=0.8
+		desc="x1.15 durability, x1.15 resistance, x0.5 regeneration and recovery, x0.9 force and 0.8x energy"
+		Endx=1.15;Resx=1.15;Regx=0.5;Recx=0.5;Powx=0.9;Kix=0.8
 		New()
 			spawn if(suffix)
 				var/mob/m=loc
 				if(m&&ismob(m)) m.armor_module=src
 			. = ..()
 
+	Cyber_Charge
+		Cost=300000
+		desc="A cybernetic energy attack designed to mimic Charge. It is a bit weaker but fires twice as fast."
+		Abilities=list(new/obj/Attacks/Cyber_Charge)
+
+	Laser_Beam
+		Cost=300000
+		desc="A cybernetic energy attack designed to mimic Beam. It is very hard to deflect because it \
+		is made of light, not ki."
+		Abilities=list(new/obj/Attacks/Laser_Beam)
+
 	Time_normalizer
 		Cost=5000000
 		desc="Nullifies time freeze, allowing you to still move around while the time freeze is active on \
 		you, but slower than you would normally move. Some more downsides are that the entire time you \
 		have this module installed your regeneration is decreased by 15%, energy by 10%, \
-		and force by 1."
+		and force by 5%."
 		Kix=0.9
+		Powx=0.95
 		Regx=0.85
-		PowP=-1
 		paralysis_immunity=1
 
 	Grab_Absorb
@@ -243,7 +301,7 @@ obj/Module
 			. = ..()
 
 	var/list/Abilities=new;var/Android_Only
-	var/BPx=1;var/Kix=1;var/StrP=1;var/EndP=1;var/PowP=1;var/ResP=1;var/SpdP=1;var/OffP=1;var/DefP=1;var/Regx=1
+	var/BPx=1;var/Kix=1;var/Strx=1;var/Endx=1;var/Powx=1;var/Resx=1;var/Spdx=1;var/Offx=1;var/Defx=1;var/Regx=1
 	var/Recx=1;var/Life_Add=0;var/Leechx=1;var/Regenerate_Add=0;var/Lungs=0;var/CP_Mult=0.1;var/Cyber_Fly=0
 	var/Nanite_Repair=0;var/Icon_Change;var/Giant;var/Scanner=0;var/Cyber_Force_Field=0;var/Blast_Absorb=0
 	var/paralysis_immunity=0
@@ -260,20 +318,14 @@ obj/Module
 
 		//P.bp_mult-=BPx
 
-		P.max_ki*=Kix;P.Eff*=Kix;P.Ki*=Kix;
-		P.Str += StrP
-		P.End += EndP
-		P.Pow += PowP
-		P.Res += ResP
-		P.Spd += SpdP
-		P.Off += OffP
-		P.Def += DefP
-		P.regen*=Regx;P.recov*=Recx
+		P.max_ki*=Kix;P.Eff*=Kix;P.Ki*=Kix;P.Str*=Strx;P.strmod*=Strx;P.End*=Endx
+		P.endmod*=Endx;P.Pow*=Powx;P.formod*=Powx;P.Res*=Resx;P.resmod*=Resx;P.Spd*=Spdx;P.spdmod*=Spdx
+		P.Off*=Offx;P.offmod*=Offx;P.Def*=Defx;P.defmod*=Defx;P.regen*=Regx;P.recov*=Recx
 		P.Decline+=Life_Add;P.leech_rate*=Leechx;P.Regenerate+=Regenerate_Add;P.Lungs+=Lungs;P.Cyber_Fly+=Cyber_Fly
 		P.Nanite_Repair+=Nanite_Repair;P.Cyber_Scanner+=Scanner;P.Cyber_Force_Field+=Cyber_Force_Field;\
 		P.Blast_Absorb+=Blast_Absorb
 		P.paralysis_immune+=paralysis_immunity
-		if(P.Nanite_Repair) P.NaniteRepairTick()
+		if(P.Nanite_Repair) P.Nanite_repair_loop()
 		if(Icon_Change&&P.Android)
 			P.icon=Icon_Change
 			P.overlays-=P.overlays
@@ -283,20 +335,19 @@ obj/Module
 		if(Giant)
 			P.Enlarge_Icon(42,42)
 			P.pixel_y=0
-
+		//var/CP_Add=P.Knowledge*2
+		//if(P.cyber_bp<CP_Add)
+		//	P.cyber_bp+=CP_Add*CP_Mult*cyber_bp_mod
+		//	if(P.cyber_bp>CP_Add) P.cyber_bp=CP_Add
+		if(istype(src,/obj/Module/Generator)) P.generator_module=src
+		if(istype(src,/obj/Module/Armor)) P.armor_module=src
 		if(istype(src,/obj/Module/Blast_Absorb)) P.blast_absorb_module=src
 		suffix="Installed"
 		P.has_modules=1
 		for(var/obj/O in Abilities) P.contents+=O
 		P.active_modules+=src
 		P.contents += src
-		if(P.Race != "Android" && P.Is_Cybernetic() && P.Class != "Cyborg")
-			P.originalClass = P.Class
-			P.Class = "Cyborg"
-			for(var/t in P.UnlockedTransformations)
-				var/transformation/T = P.UnlockedTransformations[t]
-				if(!T) continue
-				T.ExitForm(P)
+		if(type == /obj/Module/Body_Swap) P.has_body_swap = 1
 		if(type == /obj/Module/Grab_Absorb) P.grab_absorb_module = src
 		if(istype(src,/obj/Module/Drone_AI)) P.Drone_initialize()
 
@@ -309,22 +360,18 @@ obj/Module
 		if(!(src in P.active_modules)) return
 
 		//P.bp_mult-=BPx-1
-		P.max_ki/=Kix;P.Eff/=Kix;P.Ki/=Kix;
-		P.Str -= StrP
-		P.End -= EndP
-		P.Pow -= PowP
-		P.Res -= ResP
-		P.Spd -= SpdP
-		P.Off -= OffP
-		P.Def -= DefP
-		P.regen/=Regx;P.recov/=Recx
+		P.max_ki/=Kix;P.Eff/=Kix;P.Ki/=Kix;P.Str/=Strx;P.strmod/=Strx;P.End/=Endx
+		P.endmod/=Endx;P.Pow/=Powx;P.formod/=Powx;P.Res/=Resx;P.resmod/=Resx;P.Spd/=Spdx;P.spdmod/=Spdx
+		P.Off/=Offx;P.offmod/=Offx;P.Def/=Defx;P.defmod/=Defx;P.regen/=Regx;P.recov/=Recx
 		P.Decline-=Life_Add;P.leech_rate/=Leechx;P.Regenerate-=Regenerate_Add;P.Lungs-=Lungs;P.Cyber_Fly-=Cyber_Fly
 		P.Nanite_Repair-=Nanite_Repair;P.Cyber_Scanner-=Scanner;P.Cyber_Force_Field-=Cyber_Force_Field;\
 		P.Blast_Absorb-=Blast_Absorb
 		P.paralysis_immune-=paralysis_immunity
 		if(Giant) P.Enlarge_Icon(32,32)
-
+		//P.cyber_bp-=P.Knowledge*2*CP_Mult*cyber_bp_mod
+		//if(P.cyber_bp<0) P.cyber_bp=0
 		if(istype(src,/obj/Module/Generator)) P.generator_module=null
+		if(istype(src,/obj/Module/Armor)) P.armor_module=null
 		if(istype(src,/obj/Module/Blast_Absorb)) P.blast_absorb_module=null
 		suffix=null
 		var/obj/Module/any_installed_module
@@ -332,8 +379,7 @@ obj/Module
 		if(!any_installed_module) P.has_modules=0
 		for(var/obj/O in Abilities) P.contents-=O
 		P.active_modules-=src
-		if(P.Race != "Android" && !P.Is_Cybernetic() && P.Class == "Cyborg")
-			P.Class = P.originalClass
+		if(type == /obj/Module/Body_Swap) P.has_body_swap = 0
 		if(type == /obj/Module/Grab_Absorb) P.grab_absorb_module = null
 
 	Click() if(src in usr)
@@ -355,10 +401,12 @@ obj/Module
 				return
 
 			if(Android_Only&&!P.Android)
-				usr<<"Installation failed. [src] can only be installed on 100% non-organic Androids. [P] is either a Cyborg or 100% Organic."
+				usr<<"Installation failed. [src] can only be installed on 100% non-organic \
+				Androids. [P] is either a Cyborg or 100% Organic."
 				return
 
-			if(P.client&&P!=usr&&!P.KO) switch(input(P,"[usr] wants to install a cybernetic module on you: [src]. Allow?") in list("No","Yes"))
+			if(P.client&&P!=usr&&!P.KO) switch(input(P,"[usr] wants to install a cybernetic module \
+			on you: [src]. Allow?") in list("No","Yes"))
 				if("No")
 					if(usr) usr<<"[P] will not allow you to install [src]"
 					return
@@ -367,9 +415,9 @@ obj/Module
 			if(suffix) return
 			if(P == usr && loc != usr) return //if you are trying to install it on yourself but it is no longer in your contents, deny
 
-			src.Move(P)
-			Enable_Module(P)
 			player_view(15,usr)<<"[usr] installs [src] (Cybernetic Module) on [P]"
+			Enable_Module(P)
+			P.contents+=src
 
 	verb/Drop()
 		var/mob/P
@@ -378,28 +426,19 @@ obj/Module
 		if(suffix)
 			usr<<"You can not drop this while it is installed in your body"
 			return
-		if(usr.Redoing_Stats)
-			usr << "You can not drop items while redoing stats!"
-			return
-		if(usr.IsFusion())
-			usr << "Fused beings can not drop items!"
-			return
 		for(var/mob/A in player_view(15,usr)) if(A.see_invisible>=usr.invisibility)
 			if(!P) A<<"[usr] drops [src]"
 			else A<<"[usr] gives [P] a [src]"
 		SafeTeleport(usr.loc)
 		step(src,usr.dir)
 		dir=SOUTH
-		if(P) Move(P)
+		if(P) P.contents+=src
 		else usr.Store_item_check(src)
 
 	New()
-		spawn if(ismob(loc))
+		spawn if(suffix && ismob(loc))
 			var/mob/M=loc
-			if(suffix)
-				M.active_modules ||= list()
-				M.active_modules |= src
-		
+			M.active_modules+=src
 
 	Del()
 		if(suffix)
@@ -407,27 +446,33 @@ obj/Module
 			if(ismob(M)) Disable_Module(M)
 		. = ..()
 
-mob/proc/HasModules()
-	for(var/obj/Module/M in src)
-		return 1
-
 mob/var/tmp/list/active_modules=new
 mob/var/cyber_bp=0
 mob/var/Record_cyber_bp=0
+mob/proc/cyber_bp_Loop()
+	set waitfor=0
+	while(src)
+		return
+		if(Record_cyber_bp<cyber_bp) Record_cyber_bp=cyber_bp
+		var/Hours=6
+		if(Android) Hours*=2
+		if(cyber_bp)
+			cyber_bp-=Record_cyber_bp/(60*Hours)
+			if(cyber_bp<0)
+				cyber_bp=0
+				Record_cyber_bp=0
+		sleep(600)
 mob/var/has_modules
-mob/var/originalClass
 mob/proc/has_modules()
 	if(has_modules) return 1
-
+	//for(var/obj/Module/m in active_modules) if(m.suffix) return 1
 mob/proc/Is_Cybernetic()
-	return (Android||cyber_bp||has_modules())
-
+	if(Android||cyber_bp||has_modules()) return 1
 mob/var/Nanite_Repair
 var/list/cybernetics_computers=new
 obj/Cybernetics_Computer
 	New()
-		cybernetics_computers ||= list()
-		cybernetics_computers += src
+		cybernetics_computers+=src
 	icon='Lab.dmi'
 	icon_state="Lab2"
 	Makeable=1
@@ -488,6 +533,7 @@ obj/Cybernetics_Computer
 						P.dir=SOUTH
 						P.Android_Starting_Stats()
 						P.Random_Colors()
+						P.Rearrange_Mode_Check()
 						for(var/obj/O in P) O.Mastery=1000
 				if("Command Drones") usr.Drone_Options(src)
 				if("Repair Android/Cyborg")
@@ -518,6 +564,10 @@ obj/Cybernetics_Computer
 					if(usr.Health<100) usr.Health=100
 					if(usr.Ki<usr.max_ki) usr.Ki=usr.max_ki
 					if(usr.BPpcnt>100) usr.BPpcnt=100
+					for(var/obj/Injuries/I in usr.injury_list)
+						usr<<"Your [I] injury has been repaired"
+						del(I)
+						usr.Add_Injury_Overlays()
 				if("Set Frequency")
 					switch(input("You are about to reset the [src] frequency. The [src] frequency is a \
 					frequency that cyborgs can be linked to using a Rebuild Module or Drone AI module, and perhaps other \
@@ -546,7 +596,8 @@ obj/Genetics_Computer
 	Makeable=1
 	density=1
 	Cost = 2000000
-	desc="This computer can let you swap bodies, modify genetics (stats), and other neat things like that."
+	desc="This computer can accept DNA samples and do things with them, such as create a clone, or do a brain \
+	transplant to put your brain into another body."
 	takes_gradual_damage=1
 	verb/Upgrade()
 		set name="Repair/Upgrade health"
@@ -560,39 +611,54 @@ obj/Genetics_Computer
 
 	verb/Use()
 		set src in oview(1,usr)
-		if(usr.fusing) return
 		if(usr in view(1,src))
-			if(usr.IsFusion())
-				alert("You can not use this while fused!")
-				return
-			if(usr.fusing) return
 			if(dna_protected&&dna_protected!=usr.key)
 				alert("You can not use this because it is passworded to someone else's DNA")
 				return
-			var/list/options=list("Cancel","Mind Swap","Redo Stats (Non-Androids only)", "Reset Traits")
+			var/list/options=list("Cancel","Make Clone",\
+				"Mind Swap","Lower Stat","Battle Power Imprint","Stat Imprint","Knowledge Imprint",\
+				"Unlock Stat Build","Redo Stats (Non-Androids only)")
+
+			//options -= "Unlock Stat Build" //i dont even like this feature
+			if(lower_stats_off) options -= "Lower Stat"
+
+			//options -= "Lower Stat" //this feature is just removed now, stats only go up now
 
 			if(dna_protected) options+="Disable DNA authentication"
 			else options+="Enable DNA authentication"
 			switch(input("[src]: What do you want to do?") in options)
 				if("Cancel") return
 				if("Disable DNA authentication")
-					if(usr.fusing) return
 					usr<<"DNA authentication disabled"
 					dna_protected=0
 				if("Enable DNA authentication")
-					if(usr.fusing) return
 					usr<<"DNA authentication enabled. This means only you can use the [src]"
 					dna_protected=usr.key
+				if("Unlock Stat Build")
+					var/res_cost = round(50000000 / usr.Intelligence() ** 0.3)
+					if(usr.Res() < res_cost)
+						usr << "You need [Commas(res_cost)] resources to do this"
+						return
+					switch(alert(usr, "Do you want to use [Commas(res_cost)] resources to do this?", "Options", "Yes", "No"))
+						if("No") return
+						if("Yes")
+							if(usr.Res() < res_cost) return
+							usr.Alter_Res(-res_cost)
+							usr.stat_build_unlocked = 1
+							alert(usr, "Your stat build has been unlocked. This means next time you redo stats all points will be available to use for any race.")
 				if("Redo Stats (Non-Androids only)")
-					if(usr.fusing) return
+
+					if(race_stats_only_mode)
+						alert(usr,"This option is disabled in 'Race Stats Only' mode. Which is a mode where race stats are built in and not changeable")
+						return
 
 					var/list/Mobs=list("Cancel")
 					for(var/mob/P in Get_step(usr,usr.dir))
-						if(!P.Android && !P.IsFusion())
+						if(!P.Android && !P.dbz_character && !P.is_body_swap_mob)
 							Mobs+=P
-					if(!usr.Android && !usr.IsFusion()) Mobs += usr
+					if(!usr.Android && !usr.dbz_character && !usr.is_body_swap_mob) Mobs += usr
 					if(!(locate(/mob) in Mobs))
-						usr<<"This can only be used on creatures with DNA (non-Androids or Fusions)"
+						usr<<"This can only be used on creatures with DNA (non-Androids)"
 						return
 
 					var/mob/P=input("Who do you want to redo stats on?") in Mobs
@@ -609,7 +675,7 @@ obj/Genetics_Computer
 					if(!usr||!P) return
 					var/res_cost=round(5000000/usr.Intelligence()**0.4)
 					if(usr.Res()<res_cost)
-						usr<<"You need [Commas(res_cost)] resources to do this."
+						usr<<"You need [Commas(res_cost)] resources to do this"
 						return
 					switch(alert(usr,"Do you want to use [Commas(res_cost)] resources to do this?","Options","Yes","No"))
 						if("No") return
@@ -618,26 +684,235 @@ obj/Genetics_Computer
 							usr.Alter_Res(-res_cost)
 					player_view(15,usr)<<"[usr] is redoing the stats of [P]"
 					P.Redo_Stats(usr)
-				
-				if("Reset Traits")
-					if(usr.fusing) return
-					var/res_cost=round(250000000/usr.Intelligence()**0.4)
-					if(usr.Res() < res_cost)
-						usr << "You need [Commas(res_cost)] resources to do this."
-						return
-					usr.Alter_Res(-res_cost)
-					usr.ResetTraits()
-					usr << "Your traits have been reset and trait points refunded."
 
+				if("Lower Stat")
+					if(world.time < 5 * 600)
+						alert(usr,"You can only use this option when the server has been up for at least 5 minutes")
+						return
+
+					if(lower_stats_off)
+						alert(usr, "This option is disabled by admins")
+						return
+
+					if(race_stats_only_mode)
+						alert(usr,"This option is disabled in 'Race Stats Only' mode. Which is a mode where race stats are built in and not changeable")
+						return
+
+					if(Stat_Settings["Rearrange"])
+						usr<<"This doesn't work when admins have stat gains set to re-arrange mode"
+						return
+
+					var/list/L=list("Cancel")
+					for(var/mob/P in view(1,src)) if(!P.client || P==usr)
+						if(P.drone_module&&!P.Is_drone_master(usr))
+							alert("Only the drone master can do this")
+						else L+=P
+
+					var/mob/P=usr.Choose_Mob("Choose who's stats you will lower. You can only change your own \
+					stats or that of an npc. They must be within 1 tile of the [src]",L)
+					if(!P||P=="Cancel") return
+					if(P.dbz_character)
+						usr << "This does not work on Wish Orbs characters"
+						return
+					if(!usr.Can_alter_drone(P)) return
+					while(usr)
+						var/Tag
+						switch(input("Which of your stats do you want to lower?") in list("Cancel","Strength","Durability",\
+						"Speed","Force","Resistance","Accuracy","Reflex"))
+							if("Cancel") return
+							if("Strength") Tag="Str"
+							if("Durability") Tag="End"
+							if("Speed") Tag="Spd"
+							if("Force") Tag="Pow"
+							if("Resistance") Tag="Res"
+							if("Accuracy") Tag="Off"
+							if("Reflex") Tag="Def"
+
+						var
+							stat_mod
+							//stat_min =  Stat_Record * 0.7 * stat_mod
+							stat_min = 1
+						if(P) stat_mod = P.StatModByTag(Tag)
+
+						var/N=input("What do you want to lower it to? The amount must be less than what [P] currently has \
+						in the stat, which is [Commas(P.vars[Tag])], and more than the server minimum of [Commas(stat_min)]") as num
+						if(P)
+							if(P.StatModByTag(Tag) != stat_mod)
+								usr<<"Their stat mod changed. Try again."
+								return
+							if(N<1) N=1
+							if(N < stat_min) N = stat_min
+							if(N>P.vars[Tag])
+								usr<<"The amount must be less than what [P] currently has in the stat"
+								return
+							player_view(15,src)<<"[usr] uses genetics to lower one of [P]'s stats from [P.vars[Tag]] to [N]"
+							P.vars[Tag]=N
+
+				if("Knowledge Imprint")
+					var/Res_Cost=100000/usr.Intelligence()
+					if(usr.Res()<Res_Cost)
+						usr<<"You need [Commas(Res_Cost)]$ to do this"
+						return
+					var/list/DNA=list("Cancel")
+					for(var/obj/items/DNA_Container/D in usr.item_list) if(D.Clone) DNA+=D
+					if(!(locate(/obj) in DNA))
+						usr<<"You can not do this because you must have a DNA container with someone's DNA in it."
+						return
+					var/obj/items/DNA_Container/D=input("Which DNA do you want to use for the BP imprint?") in DNA
+					if(!D||D=="Cancel") return
+					var/list/Mobs=list("Cancel")
+					for(var/mob/P in view(1,src)) Mobs+=P
+					if(!(locate(/mob) in Mobs))
+						usr<<"You can not do this. There must be a person near the [src] that you can imprint the DNA on"
+						return
+					var/mob/P=input("Choose the body that you want to imprint [D.Clone]'s DNA on. This will overwrite \
+					their knowledge with the knowledge of [D.Clone].") in Mobs
+					if(P=="Cancel"||!P) return
+					if(P.client&&!P.KO)
+						switch(input(P,"[usr] is trying to imprint knowledge on you, accept?") in list("No","Yes"))
+							if("No")
+								usr<<"[P] has denied the knowledge imprint"
+								return
+					var/N=D.Clone.Knowledge
+					if(P.Knowledge>N)
+						player_view(15,src)<<"The knowledge imprint on [P] was cancelled because it would actually lower their knowledge to do this"
+						return
+					player_view(15,src)<<"[usr] uses the [D] to overwrite [P]'s knowledge with the knowledge of [D.Clone]"
+					if(usr.Res()<Res_Cost)
+						usr<<"You need [Commas(Res_Cost)]$ to do this"
+						return
+					usr.Alter_Res(-Res_Cost)
+					P.Knowledge=N
+
+				if("Battle Power Imprint")
+					var/Res_Cost=5000000/usr.Intelligence()
+					if(usr.Res()<Res_Cost)
+						usr<<"You need [Commas(Res_Cost)]$ to do this"
+						return
+					var/list/DNA=list("Cancel")
+					for(var/obj/items/DNA_Container/D in usr.item_list) if(D.Clone) DNA+=D
+					if(!(locate(/obj) in DNA))
+						usr<<"You can not do this because you must have a DNA container with someone's DNA in it."
+						return
+					var/obj/items/DNA_Container/D=input("Which DNA do you want to use for the BP imprint?") in DNA
+					if(!D||D=="Cancel") return
+					var/list/Mobs=list("Cancel")
+					for(var/mob/P in view(1,src)) Mobs+=P
+					if(!(locate(/mob) in Mobs))
+						usr<<"You can not do this. There must be a person near the [src] that you can imprint the DNA on"
+						return
+					var/mob/P=input("Choose the body that you want to imprint [D.Clone]'s DNA on. This will overwrite \
+					their BP with the BP of [D.Clone].") in Mobs
+					if(P=="Cancel"||!P) return
+					if(P.client&&P!=usr)
+						switch(input(P,"[usr] is trying to imprint BP on you, accept?") in list("No","Yes"))
+							if("No")
+								usr<<"[P] has denied the BP imprint"
+								return
+					var/N=(D.Clone.base_bp/D.Clone.bp_mod)*P.bp_mod
+					//N=Clamp(N,1,D.Clone.base_bp)
+
+					var/real_amount=input("You can raise [P]'s bp up to [Commas(N)] but you can give them less if you \
+					choose. Input the amount you want to raise them to now. Their current base bp is \
+					[Commas(P.base_bp)].") as num
+					if(real_amount<1) real_amount=1
+					if(real_amount>N) real_amount=N
+					N=real_amount
+
+					if(!P) return
+					if(P.base_bp>N)
+						player_view(15,src)<<"The BP imprint on [P] was cancelled because it would actually lower their BP to do this"
+						return
+					player_view(15,src)<<"[usr] uses DNA to increase [P]'s power from [Commas(P.base_bp)] to [Commas(N)]"
+					if(usr.Res()<Res_Cost)
+						usr<<"You need [Commas(Res_Cost)]$ to do this"
+						return
+					usr.Alter_Res(-Res_Cost)
+					P.base_bp=N
+					if(P.gravity_mastered<D.Clone.gravity_mastered) P.gravity_mastered=D.Clone.gravity_mastered
+
+				if("Stat Imprint")
+
+					if(race_stats_only_mode)
+						alert(usr,"This option is disabled in 'Race Stats Only' mode. Which is a mode where race stats are built in and not changeable")
+						return
+
+					if(Stat_Settings["Rearrange"])
+						usr<<"This is disabled when admins have stat mode set to 'rearrange mode'"
+						return
+					var/Res_Cost=1000000/usr.Intelligence()
+					if(usr.Res()<Res_Cost)
+						usr<<"You need [Commas(Res_Cost)]$ to do this"
+						return
+
+					var/list/DNA=list("Cancel")
+					for(var/obj/items/DNA_Container/D in usr.item_list) if(D.Clone) DNA+=D
+					if(!(locate(/obj) in DNA))
+						usr<<"You can not do this because you must have a DNA container with someone's DNA in it."
+						return
+					var/obj/items/DNA_Container/D=input("Which DNA do you want to use for the stat imprint?") in DNA
+					if(!D||D=="Cancel") return
+
+					var/list/Mobs=list("Cancel")
+					for(var/mob/P in view(1,src))
+						if(!P.dbz_character)
+							Mobs+=P
+					if(!(locate(/mob) in Mobs))
+						usr<<"You can not do this. There must be a person near the [src] that you can imprint the DNA on"
+						return
+					var/mob/P=input("Choose the body that you want to imprint [D.Clone]'s DNA on. This will overwrite \
+					their stats with the stats of [D.Clone]. Warning: This could lower your overall stats if you use \
+					DNA that is weaker than you.") in Mobs
+					if(P=="Cancel"||!P) return
+					if(!usr.Can_alter_drone(P)) return
+					if(P.client)
+						switch(input(P,"[usr] is trying to imprint stats on you, accept?") in list("No","Yes"))
+							if("No")
+								usr<<"[P] has denied the stat imprint"
+								return
+
+					player_view(15,src)<<"[usr] uses the [D] to overwrite [P]'s stats with the stats of [D.Clone]"
+					if(usr.Res()<Res_Cost)
+						usr<<"You need [Commas(Res_Cost)]$ to do this"
+						return
+					usr.Alter_Res(-Res_Cost)
+					if(P.max_ki < (D.Clone.max_ki / D.Clone.Eff) * P.Eff)
+						P.max_ki=(D.Clone.max_ki/D.Clone.Eff)*P.Eff
+					if(P.Ki>P.max_ki) P.Ki=P.max_ki
+					P.Str=(D.Clone.Str/D.Clone.strmod)*P.strmod*(P.Modless_Gain/D.Clone.Modless_Gain)
+					P.End=(D.Clone.End/D.Clone.endmod)*P.endmod*(P.Modless_Gain/D.Clone.Modless_Gain)
+					P.Pow=(D.Clone.Pow/D.Clone.formod)*P.formod*(P.Modless_Gain/D.Clone.Modless_Gain)
+					P.Res=(D.Clone.Res/D.Clone.resmod)*P.resmod*(P.Modless_Gain/D.Clone.Modless_Gain)
+					P.Spd=(D.Clone.Spd/D.Clone.spdmod)*P.spdmod*(P.Modless_Gain/D.Clone.Modless_Gain)
+					P.Off=(D.Clone.Off/D.Clone.offmod)*P.offmod*(P.Modless_Gain/D.Clone.Modless_Gain)
+					P.Def=(D.Clone.Def/D.Clone.defmod)*P.defmod*(P.Modless_Gain/D.Clone.Modless_Gain)
+
+				if("Make Clone")
+					var/res_cost=1000000/usr.Intelligence()**0.2
+					if(usr.Res()<res_cost) alert("You need [Commas(res_cost)] resources to do this")
+					else
+						var/list/Clonables=list("Cancel")
+						for(var/obj/items/DNA_Container/D in usr.item_list) if(D.Clone) Clonables+=D
+						if(!(locate(/obj) in Clonables))
+							usr<<"You can not do this because you must have a DNA container with someone's DNA in it."
+							return
+						var/obj/items/DNA_Container/D=input("What DNA to use to make the clone?") in Clonables
+						if(!D||D=="Cancel") return
+						switch(alert("This will cost [Commas(res_cost)] resources. Accept?","Options","Yes","No"))
+							if("No") return
+						if(usr.Res()<res_cost) return
+						usr.Alter_Res(-res_cost)
+						var/mob/P=D.Clone.Duplicate()
+						P.SafeTeleport(loc)
+						player_view(15,src)<<"[src]: Clone created using [D]"
 				if("Mind Swap")
-					if(usr.fusing) return
 					if(usr.last_mind_swap_time+100>world.time)
 						alert(usr,"You can only mind swap once every 10 seconds")
 						return
 
 					var/list/Mobs=list("Cancel")
 					for(var/mob/P in view(1,src))
-						if(P != usr && P.brain_transplant_allowed && !P.empty_player && !P.IsFusion())
+						if(P != usr && P.brain_transplant_allowed && !P.empty_player)
 							if(!P.drone_module || (P.drone_module && P.Is_drone_master(usr)) || P.KO)
 								if(P.canMindSwapWith)
 									Mobs+=P
@@ -673,17 +948,29 @@ obj/Genetics_Computer
 					usr.last_mind_swap_time=world.time
 					Switch_Bodies(usr,P)
 
+mob/proc
+	StatModByTag(t)
+		if(!t) return
+		switch(t)
+			if("Str") return strmod
+			if("End") return endmod
+			if("Spd") return spdmod
+			if("Pow") return formod
+			if("Res") return resmod
+			if("Off") return offmod
+			if("Def") return defmod
+
 mob/var/tmp/last_mind_swap_time=0
 
 mob/proc/Android_Starting_Stats()
-	max_ki = Math.Max(max_ki, 5000 * Eff)
-	Str = Math.Min(Str, 9)
-	End = Math.Min(End, 9)
-	Pow = Math.Min(Pow, 3)
-	Res = Math.Min(Res, 9)
-	Off = Math.Min(Off, 6)
-	Def = Math.Min(Def, 6)
-	Spd = Math.Min(Spd, 6)
+	if(max_ki<500*Eff) max_ki=500*Eff
+	if(Str<1000*strmod) Str=1000*strmod
+	if(End<2000*endmod) End=2000*endmod
+	if(Pow<500*formod) Pow=500*formod
+	if(Res<1000*resmod) Res=1000*resmod
+	if(Spd<1000*spdmod) Spd=1000*spdmod
+	if(Off<1000*offmod) Off=1000*offmod
+	if(Def<500*defmod) Def=500*defmod
 
 obj/var/Total_Cost=0 //Cost of the item including upgrades
 atom/var/can_blueprint=1
@@ -767,12 +1054,15 @@ obj/items/Android_Blueprint
 				usr<<"There is already an object occupying this space"
 				return
 			if(ismob(Body))
+				if(Body.is_saitama)
+					usr<<"Saitama cloning bug is fixed now"
+					return
 				for(var/obj/o in Body)
-					if(!ALLOW_BLUEPRINT_ILLEGAL && o.type in Illegal_Science)
+					if(o.type in Illegal_Science)
 						usr<<"This clone contains illegal science items and can not be made"
 						return
-				if(Body.drone_module && DroneCount() >= Limits.GetSettingValue("Maximum Drones"))
-					usr << "No more drones can be made because the maximum amount ([Limits.GetSettingValue("Maximum Drones")]) already exists in the world. This is to stop lag."
+				if(Body.drone_module && DroneCount() >= drone_limit)
+					usr << "No more drones can be made because the maximum amount ([drone_limit]) already exists in the world. This is to stop lag."
 					return
 				var/Res_Cost=5000
 				//for(var/obj/Module/M in Body) Res_Cost+=M.Cost
@@ -792,7 +1082,7 @@ obj/items/Android_Blueprint
 				P.Mob_ID=get_mob_id()
 
 			if(isobj(Body))
-				for(var/Illegal in Illegal_Science) if(!ALLOW_BLUEPRINT_ILLEGAL && Illegal==Body.type)
+				for(var/Illegal in Illegal_Science) if(Illegal==Body.type)
 					usr<<"The item you are trying to create with this blueprint is currently disabled by \
 					admins and can not be made"
 					return
@@ -818,26 +1108,21 @@ obj/items/Android_Blueprint
 				if(istype(O,/obj/Drill)) O.Resources=0
 				O.SafeTeleport(Get_step(usr,usr.dir))
 				O.dir=NORTH
-
 proc/get_obj_copy(obj/o)
 	Save_Obj(o)
 	var/obj/o2=new o.type
 	Load_Obj(o2)
 	return o2
 proc/Save_Obj(obj/O) if(O)
-	var/savefile/F=new("data/Blueprint")
+	var/savefile/F=new("Blueprint")
 	O.Write(F)
 	if(F["key"]) F["key"]<<null
 proc/Load_Obj(obj/O) if(O)
-	var/savefile/F=new("data/Blueprint")
+	var/savefile/F=new("Blueprint")
 	O.Read(F)
 
 obj/var/dna_protected
 var/list/robotics_tools=new
-
-proc/CyberModuleChoices()
-	return list(new/obj/Module/Blast_Absorb, new/obj/Module/Armor_New, new/obj/Module/Brute_New, new/obj/Module/Generator,\
-				new/obj/Module/Auto_Repair, new/obj/Module/Antigravity, new/obj/Module/BP_Scanner)
 
 mob/proc/Can_alter_drone(mob/drone,display_message=1)
 	if(drone.drone_module && !drone.KO && !drone.Is_drone_master(src))
@@ -848,7 +1133,7 @@ mob/proc/Can_alter_drone(mob/drone,display_message=1)
 obj/items/Robotics_Tools
 	desc="This is used to increase the cybernetic BP of a cyborg. If they are not already a cyborg, this will make \
 	them into one. There are disadvantages to having cybernetic BP, such as inability to ascend, slower training, \
-	and inability to turn Omega Yasai. All of the negative effects will go away when your cybernetic BP \
+	and inability to turn Super Yasai. All of the negative effects will go away when your cybernetic BP \
 	wears off."
 	Cost=100000
 	Stealable=1
@@ -858,8 +1143,7 @@ obj/items/Robotics_Tools
 	var/Upgrade_Power=1 //Can be edited by admins to create better cyborgs.
 	Level=0
 	New()
-		robotics_tools ||= list()
-		robotics_tools += src
+		robotics_tools+=src
 		. = ..()
 	verb/Hotbar_use()
 		set hidden=1
@@ -900,7 +1184,7 @@ obj/items/Robotics_Tools
 				if(Level) return
 				usr.Alter_Res(-Cost)
 				Level++
-				Upgrade_Power+=0.3
+				Upgrade_Power+=0.5
 				player_view(15,usr)<<"[usr] upgrades the [src] to lv2 upgrading"
 			if("Command Drones") usr.Drone_Options(src)
 			if("Mind Transfer")
@@ -985,11 +1269,19 @@ obj/items/Robotics_Tools
 				if(P.Health<100) P.Health=100
 				if(P.Ki<P.max_ki) P.Ki=P.max_ki
 				if(P.BPpcnt>100) P.BPpcnt=100
+				for(var/obj/Injuries/I in P.injury_list)
+					P<<"Your [I] injury has been repaired"
+					del(I)
+					P.Add_Injury_Overlays()
 			if("Redo Android Stats")
 
+				if(race_stats_only_mode)
+					alert(usr,"This option is disabled in 'Race Stats Only' mode. Which is a mode where race stats are built in and not changeable")
+					return
+
 				var/list/Mobs=list("Cancel")
-				for(var/mob/P in Get_step(usr,usr.dir)) if(P.Android) Mobs+=P
-				if(usr.Android) Mobs+=usr
+				for(var/mob/P in Get_step(usr,usr.dir)) if(P.Android && !P.is_body_swap_mob) Mobs+=P
+				if(usr.Android && !usr.is_body_swap_mob) Mobs+=usr
 				if(!(locate(/mob) in Mobs))
 					usr<<"You can not use this because neither you nor the person you are facing are Androids."
 					return
@@ -1006,6 +1298,7 @@ obj/items/Robotics_Tools
 					return
 				player_view(15,usr)<<"[usr] is redoing the stats of [P]"
 				P.Redo_Stats(usr)
+				//P.Android_Starting_Stats()
 			if("Uninstall Modules")
 				var/Res_Cost=1000000/usr.Intelligence()**0.5
 				if(usr.Res()<Res_Cost)
@@ -1013,8 +1306,8 @@ obj/items/Robotics_Tools
 					return
 				var/list/Mobs=list("Cancel")
 				for(var/mob/P in Get_step(usr,usr.dir))
-					Mobs+=P
-				Mobs+=usr
+					if(!P.is_body_swap_mob) Mobs+=P
+				if(!usr.is_body_swap_mob) Mobs+=usr
 				var/mob/P=input("Who's cybernetic modules do you want to uninstall? The removal will cost \
 				[Commas(Res_Cost)]$") in Mobs
 				if(P=="Cancel"||!P) return
@@ -1024,8 +1317,9 @@ obj/items/Robotics_Tools
 				if(!(locate(/obj) in Module_List))
 					usr<<"[P] has no modules installed."
 					return
-				if(P.client&&P!=usr&&!P.KO)
-					switch(alert(P,"[usr] wants to uninstall some of your cybernetic modules. Allow?",, "Yes", "No"))
+				if(P.client&&P!=usr&&(!P.KO||(alignment_on&&both_good(usr,P))))
+					switch(input(P,"[usr] wants to uninstall some of your cybernetic \
+					modules. Allow?" in list("No","Yes")))
 						if("No")
 							if(usr) usr<<"[P] will not allow you to uninstall their modules"
 							return
@@ -1046,13 +1340,12 @@ obj/items/Robotics_Tools
 				var/mob/P=input("Who's cybernetic power do you want to upgrade?") in Mobs
 				if(P=="Cancel"||!P) return
 				if(!usr.Can_alter_drone(P)) return
-				var/transformation/T = P.GetActiveForm()
-				if(T)
-					usr<<"[P] must be in base form! Upgrade canceled."
+				if(P.ssj)
+					usr<<"[P] must revert to base form before you can upgrade them"
 					return
 
 				if(P.client && P != usr)
-					if(!P.KO || (P.KO && !Social.GetSettingValue("Forced Cyborgization")))
+					if(!P.KO || (P.KO && can_cyber_KOd_people) || (alignment_on && both_good(usr,P)))
 						switch(input(P,"[usr] wants to upgrade your cybernetic bp. Allow? \
 						Be warned, they could also use this to downgrade you.") in list("No","Yes"))
 							if("No")
@@ -1060,6 +1353,10 @@ obj/items/Robotics_Tools
 								return
 
 				if(!P||!usr) return
+				/*if(!(locate(/obj/Module) in P.active_modules)&&!P.Android)
+					usr<<"[P] cannot be upgraded because they are not an Android or Cyborg. To qualify as a Cyborg they must \
+					have at least 1 Cybernetic Module installed in their body."
+					return*/
 				var/Cap=usr.Get_max_cyber_bp_upgrade(race=P.Race)
 				if(P.cyber_bp>Cap)
 					usr<<"[P] is beyond your knowledge, you can not upgrade them."
@@ -1092,6 +1389,9 @@ obj/items/Robotics_Tools
 				if(usr.Res()<Total_Cost)
 					usr<<"You need at least [Commas(Total_Cost)]$ to do this"
 					return
+				if(P.ssj)
+					usr<<"[P] must be in base form. Upgrade canceled"
+					return
 				var/C_BP_Add = Cap * (Amount / 100)
 				player_view(15,usr)<<"[usr] upgraded [P]'s cybernetic power from [Commas(P.cyber_bp)] to \
 				[Commas(C_BP_Add)] ([Amount]%). Cost: [Commas(Total_Cost)]$"
@@ -1099,13 +1399,6 @@ obj/items/Robotics_Tools
 				if(Total_Cost<0) Total_Cost=0
 				usr.Alter_Res(-Total_Cost)
 				P.cyber_bp=C_BP_Add
-				P.UpdateBPTier()
-				if(P.Race != "Android")
-					if(!P.Is_Cybernetic() && P.Class == "Cyborg")
-						P.Class = P.originalClass
-					else if(P.Is_Cybernetic() && P.Class != "Cyborg")
-						P.originalClass = P.Class
-						P.Class = "Cyborg"
 				P.Record_cyber_bp=C_BP_Add
 				P.BP=P.get_bp()
 
@@ -1118,13 +1411,12 @@ mob/proc/Absorb_Blast(obj/Blast/B)
 	if(!(B.dir in list(turn(dir,180),turn(dir,135),turn(dir,225)))) return
 	var/Amount = 1 * (max_ki / 100) * ((B.BP * B.Force * B.percent_damage) / (BP * Res))
 	if(B.Owner == src) Amount = 0 //cant get energy from your own blasts
-	IncreaseKi(Amount)
-	del B
+	Ki += Amount
 	if(Ki>max_ki * overloadMult)
 		Explosion_Graphics(src, 2)
-		KnockOut(B.Owner, can_anger = 0)
-		IncreaseKi(-Ki + 1)
-		TakeDamage(Health + 1, "overload")
+		KO(B.Owner, allow_anger = 0)
+		Ki = 1
+		Health = 1
 		var/timer = 7 / ((Eff + recov) ** 0.5)
 		timer = round(timer, 0.01)
 		src << "Your blast absorber has been overloaded! It will re-activate in [timer] minutes"
@@ -1143,7 +1435,7 @@ obj/Overdrive
 		set hidden=1
 		Overdrive()
 	verb/Overdrive()
-		set category = "Skills"
+		//set category="Skills"
 		usr.Overdrive()
 mob/proc/Overdrive()
 	if(Redoing_Stats||KO) return
@@ -1152,6 +1444,7 @@ mob/proc/Overdrive()
 		Old_Trans_Graphics()
 		if(!src) return
 		Overdrive=1
+		Overdrive_Loop()
 	else Overdrive_Revert()
 mob/proc/Overdrive_Revert() if(Overdrive)
 	src<<"Overdrive deactivated."
@@ -1163,12 +1456,17 @@ mob/var/Cyber_Fly=0
 
 mob/proc/Clone()
 	var/mob/P=Duplicate(include_unclonables = 0)
+	P.bp_tier=1
+
+	if(istype(P,/mob/Body))
+		var/mob/Body/b = P
+		b.hit_by_zombie = 0
 
 	P.Experience=0 //no SP
 	P.Disable_Modules()
 	P.cyber_bp=0
 	P.base_bp*=0.9
-	P.static_bp*=0.9
+	P.hbtc_bp*=0.9
 	P.max_ki*=0.6
 	P.Ki*=0.6
 	P.Knowledge*=0.98
@@ -1177,15 +1475,17 @@ mob/proc/Clone()
 	P.Decline=5
 	P.Decline_Rate*=3
 	P.Age=0
+	for(var/obj/Injuries/I in P.injury_list) del(I)
 	P.Alter_Res(-P.Res())
 	for(var/obj/items/I in P.item_list) if(I.suffix!="Equipped") del(I)
+	for(var/obj/Stun_Chip/O in P) del(O)
 	for(var/obj/Module/M in P) del(M)
 	P.FullHeal()
 	return P
 
 mob/var/scrap_absorb_mode
 
-obj/Skills/Special/Scrap_Absorb
+obj/Scrap_Absorb
 	Givable=1
 	desc="This ability lets you absorb the scraps from dead Androids, to increase your own power. \
 	Some of the power is permanent, some of it is temporary."
@@ -1199,25 +1499,29 @@ obj/Skills/Special/Scrap_Absorb
 		Scrap_Absorb()
 
 	verb/Scrap_Absorb()
-		set category = "Skills"
+		//set category="Skills"
 		if(Using) return
 		usr << "This will only work on scraps from androids created over 30 minutes ago"
 		for(var/obj/Android_Scraps/A in android_scraps)
 			if(getdist(usr,A)<=20 && viewable(usr,A,20) && A.can_absorb_these_scraps)
-				if(!A.Owner || A.Owner == usr) continue
+				if(!A.Owner) A.Owner=usr
 				player_view(15,usr)<<"[usr] begins absorbing the scraps of [A.Owner]!"
-				usr.Knowledge = Math.Max(usr.Knowledge, A.knowledge)
-				var/Amount=A.cyber_bp*0.2
+				if(usr.Knowledge<A.knowledge) usr.Knowledge=A.knowledge
+				var/Amount=A.cyber_bp*0.5
 				if(A.Owner!=usr) A.Owner.Death(null,1)
-				if(A.Owner == usr) Amount *= 0.2
+				//var/Attack_Gains=500
+				//usr.Attack_Gain(Attack_Gains,A.Owner,apply_hbtc_gains=0,include_weights=0)
+				Using=1
+				Stored_Icon=usr.icon
+				Old_cyber_bp=usr.cyber_bp
+				usr.icon='Android 13.dmi'
+				usr.Scrap_Absorb_Revert_Timer(src)
+				usr.scrap_absorb_mode = 1
 				if(usr.Ki<usr.max_ki) usr.Ki=usr.max_ki
 				if(usr.Health<100) usr.Health=100
 				usr.cyber_bp+=Amount
-				usr.absorbedCyberBP += Amount
 				Scraps_Assemble(usr)
 				break
-
-mob/var/absorbedCyberBP
 
 obj/Android_Scraps
 	icon='Android Scraps.dmi'
@@ -1231,8 +1535,7 @@ obj/Android_Scraps
 	var/can_absorb_these_scraps=1
 
 	New()
-		android_scraps ||= list()
-		android_scraps |= src
+		android_scraps+=src
 		pixel_x=rand(-6,6)
 		pixel_y=rand(-6,6)
 		spawn(3000) if(src) del(src)
@@ -1243,15 +1546,15 @@ obj/Android_Scraps
 
 var/list/android_scraps=new
 
-mob/proc/Scrap_Absorb_Revert_Timer(obj/Skills/Special/Scrap_Absorb/A)
+mob/proc/Scrap_Absorb_Revert_Timer(obj/Scrap_Absorb/A)
 	set waitfor=0
-	if(!A) for(var/obj/Skills/Special/Scrap_Absorb/O in src) if(O.Using) A=O
+	if(!A) for(var/obj/Scrap_Absorb/O in src) if(O.Using) A=O
 	if(!A) return
 	sleep(900)
 	if(src && A && A.Using) Scrap_Absorb_Revert(A)
 
-mob/proc/Scrap_Absorb_Revert(obj/Skills/Special/Scrap_Absorb/A)
-	if(!A) for(var/obj/Skills/Special/Scrap_Absorb/O in src) if(O.Using) A=O
+mob/proc/Scrap_Absorb_Revert(obj/Scrap_Absorb/A)
+	if(!A) for(var/obj/Scrap_Absorb/O in src) if(O.Using) A=O
 	if(A)
 		cyber_bp=A.Old_cyber_bp
 		icon=A.Stored_Icon

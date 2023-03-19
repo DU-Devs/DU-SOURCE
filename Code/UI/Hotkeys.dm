@@ -1,10 +1,7 @@
 mob/proc/LoadCharacterHotkeyThing()
 	set waitfor=0
-	#ifdef DEBUG
-	if(IsCodedAdmin()) src << "LoadCharacterHotkeyThing"
-	#endif
 	sleep(10)
-	if(hotbar_ids.len || Has_hotkey_server_backup())
+	if(Has_hotkey_server_backup())
 		Restore_hotbar_from_IDs() //this automatically loads their hotkey backup if it hasnt been loaded already
 	else
 		Generate_starter_hotbar()
@@ -28,6 +25,7 @@ mob/proc
 
 	Hotkey_server_backup_save()
 		if(!client || !hotbar_ids.len) return
+		if(client.connection != "seeker") return //i think web connections and such are corrupting their hotkey file and erasing their hotkeys
 		var/savefile/f = new("HotkeyBackups/[ckey]")
 		f["hotbar_ids"] << hotbar_ids
 
@@ -40,25 +38,22 @@ mob/var/hotbar_proxies_added
 var/list/global_hotbar_proxies
 
 mob/proc/Add_hotbar_proxies()
+	/*if(hotbar_proxies_added == 7) return //already added
+	contents.Add(new/obj/Build_Menu,new/obj/Manual_Attack,new/obj/Train,new/obj/Meditate,new/obj/Power_Up,new/obj/Power_Down,new/obj/Grab,\
+	new/obj/Local_chat,new/obj/World_chat,new/obj/Emote,new/obj/Countdown,new/obj/Learn,new/obj/Teach,new/obj/Injure,\
+	new/obj/Lethal_toggle,new/obj/Dig_for_resources,new/obj/Use_object,new/obj/Play_Music,new/obj/Block,new/obj/Evade,new/obj/Flash_Step, \
+	new/obj/Move_Left, new/obj/Move_Right, new/obj/Move_Up, new/obj/Move_Down, new/obj/Defend)
+	hotbar_proxies_added = 7*/
 
 	if(!global_hotbar_proxies)
 		global_hotbar_proxies = list(new/obj/Build_Menu,new/obj/Manual_Attack,new/obj/Train,new/obj/Meditate,new/obj/Power_Up,new/obj/Power_Down,new/obj/Grab,\
-		new/obj/Local_chat,new/obj/World_chat,new/obj/Emote,new/obj/Countdown,new/obj/Learn,new/obj/Teach,new/obj/Injure,new/obj/Shadow_Spar,\
-		new/obj/Lethal_toggle,new/obj/Dig_for_resources,new/obj/Use_object,new/obj/Play_Music,new/obj/Flash_Step, \
-		new/obj/Move_Left, new/obj/Move_Right, new/obj/Move_Up, new/obj/Move_Down, new/obj/Dice_Roll, new/obj/Character_Sheet, new/obj/Build_Mode_Toggle)
+		new/obj/Local_chat,new/obj/World_chat,new/obj/Emote,new/obj/Countdown,new/obj/Learn,new/obj/Teach,new/obj/Injure,\
+		new/obj/Lethal_toggle,new/obj/Dig_for_resources,new/obj/Use_object,new/obj/Play_Music,new/obj/Block,new/obj/Evade,new/obj/Flash_Step, \
+		new/obj/Move_Left, new/obj/Move_Right, new/obj/Move_Up, new/obj/Move_Down, new/obj/Defend, new/obj/Dice_Roll)
 	for(var/obj/o in global_hotbar_proxies)
 		if(!(locate(o.type) in src))
 			contents += new o.type
 	hotbar_proxies_added = 7
-
-obj/Build_Mode_Toggle
-	hotbar_type = "Other"
-	can_hotbar = 1
-
-	verb/Hotbar_use()
-		set waitfor = 0
-		set hidden = 1
-		usr.client.ToggleBuildMode()
 
 obj/Use_object
 	hotbar_type="Other"
@@ -141,13 +136,12 @@ obj/Move_Down
 
 obj/Build_Menu
 	can_hotbar=1
-	name = "Science Menu"
 	hotbar_type="Other"
 	repeat_macro=0
 	verb/Hotbar_use()
 		set waitfor=0
 		set hidden=1
-		usr.ToggleScienceMenu()
+		usr.ToggleBuildMenu()
 
 obj/Dice_Roll
 	can_hotbar=1
@@ -160,8 +154,7 @@ obj/Dice_Roll
 
 mob/verb/Dice_Roll()
 	set category = "Other"
-	for(var/mob/M in player_view(20,src))
-		M.SendMsg("<font color=cyan>[src] rolled a [rand(1,20)]", CHAT_IC)
+	player_view(20,src) << "<font color=cyan>[src] rolled a [rand(0,10)]"
 
 obj/Flash_Step
 	can_hotbar=1
@@ -204,7 +197,7 @@ obj/Injure
 	verb/Hotbar_use()
 		set waitfor=0
 		set hidden=1
-		//usr.Injure()
+		usr.Injure()
 
 obj/Lethal_toggle
 	hotbar_type="Other"
@@ -229,14 +222,6 @@ obj/Local_chat
 		set waitfor=0
 		set hidden=1
 		usr.Say()
-
-obj/Character_Sheet
-	hotbar_type = "Other"
-	can_hotbar = 1
-	verb/Hotbar_use()
-		set waitfor = 0
-		set hidden = 1
-		usr.View_Character(usr)
 
 obj/World_chat
 	hotbar_type="Other"
@@ -311,14 +296,6 @@ obj/Meditate
 		set hidden=1
 		usr.Meditate()
 
-obj/Shadow_Spar
-	hotbar_type="Training method"
-	can_hotbar=1
-	verb/Hotbar_use()
-		set waitfor=0
-		set hidden=1
-		usr.Shadow_Spar()
-
 obj/Power_Up
 	hotbar_type="Buff"
 	can_hotbar=1
@@ -343,10 +320,7 @@ obj/Power_Down
 
 //client/control_freak=CONTROL_FREAK_MACROS
 
-obj/skill_proxy
-	
-
-obj/Skills/Combat/Ki
+obj/Attacks
 	hotbar_type="Blast"
 	can_hotbar=1
 
@@ -415,15 +389,12 @@ proc/Generate_hotbar_type_icons()
 		hotbar_type_icons+=o
 
 proc/GridPosToListPos(gp)
-	var/comma_pos = findtextEx(gp, ",")
+	var/comma_pos = findtext(gp, ",")
 	if(comma_pos) gp = copytext(gp, comma_pos + 1, length(gp) + 1)
 	return text2num(gp)
 
 client/MouseDrop(obj/src_object, over_object, src_location, over_location, src_control, over_control, params)
 	if(mob && isobj(src_object) && over_location && over_control == "hotbar.key_grid")
-		var/list/P = params2list(params)
-		var/drop_location = P["drop-cell"]
-
 
 		//what was dragged is only an icon representing an object, so get the actual object from it
 		if(istype(src_object,/obj/hotbar_type_icon))
@@ -432,26 +403,22 @@ client/MouseDrop(obj/src_object, over_object, src_location, over_location, src_c
 				src_object = mob.hotbar_objects[list_pos]
 
 		if(src_object && src_object.loc == mob && src_object.can_hotbar)
-			var/list_pos = GridPosToListPos(drop_location)
+			var/list_pos = GridPosToListPos(over_location)
 			if(mob.hotbar.len < list_pos) mob.hotbar.len = list_pos
 
 			//there is never any reason for them to drag the exact same object onto the exact same key its already on, but if allowed to do so
 			//it will cause a bug, so thats why i put this safety check to just stop
 			if(src_object == mob.hotbar[list_pos])
-				#ifdef DEBUG
-				if(mob.IsCodedAdmin()) mob << "<font color=cyan>Ignored because same exact object on same exact button. Remove this message."
-				#endif
 				return
 
-			for(var/i = 1, i <= mob.hotbar.len, i++)
-				var/obj/O = mob.hotbar[i]
-				if(O == src_object && i != list_pos)
-					mob.hotbar[i] = null
-					mob.hotbar_ids -= O.hotbar_id
-					mob << "<font color=yellow>[src_object] was cleared from the other key it was already assigned to because having the same thing attached to \
-							multiple buttons is not currently supported."
-					break
-
+			//if object is hotkeyed to another button clear that button because having the same thing on 2 different buttons is
+			//not currently supported because if you relog it will clear 1 of the buttons anyway like a bug
+			for(var/obj/o in mob.hotbar) if(o == src_object)
+				mob.hotbar -= src_object
+				mob.hotbar_ids -= src_object.hotbar_id
+				mob << "<font color=yellow>[src_object] was cleared from the other key it was already assigned to because having the same thing attached to \
+				multiple buttons is not currently supported."
+			if(mob.hotbar.len < list_pos) mob.hotbar.len = list_pos //fix error
 			mob.hotbar[list_pos] = src_object
 			src_object.hotbar_id = Assign_hotbar_ID()
 			mob.Register_hotbar_ID(src_object.type, src_object.hotbar_id, list_pos)
@@ -459,6 +426,7 @@ client/MouseDrop(obj/src_object, over_object, src_location, over_location, src_c
 
 proc/Assign_hotbar_ID()
 	return "[rand(1,999999999)]"
+
 mob/proc/Register_hotbar_ID(t,i,hotbar_pos=1)
 	//if(key=="Tens of DU") src<<"Register_hotbar_ID"
 	if(istext(hotbar_pos)) hotbar_pos=text2num(hotbar_pos)
@@ -471,10 +439,8 @@ mob/proc/Register_hotbar_ID(t,i,hotbar_pos=1)
 
 //this fixes a bug with the original system. should be able to be removed after a while
 mob/proc/Hotbar_IDs_valid()
-	#ifdef DEBUG
-	src << "Checking hotbar IDs validity"
-	#endif
-	
+	//if(key=="Tens of DU") src<<"Hotbar_IDs_valid"
+	//if(!hotbar_ids.len) return
 	if(istext(hotbar_ids))
 		src << "HOTBAR INFORMATION INVALID. RESETTING"
 		return
@@ -486,9 +452,6 @@ mob/proc/Hotbar_IDs_valid()
 		if(!("object type" in l))
 			src << "HOTBAR INFORMATION INVALID. RESETTING"
 			return
-	#ifdef DEBUG
-	src << "Hotbar IDs valid"
-	#endif
 	return 1
 
 mob/verb/Delete_hotbar()
@@ -504,18 +467,12 @@ mob/var/starter_hotbar_generated
 mob/verb/Restore_starter_hotbar()
 	set hidden=1
 	set name=".Restore_starter_hotbar"
-	#ifdef DEBUG
-	if(IsCodedAdmin()) src << "Restore_starter_hotbar - its bad if this runs and you already have a hotbar"
-	#endif
 	hotbar_ids=new/list
 	starter_hotbar_generated=0
 	Generate_starter_hotbar()
 	Refresh_hotbar_grids()
 
 mob/proc/Generate_starter_hotbar()
-	#ifdef DEBUG
-	if(IsCodedAdmin()) src<<"Generate_starter_hotbar - warning this stops if hotbar_ids already has any value"
-	#endif
 	if(hotbar_ids.len) return
 	if(starter_hotbar_generated) return
 	starter_hotbar_generated=1
@@ -527,12 +484,14 @@ mob/proc/Generate_starter_hotbar()
 		var/object_type
 		switch(k)
 			if("Space") object_type=/obj/Manual_Attack
+			//if("A") object_type=/obj/Attacks/Shockwave
 			if("A") object_type=/obj/Move_Left
 			if("B") object_type=/obj/World_chat
-			if("C") object_type=/obj/Character_Sheet
+			if("C")
+			//if("D") object_type=/obj/Attacks/Charge
 			if("D") object_type=/obj/Move_Right
 			if("E") object_type=/obj/Use_object
-			if("F") object_type=/obj/Skills/Combat/Ki/Blast
+			if("F") object_type=/obj/Attacks/Blast
 			if("G") object_type=/obj/Power_Up
 			if("H") object_type=/obj/Power_Down
 			if("I") object_type=/obj/Injure
@@ -544,11 +503,13 @@ mob/proc/Generate_starter_hotbar()
 			if("O") object_type=/obj/Lethal_toggle
 			if("P") object_type=/obj/Shadow_Spar
 			if("Q") object_type=/obj/Countdown
-			if("R") object_type=/obj/Skills/Utility/Fly
+			if("R") object_type=/obj/Fly
+			//if("S") object_type=/obj/Attacks/Beam
 			if("S") object_type=/obj/Move_Down
 			if("T") object_type=/obj/Grab
 			if("U") object_type=/obj/Dig_for_resources
 			if("V") object_type=/obj/Local_chat
+			//if("W") object_type=/obj/Block
 			if("W") object_type=/obj/Move_Up
 			if("X") object_type=/obj/Learn
 			if("Y") object_type=/obj/Auto_Attack
@@ -563,11 +524,8 @@ mob/proc/Restore_hotbar_from_IDs()
 
 	if(!playerCharacter) return //this person is on the title screen and not loaded into a character
 
-	#ifdef DEBUG
-	if(IsCodedAdmin()) src << "Restore_hotbar_from_IDs"
-	#endif
-
 	if(!Hotbar_IDs_valid())
+		hotbar = new/list
 		hotbar_ids = new/list
 
 	if(!hotbar_ids.len && Has_hotkey_server_backup())
@@ -694,6 +652,7 @@ mob/proc/Refresh_hotbar_key_grid()
 	//if(key=="Tens of DU") src<<"Refresh_hotbar_key_grid"
 
 	if(!client) return
+
 	if(winget(src,"hotbar","is-visible")!="true") return
 	winset(src,"hotbar.key_grid","cells=3x[keys.len]")
 	var/cell=1
@@ -745,6 +704,7 @@ mob/verb/Show_hotbar_grid()
 mob/verb/Hide_hotbar_grid()
 	set hidden=1
 	set name=".Hide_hotbar_grid"
+	//if(key=="Tens of DU") src<<"Hide_hotbar_grid"
 	if(!client) return
 	winset(src,"hotbar.ability_grid","cells=0x0") //clear the grid
 	winset(src,"hotbar.key_grid","cells=0x0")

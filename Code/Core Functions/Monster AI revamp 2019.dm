@@ -1,11 +1,5 @@
-proc
-	RandomHumanIcon()
-		return pick('BaseHumanPale.dmi','BaseHumanTan.dmi','BaseHumanDark.dmi',\
-		'New Pale Female.dmi','New Tan Female.dmi','New Black Female.dmi')
-
 mob/proc/Activate_NPCs_Loop()
 	set waitfor=0
-	set background = TRUE
 	var/turf/former_loc=loc
 	while(src)
 		if(former_loc!=loc&&client&&client.inactivity<300) Activate_NPCs()
@@ -27,11 +21,14 @@ mob/proc/Activate_NPC(Timer=300)
 	set waitfor=0
 	if(!z) return
 	if(src&&!NPC_Activated&&z)
+		if(istype(src,/mob/Enemy/Zombie)) Timer = 1 * 600
 		NPC_Activated=1
 		Inactive_NPCs-=src
 		Inactive_NPCs=remove_nulls(Inactive_NPCs)
 		NpcRoam(Timer)
 		Find_Target(Timer)
+		//Power_Increase_Loop(Timer)
+		//NPC_Heal_Loop(Timer)
 		sleep(Timer)
 		if(src)
 			NPC_Activated=0
@@ -104,6 +101,37 @@ mob/proc/Attack_Target(mob/P)
 	while(src && Target && !Target.KO && getdist(src,Target) <= max_range && viewable(a = src, b = Target, max_dist = max_range, seePastDenseObjs = 0))
 		if(!z) break
 		if(!KB)
+			var/pixDist = bounds_dist(src, Target)
+			//if(pixDist > 0)
+			if(1)
+				var/success
+				//success = step_towards(src, Target)
+				success = vector_step_toward(src, Target)
+				//some basic tile snapping to enhance the unreliable other tile snapping systems
+				//if(get_dir(src, Target) in list(EAST,WEST)) step_y -= Clamp(6, 0, step_y)
+				//if(get_dir(src, Target) in list(NORTH,SOUTH)) step_x = Clamp(6, 0, step_x)
+				dir = get_dir(src, Target)
+				//NpcAlignToTile(dir) //in any directions the npc is not currently moving, align them to the tile as best as possible
+				/*
+				//regular stepping
+				if(world.time > pathfindUntil)
+					success = step_towards(src, Target)
+					dir = get_dir(src, Target)
+					if(!success)
+						pathfindUntil = world.time + 100
+						//dont enable pathfinding from obstacles which are mobs
+						if(ismob(last_bumped_obj) && world.time - last_bump < 5)
+							pathfindUntil = 0
+				//pathfinding
+				if(world.time < pathfindUntil)
+					//success = g_step_to(Target) //im not even sure g_step_to returns a success or not
+					success = step_to(src, Target, 0, step_size)
+					view(10,src) << "pathfind step"
+					if(!success)
+						unreachable_targets += Target
+						Remove_unreachable_target(Target, 300)
+						target_unreachable = 1
+						*/
 			if(!KO && !KB && bounds_dist(src, Target) < 10)
 				ResetStepXY()
 				dir = get_dir(src, Target)
@@ -125,6 +153,17 @@ mob/proc/Remove_unreachable_target(mob/m,timer=0)
 	unreachable_targets-=m
 	unreachable_targets=remove_nulls(unreachable_targets)
 
+mob/proc/Power_Increase_Loop(Timer=600,Delay=100)
+	set waitfor=0
+
+	return //DISABLED!!!!!!!!!!
+
+	if(!istype(src,/mob/Enemy/Zombie)) return
+
+	for(var/I in 0 to round(Timer/Delay))
+		if(!KO) for(var/mob/P in player_view(7,src)) if(P.client) Attack_Gain(1,P)
+		sleep(Delay)
+
 mob/proc/NPC_Heal_Loop(Timer=600,Delay=50)
 	set waitfor=0
 	for(var/I in 0 to round(Timer/Delay))
@@ -137,11 +176,15 @@ mob/proc/NPC_Heal_Loop(Timer=600,Delay=50)
 
 proc/On_Water(mob/M)
 	var/turf/T=M.base_loc()
-	return IsWater(T)
+	if(isturf(T)&&T.Water) return 1
 
 proc/Surrounded(mob/M)
 	for(var/turf/T in orange(1,M)) if(!(locate(/mob) in T)) return
 	return 1
+
+
+
+
 
 mob/Health=100
 mob/var/Docile
@@ -157,7 +200,7 @@ mob/proc/Find_Location()
 			Found=0
 			SafeTeleport(T)
 		var/turf/NewLoc=loc
-		if(!NewLoc||!isturf(NewLoc)||NewLoc.density|| IsWater(NewLoc) || !viewable(src, T, 40))
+		if(!NewLoc||!isturf(NewLoc)||NewLoc.density||NewLoc.Water || !viewable(src, T, 40))
 			Found=0
 			SafeTeleport(T)
 	if(prob(50)) Find_Location()
@@ -165,23 +208,28 @@ mob/proc/Find_Location()
 var/NPC_Delay=1
 var/NPC_Can_Respawn=1
 var/NPC_Leave_Body=1
+var/npcs_enabled=1
+
+mob/Admin2/verb/Toggle_Npcs()
+	set category="Admin"
+	npcs_enabled=!npcs_enabled
+	if(!npcs_enabled)
+		src<<"NPCS DISABLED"
+		disable_npcs()
+	else src<<"NPCS ENABLED"
 
 mob/var/tmp/perma_delete
 
 proc/disable_npcs()
-	set background = TRUE
-	set waitfor = FALSE
 	NPC_Can_Respawn=0
 	NPC_Leave_Body=0
-	for(var/mob/Enemy/E)
-		if(E.z && !E.no_disable)
-			E.perma_delete=1
-			del(E)
-	for(var/mob/Body/B)
-		if(B.displaykey)
-			continue
-		if(B.z)
-			del(B)
+	for(var/mob/Enemy/E) if(!istype(E,/mob/Enemy/Zombie)) if(E.z)
+		if(prob(5)) sleep(1)
+		E.perma_delete=1
+		del(E)
+	for(var/mob/Body/B) if(!B.displaykey) if(B.z)
+		if(prob(5)) sleep(1)
+		del(B)
 	NPC_Leave_Body=1
 
 mob/var
@@ -209,20 +257,25 @@ mob
 	proc/Add_resources()
 		var/mob/Enemy/e=src
 		var/obj/Resources/B = GetCachedObject(/obj/Resources, src)
-		B.Value=round(rand(30000,60000)*bp_mod*e.npc_money_mod*Mechanics.GetSettingValue("Resource Generation Rate"))
+		B.Value=round(rand(30000,60000)*bp_mod*e.npc_money_mod*Resource_Multiplier)
 		B.Update_value()
 
 	proc/Add_hbtc_key()
 
 		if(world.time<5*600) return
 
+		if(z==1)
+			if(npcs_give_hbtc_keys)
+				if(prob(1))
+					give_hbtc_key()
+
 	proc/New_npc_bp()
-		set waitfor = FALSE
-		set background = TRUE
-		if(world.time < 600) sleep(600 - world.time)
-		BP = (Math.Rand() * 0.4 + 0.3) * Avg_BP * bp_mod
-		BP *= Math.Rand(0.8, 1.2)
-		BP = Math.Max(BP, 1)
+		set waitfor=0
+		if(world.time < 600)
+			sleep(600 - world.time)
+		BP=0.5*Avg_BP*bp_mod
+		if(BP < 1) BP = 1 //fixes bug
+		BP*=rand(80,120)/100
 
 mob/proc/Update_npc_stats()
 	Str=Stat_Record*strmod/1.5
@@ -237,17 +290,16 @@ mob/proc/Update_npc_stats()
 
 mob/Enemy/proc
 	EnemyNew()
-		set waitfor = FALSE
-		set background = TRUE
+		set waitfor=0
 		//control npc density
-		/*if(!init && type != /mob/Enemy/Core_Demon && !prob(Mechanics.npcSpawnDensity * 100))
+		if(!init && type != /mob/Enemy/Core_Demon && !prob(npcDensity * 100))
 			sleep(rand(10, 600))
 			perma_delete = 1
 			del(src)
-			return*/
+			return
 		update_area()
 		Inactive_NPCs+=src
-		if(src&&z)
+		if(src&&z&&!istype(src,/mob/Enemy/Zombie))
 			if(z==14)
 				bp_mod*=2
 				if(Enlargement_Chance<33) Enlargement_Chance=33
@@ -279,7 +331,7 @@ mob/Enemy
 		init
 		Enlargement_Chance=0
 		npc_money_mod=1
-		no_disable = 0
+	Has_DNA=0
 	step_size = 10
 	New()
 		EnemyNew()
@@ -412,7 +464,6 @@ mob/Enemy
 		bp_mod=4.1
 		npc_money_mod=8
 		Spawn_Timer=0
-		no_disable = 1
 		Enlargement_Chance=20
 		npcTargetingRange = 999
 		Del()

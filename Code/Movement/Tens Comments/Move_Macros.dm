@@ -110,11 +110,16 @@ mob/verb/KeyDown(d as text)
 			Regeneration_Skill = 0
 			src << "You stop regenerating"
 
+		//if its the classic ui then the only way to do a double tap dash is to double tap, instead of ctrl + direction like the new way
+		//var/double_tapped
+		//if(classic_ui)
+		//	if(d == last_directional_key_down && world.time - last_directional_keydown_time <= 1.2) double_tapped=1 //1.875 is exactly 3 ticks at 16 fps
 		last_directional_keydown_time = world.time
 		last_directional_key_down = d
 
 		var/warped
-
+		//instead of double tapping we have switched to Ctrl + Direction
+		//if(classic_ui && double_tapped) warped = DoubleTapWarp(d)
 		if(client && client.ctrl_button) warped = DoubleTapWarp(d) //this checks if you intentionally double tapped the same direction which will then zanzoken you like 10 tiles in that direction
 		//Dash_Evade(Macro_direction(), from_double_tap=double_tapped)
 
@@ -160,7 +165,7 @@ mob/verb/KeyUp(d as text)
 	//1) if you just knockbacked someone and that person is still in the process of being knockbacked, and you doubletap spacebar you will automatically warp next to them
 		//and hit them again. not many people seem to be aware of this feature, if it even works. i never really use it.
 	//2) you perform a lunge attack on any target that is available if any
-	if(d == "Space" && world.time - last_spacebar_down < 8)
+	if(d == "Space" && world.time - last_spacebar_down < 3)
 		if(MeleeFollowupAttackCheck())
 		else LungeAttack()
 
@@ -199,7 +204,6 @@ mob/proc
 			sleep(world.tick_lag)
 
 		pixel_offset_loop=0*/
-
 
 //this is the proc which will actually move the player based on the player's current desired movement input
 mob/proc/move_loop()

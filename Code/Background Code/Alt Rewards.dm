@@ -37,4 +37,4 @@ mob
 			if(!client || !AltCount()) return
 			var/mob/m = GetNewestAlt()
 			if(!m) return
-			bank_list[m.key] += alt_res_reward * Mechanics.GetSettingValue("Resource Generation Rate")
+			bank_list[m.key] += alt_res_reward * Resource_Multiplier

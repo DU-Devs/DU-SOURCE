@@ -1,324 +1,498 @@
-rank
-	var
-		name
-		desc
-		location
-		list/items
-		list/skills
-		list/minStats
-		list/addStats
-		list/multStats
-		list/waitingList
-	
-	Topic(href, hrefs[])
-		. = ..()
-		if(hrefs["action"] == "enlist")
-			if(usr.key && usr.key in waitingList)
-				switch(alert("You're already on the waiting list for this rank.  Would you like to leave it?",,"Yes", "No"))
-					if("Yes") LeaveWaitingList(usr)
-			else JoinWaitingList(usr)
-	
-	proc
-		Initialize(_name, _desc, _location, list/_items, list/_skills, list/_minStats, list/_addStats, list/_multStats)
-			name = _name
-			desc = _desc
-			location = _location
-			items = _items
-			skills = _skills
-			minStats = _minStats
-			addStats = _addStats
-			multStats = _multStats
-		
-		Apply(mob/M)
-			if(!M || !M.client || !(M in players)) return
-			ApplyItems(M)
-			ApplySkills(M)
-			ApplyStats(M)
-			M.playerRanks += src.name
+mob/proc/Give_Rank(mob/A)
+	set category="Admin"
+	var/list/Planets=list("Cancel","Earth","Puranto","Braal","Arconia","Ice Planet","Heaven","Hell",\
+	"Android Skill Master")//,"Z Character Skill Sets")
+	var/list/Ranks=new
+	switch(input(src,"Choose Planet Rank") in Planets)
+		if("Cancel") return
+		if("Z Character Skill Sets")
+			switch(input(src,"What skill set?") in list("Cancel","Carrot_Man","Piccolo","Blowhan","Braal","Trunks","Tien",\
+			"Yamcha","Krillin","Chaotsu","Freeza","Cell","Majin Buu"))
+				if("Cancel") return
+				if("Carrot_Man") A.Carrot_Man(src)
+				if("Piccolo") A.Piccolo(src)
+				if("Blowhan") A.Blowhan(src)
+				if("Braal") A.Braal(src)
+				if("Trunks") A.Trunks(src)
+				if("Tien") A.Tien(src)
+				if("Yamcha") A.Yamcha(src)
+				if("Krillin") A.Krillin(src)
+				if("Chaotsu") A.Chaotsu(src)
+				if("Freeza") A.Freeza(src)
+				if("Cell") A.Cell(src)
+				if("Majin Buu") A.Majin_Buu(src)
+		if("Earth")
+			Ranks.Add("Cancel","Earth Guardian","Popo!","Korin","Turtle Hermit","Crane Hermit","Teacher")
+			switch(input(src,"What Rank?") in Ranks)
+				if("Cancel") return
+				if("Earth Guardian") A.Guardian(src)
+				if("Popo!") A.Popo(src)
+				if("Korin") A.Korin(src)
+				if("Turtle Hermit") A.Turtle_Hermit(src)
+				if("Crane Hermit") A.Crane_Hermit(src)
+				if("Teacher") A.Earth_Teacher(src)
+		if("Puranto")
+			Ranks.Add("Cancel","Elder","Teacher")
+			switch(input(src,"What Rank?") in Ranks)
+				if("Cancel") return
+				if("Elder") A.Elder(src)
+				if("Teacher") A.Puranto_Teacher(src)
+		if("Braal")
+			Ranks.Add("Cancel","Elite Yasai","Elite Alien")
+			switch(input(src,"What Rank?") in Ranks)
+				if("Cancel") return
+				if("Elite Yasai") A.Elite_Yasai(src)
+				if("Elite Alien") A.Elite_Alien(src)
+		if("Arconia")
+			Ranks.Add("Cancel","Yardrat Master","Skill Master")
+			switch(input(src,"What Rank?") in Ranks)
+				if("Cancel") return
+				if("Yardrat Master") A.Yardrat_Master(src)
+				if("Skill Master") A.Alien_Skill_Master(src)
+		if("Ice Planet")
+			Ranks.Add("Cancel","Skill Master")
+			switch(input(src,"What Rank?") in Ranks)
+				if("Cancel") return
+				if("Skill Master") A.Ice_Skill_Master(src)
+		if("Heaven")
+			Ranks.Add("Cancel","Kaioshin","North Kaio","South/East/West Kaio","Kaio Helper")
+			switch(input(src,"What Rank?") in Ranks)
+				if("Cancel") return
+				if("Kaioshin") A.Kaioshin(src)
+				if("North Kaio") A.North_Kai(src)
+				if("South/East/West Kaio") A.Cardinal_Kai(src)
+				if("Kaio Helper") A.Kaio_Helper(src)
+		if("Hell")
+			Ranks.Add("Cancel","Daimao","Demon Master")
+			switch(input(src,"What Rank?") in Ranks)
+				if("Cancel") return
+				if("Daimao") A.Daimaou(src)
+				if("Demon Master") A.Demon_Master(src)
+		if("Android Skill Master") A.Android_Skill_Master(src)
+	for(var/obj/O in A) if(O.Mastery<100) O.Mastery=100
+	//A.Remove_Duplicate_Moves()
+	src<<"You will still have to add them to the Ranks window. This only gives them the skills."
 
-		Remove(mob/M)
-			if(!M || !M.client || !(M in players)) return
-			RemoveItems(M)
-			RemoveSkills(M)
-			RemoveStats(M)
-			M.playerRanks -= src.name
+var/Auto_Rank = 1
 
-		ApplyItems(mob/M)
-			for(var/i in items)
-				new i(M)
-		
-		ApplySkills(mob/M)
-			for(var/i in skills)
-				new i(M)
-		
-		ApplyStats(mob/M)
-			for(var/i in minStats)
-				M.vars[i] = max(minStats[i], M.vars[i])
-			for(var/i in addStats)
-				M.vars[i] += addStats[i]
-			for(var/i in multStats)
-				M.vars[i] *= multStats[i]
-		
-		RemoveStats(mob/M)
-			for(var/i in addStats)
-				M.vars[i] -= addStats[i]
-			for(var/i in multStats)
-				M.vars[i] /= multStats[i]
-		
-		RemoveSkills(mob/M)
-			var/list/skillTypes = new
-			for(var/i in skills)
-				skillTypes += skills[i]
-			for(var/obj/O in M)
-				if(O.type in skillTypes)
-					skillTypes -= O.type
-					del(O)
-		
-		RemoveItems(mob/M)
-			var/list/itemTypes = new
-			for(var/i in items)
-				itemTypes += items[i]
-			for(var/obj/O in M)
-				if(O.type in itemTypes)
-					itemTypes -= O.type
-					del(O)
-		
-		JoinWaitingList(mob/M)
-			if(!M || !M.key) return
-			if(!waitingList) waitingList = new/list
-			waitingList += M.key
-			M << "Added to waiting list for [src.name]."
-		
-		LeaveWaitingList(mob/M)
-			if(!M || !M.key) return
-			waitingList -= M.key
-			M << "Removed from waiting list for [src.name]."
-		
-		HasEdits()
-			return (minStats && minStats.len) || (addStats && addStats.len) || (multStats && multStats.len)
+mob/Admin4/verb/Auto_Rank()
+	set category="Admin"
+	Auto_Rank=!Auto_Rank
+	if(Auto_Rank) src<<"Auto ranking is now on, meaning that certain ranks will be given automatically if nobody \
+	else online has it. They are only given to the appropriate races. This could be good for PVP servers."
+	else src<<"Auto ranking is now off"
 
-mob/var/list/playerRanks = new
+proc/Rank_taken(rank)
+	for(var/mob/m in players) if(rank in m.Ranks) return 1
 
-var/list/AllRanks = new
+mob/var/list/Ranks=new
 
-var/list/rankStats = list("base_bp", "bp_mult", "static_bp", "zenkai_mod", "leech_rate", "med_mod",\
-							"Eff", "Str", "End", "Pow", "Res", "Off", "Def", "Spd", "regen", "recov", "max_stamina", "max_anger",\
-							"KeepsBody", "Lungs", "Immortal", "Intelligence", "knowledge_cap_rate",\
-							"ascension_bp", "stun_resistance_mod",  "mastery_mod", "Decline",\
-							"Gravity_Mod", "gravity_mastered", "Regenerate", "bp_loss_from_low_ki", "bp_loss_from_low_hp")
+mob/proc/Rank_Check()
+	if(!Auto_Rank||src.Ranks.len||world.time<5*600) return
+	var/list/rank_tags=list("Elder","Daimao","Cardinal Kai","North Kai","Kaioshin","Yardrat","Puranto Teacher",\
+	"Crane","Turtle","Korin","Popo","Guardian")
+	if(alignment_on)
+		if(alignment=="Evil") rank_tags.Remove("Elder","Cardinal Kai","North Kai","Kaioshin","Turtle",\
+			"Korin","Popo","Guardian")
+		if(alignment=="Good") rank_tags.Remove("Daimao")
+	for(var/V in rank_tags) if(!src.Ranks.len&&!Rank_taken(V)&&Race_can_have_rank(V))
+		switch(alert(src,"Do you want the [V] rank? Nobody else online has it so you have been offered",\
+		"options","Yes","No"))
+			if("Yes")
+				if(Rank_taken(V)) src<<"Someone accepted the rank before you"
+				else
+					switch(V)
+						if("Daimao") Daimaou()
+						if("Cardinal Kai") Cardinal_Kai()
+						if("North Kai") North_Kai()
+						if("Kaioshin") Kaioshin()
+						if("Yardrat") Yardrat_Master()
+						if("Puranto Teacher") Puranto_Teacher()
+						if("Elder") Elder()
+						if("Crane") Crane_Hermit()
+						if("Turtle") Turtle_Hermit()
+						if("Korin") Korin()
+						if("Popo") Popo()
+						if("Guardian") Guardian()
+					Can_Remake=1
+					for(var/obj/o in src) o.update_teach_timer() //prevents all skills from being immediately teachable
+					for(var/obj/RankChat/RC in src) del(RC)
 
-mob/Admin4/verb/Manage_Ranks()
-	set category = "Admin"
-	while(1)
-		switch(input("What do you need to do?", "Manage Ranks") in list("Cancel", "Create", "Delete", "Reset", "View Waiting List"))
-			if("Create") CreateRank()
-			if("Delete") DeleteRank()
-			if("Reset")
-				switch(alert("This will delete all ranks and replace with the default list which can not be undone.\
-								Are you sure?",,"Yes", "No"))
-					if("Yes") InitializeDefaultRanks()
-			if("View Waiting List")
-				var/rank/R = input("View the waiting list for what rank?") in list("Cancel") + AllRanks
-				if(!R || R == "Cancel") continue
-				ViewWaitingList()
-			else break
+mob/proc/Race_can_have_rank(rank)
+	switch(rank)
+		if("Daimao") if(Race!="Demon") return
+		if("Cardinal Kai") if(Race!="Kai") return
+		if("North Kai") if(Race!="Kai") return
+		if("Kaioshin") if(Race!="Kai") return
+		if("Yardrat") if(Race!="Alien") return
+		if("Puranto Teacher") if(Race!="Puranto") return
+		if("Elder") if(Race!="Puranto") return
+		if("Crane") if(Race!="Human") return
+		if("Turtle") if(Race!="Human") return
+		if("Korin") if(z!=1) return
+		if("Popo") if(z!=1) return
+		if("Guardian") if(z!=1) return
+	return 1
 
-mob/proc/ViewWaitingList()
-	if(!src || !client || !IsAdmin()) return
-	var/html = "<html><head>[KHU_HTML_HEADER]<title>Waiting List</title>"
-	html += "</head><body bgcolor=#000000 text=#339999 link=#99FFFF>"
-	for(var/rank/R in AllRanks)
-		html += "<h3>Waiting list for [R.name]:"
-		for(var/i in R.waitingList)
-			html += "<p>[i]</p>"
-	html += "</body></html>"
-	if(!savedBrowserPos["Ranks"]) savedBrowserPos["Ranks"] = "0x0"
-	if(!savedBrowserSize["Ranks"]) savedBrowserSize["Ranks"] = "480x1024"
-	src << browse(html, "window=Ranks;pos=[savedBrowserPos["Ranks"]];size=[savedBrowserSize["Ranks"]]")
-	winset(src, "Ranks", "on-close='save-pos \"Ranks\"'")
+mob/proc/give_hbtc_key()
+	var/obj/items/Door_Pass/D = new
+	D.name="Time Chamber Key"
+	D.icon='Key.dmi'
+	D.Password=7125
+	D.Cost=4000000*Resource_Multiplier
+	D.can_blueprint=0
+	D.clonable=0
+	D.Stealable=1
+	D.Cost=3000000
+	D.layer=5
+	D.desc="This special key can open the time chamber in Kami's Tower, which will supposedly let you \
+	get a year's worth of training in just a single day"
+	contents += D
 
-mob/verb/Ranks()
-	set category = "Other"
-	var/html = "<html><head>[KHU_HTML_HEADER]<title>Ranks</title>"
-	html += "</head><body bgcolor=#000000 text=#339999 link=#99FFFF>"
-	html += "<h1>Click a rank's name to join/leave the waiting list.</h1>"
-	for(var/rank/R in AllRanks)
-		html += "<h2><a href=byond://?src=\ref[R]&action=enlist>[R.name]</a></h2>"
-		if(R.desc) html += "<h3>[replacetext(R.desc, "\n", "<br>")]</h3>"
-		if(R.location) html += "<p>Location: [R.location]</p>"
-		if(R.items && R.items.len)
-			html += "<p>Items: </p><ul>"
-			for(var/i in R.items)
-				var/obj/I = new i
-				html += "<li>[I.name]</li>"
-			html += "</ul>"
-		if(R.skills && R.skills.len)
-			html += "<p>Skills: </p><ul>"
-			for(var/i in R.skills)
-				var/obj/I = new i
-				html += "<li>[I.name]</li>"
-			html += "</ul>"
-		if(R.HasEdits())
-			html += "<p>Edits: </p><ul>"
-			if(R.minStats && R.minStats.len)
-				for(var/i in R.minStats)
-					html += "<li>Set [i] to minimum of [Commas(R.minStats[i])].</li>"
-			if(R.addStats && R.addStats.len)
-				for(var/i in R.addStats)
-					html += "<li>Add [Commas(R.addStats[i])] to [i].</li>"
-			if(R.multStats && R.multStats.len)
-				for(var/i in R.multStats)
-					html += "<li>Multiply [i] by [round(R.multStats[i], 0.01)]x.</li>"
-			html += "</ul><hr>"
-	html += "</body></html>"
-	if(!usr.savedBrowserPos["Ranks"]) usr.savedBrowserPos["Ranks"] = "0x0"
-	if(!usr.savedBrowserSize["Ranks"]) usr.savedBrowserSize["Ranks"] = "480x1024"
-	usr << browse(html, "window=Ranks;pos=[usr.savedBrowserPos["Ranks"]];size=[usr.savedBrowserSize["Ranks"]]")
-	winset(usr, "Ranks", "on-close='save-pos \"Ranks\"'")
+var/guardian_hbtc_given
+mob/proc
+	Guardian(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Earth Guardian")
+		Can_Remake=0
+		Ranks+="Guardian"
+		contents.Add(new/obj/Attacks/Blast,new/obj/Attacks/Charge,new/obj/Attacks/Beam,new/obj/Fly,\
+		new/obj/Power_Control,new/obj/Heal,new/obj/Materialization,new/obj/Shield,new/obj/Give_Power,\
+		new/obj/Keep_Body,new/obj/Bind,new/obj/Attacks/Attack_Barrier,new/obj/Sense,new/obj/Advanced_Sense)
+		contents.Add(new/obj/Telepathy,new/obj/Observe,new/obj/Reincarnation,new/obj/Meditate_Level_2,\
+		new/obj/Shadow_Spar,new/obj/Hide_Energy)
+		if(Race=="Puranto") contents.Add(new/obj/Make_Dragon_Balls)
+		contents+=new/obj/RankChat
+		Attack_Gain(2000,apply_hbtc_gains=0,include_weights=0)
+		if(base_bp<100) base_bp=100
+		src<<"<font color=yellow>You were given the Earth Guardian rank"
+		if(guardian_hbtc_given)
+			src<<"You were not given a time chamber key because it has already been given out this reboot \
+			to someone else who recieved this rank"
+		else
+			give_hbtc_key()
+			guardian_hbtc_given=1
+	Popo(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Popo")
+		Can_Remake=0
+		Ranks+="Popo"
+		contents.Add(new/obj/Fly,new/obj/Power_Control,new/obj/Heal,new/obj/Materialization,new/obj/Shield,\
+		new/obj/Give_Power,new/obj/Bind,new/obj/Telepathy,new/obj/Observe,new/obj/Zanzoken,new/obj/Reincarnation,\
+		new/obj/Hokuto_Shinken,new/obj/Sense,new/obj/Advanced_Sense,new/obj/Meditate_Level_2,\
+		new/obj/Shadow_Spar,new/obj/Hide_Energy)
+		contents+=new/obj/RankChat
+		Attack_Gain(2000,apply_hbtc_gains=0,include_weights=0)
+		if(base_bp<100) base_bp=100
+		src<<"<font color=yellow>You were given the Popo rank"
+	Korin(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Korin")
+		Can_Remake=0
+		Ranks+="Korin"
+		contents.Add(new/obj/items/Senzu,new/obj/Fly,new/obj/Heal,new/obj/Give_Power,new/obj/Zanzoken,\
+		new/obj/Power_Control,new/obj/Reincarnation,new/obj/Sense,new/obj/Advanced_Sense)
+		contents.Add(new/obj/Telepathy,new/obj/Observe,new/obj/Meditate_Level_2,new/obj/Shadow_Spar,\
+		new/obj/Hide_Energy)
+		contents+=new/obj/RankChat
+		Attack_Gain(2000,apply_hbtc_gains=0,include_weights=0)
+		if(base_bp<100) base_bp=100
+		src<<"<font color=yellow>You were given the Korin rank"
+	Turtle_Hermit(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Turtle Hermit")
+		Can_Remake=0
+		Ranks+="Turtle"
+		contents.Add(new/obj/Attacks/Charge,new/obj/Attacks/Beam,new/obj/Attacks/Kamehameha,\
+		new/obj/Zanzoken,new/obj/Fly,new/obj/Heal,new/obj/Give_Power,new/obj/Sense,\
+		new/obj/Meditate_Level_2,new/obj/Shadow_Spar)
+		contents+=new/obj/RankChat
+		Attack_Gain(2000,apply_hbtc_gains=0,include_weights=0)
+		if(base_bp<50) base_bp=50
+		src<<"<font color=yellow>You were given the Turtle Hermit rank"
+	Crane_Hermit(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Crane Hermit")
+		Can_Remake=0
+		Ranks+="Crane"
+		contents.Add(new/obj/Attacks/Blast,new/obj/Attacks/Beam,new/obj/Attacks/Dodompa,new/obj/Taiyoken,\
+		new/obj/SplitForm,new/obj/Self_Destruct,new/obj/Attacks/Kikoho,new/obj/Fly,new/obj/Sense,\
+		new/obj/Meditate_Level_2,new/obj/Shadow_Spar)
+		contents+=new/obj/RankChat
+		Attack_Gain(2000,apply_hbtc_gains=0,include_weights=0)
+		if(base_bp<50) base_bp=50
+		src<<"<font color=yellow>You were given the Crane Hermit rank"
+	Earth_Teacher(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Earth Teacher")
+		Ranks+="Earth Teacher"
+		contents.Add(new/obj/Attacks/Blast,new/obj/Attacks/Charge,new/obj/Attacks/Beam,new/obj/Fly,\
+		new/obj/Attacks/Sokidan,new/obj/Heal,new/obj/Shield,new/obj/Attacks/Kienzan,new/obj/Sense,\
+		new/obj/Meditate_Level_2,new/obj/Shadow_Spar,new/obj/Hide_Energy)
+		Attack_Gain(1000,apply_hbtc_gains=0,include_weights=0)
+		src<<"<font color=yellow>You were given the Earth Teacher rank"
+	Elder(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Puranto Elder")
+		Can_Remake=0
+		Ranks+="Elder"
+		contents.Add(new/obj/Attacks/Charge,new/obj/Fly,new/obj/Heal,new/obj/Power_Control,\
+		new/obj/Materialization,new/obj/Unlock_Potential,new/obj/Give_Power,new/obj/Shield,\
+		new/obj/Meditate_Level_2,new/obj/Shadow_Spar,new/obj/Puranto_Fusion,new/obj/Hide_Energy)
+		if(Race=="Puranto") contents.Add(new/obj/Make_Dragon_Balls,new/obj/Reincarnation)
+		contents.Add(new/obj/Telepathy,new/obj/Observe,new/obj/Sense,new/obj/Advanced_Sense, new/obj/Attacks/Masenko)
+		contents+=new/obj/RankChat
+		src<<"<font color=yellow>You were given the Puranto Elder rank"
+	Puranto_Teacher(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Puranto Teacher")
+		Ranks+="Puranto Teacher"
+		contents.Add(new/obj/Attacks/Blast,new/obj/Attacks/Charge,new/obj/Attacks/Beam,new/obj/Attacks/Masenko,\
+		new/obj/Attacks/Piercer,new/obj/Attacks/Sokidan,new/obj/Attacks/Scatter_Shot,\
+		new/obj/Attacks/Makosen,new/obj/Fly,new/obj/Zanzoken,\
+		new/obj/Power_Control,new/obj/SplitForm,new/obj/Heal,new/obj/Materialization,new/obj/Shield,\
+		new/obj/Give_Power,new/obj/Attacks/Shockwave,new/obj/Sense,new/obj/Advanced_Sense,new/obj/Meditate_Level_2)
+		contents.Add(new/obj/Telepathy,new/obj/Observe,new/obj/Shadow_Spar,new/obj/Puranto_Fusion)
+		Attack_Gain(1000,apply_hbtc_gains=0,include_weights=0)
+		src<<"<font color=yellow>You were given the Puranto Master rank"
+	Elite_Alien(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Elite Alien")
+		Ranks+="Elite Alien"
+		contents.Add(new/obj/Attacks/Charge,new/obj/Attacks/Explosion,new/obj/Attacks/Beam,\
+		new/obj/Fly,new/obj/Attacks/Shockwave)
+		Attack_Gain(1000,apply_hbtc_gains=0,include_weights=0)
 
-mob/proc/CreateRank()
-	var/rank/R = new/rank
-	var/_name = input("Set a name for this rank.") as text|null
-	if(!_name)
-		return
-	var/_desc = input("Enter a description of this rank.") as message|null
-	if(!_desc)
-		return
-	var/_location = input("Enter a location for this rank.") as text|null
-	if(!_location)
-		return
-	var/list/_items = new
-	InitalizeAllItemsList()
-	while(1)
-		var/i = input("Add what item?") in list("Done") + (All_Items - _items)
-		if(!i || i == "Done") break
-		_items += All_Items["[i]"]
-	var/list/_skills = new
-	InitalizeAllSkillsList()
-	while(1)
-		var/i = input("Add what skill?") in list("Done") + (All_Skills - _skills)
-		if(!i || i == "Done") break
-		_skills += All_Skills["[i]"]
-	var/list/_minStats = new
-	while(1)
-		var/i = input("Select a variable which will be modified if its value is lower than the one provided.") in list("Done") + rankStats - _minStats
-		if(!i || i == "Done") break
-		var/v = input("Select a value to which the chosen variable will be set if the previous value is lower.") as num|null
-		if(!v) break
-		_minStats["[i]"] = v
-	var/list/_addStats = new
-	while(1)
-		var/i = input("Select a variable that this rank will modify, which will have the value you set next added to it.") in list("Done") + rankStats - _addStats
-		if(!i || i == "Done") break
-		var/v = input("Select a value which will be added to the chosen variable.") as num|null
-		if(!v) break
-		_addStats["[i]"] = v
-	var/list/_multStats = new
-	while(1)
-		var/i = input("Select a variable that this rank will modify, which will be multiplied by the value you select next.") in list("Done") + rankStats - _multStats
-		if(!i || i == "Done") break
-		var/v = input("Select a value to which the chosen variable will be multiplied by.") as num|null
-		if(!v) break
-		_multStats["[i]"] = v
-	if(!R) return
-	R.Initialize(_name, _desc, _location, _items, _skills, _minStats, _addStats, _multStats)
-	AllRanks += R
+		var/bp_get=1000
+		if(base_bp<bp_get)
+			bp_get-=base_bp
+			if(bp_get>0) hbtc_bp+=bp_get
 
-mob/proc/DeleteRank()
-	while(1)
-		var/R = input("Delete which rank?") in list("Cancel") + AllRanks
-		if(!R || R == "Cancel") break
-		AllRanks -= R
+		src<<"<font color=yellow>You were given the Elite Alien rank"
+	Yardrat_Master(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Yardrat Master")
+		Can_Remake=0
+		Ranks+="Yardrat"
+		contents.Add(new/obj/Shunkan_Ido,new/obj/Fly,new/obj/Zanzoken,new/obj/Attacks/Blast,\
+		new/obj/Attacks/Charge,new/obj/Attacks/Sokidan,new/obj/Heal,new/obj/Shield,new/obj/Limit_Breaker)
+		contents.Add(new/obj/Telepathy,new/obj/Observe,new/obj/Attacks/Attack_Barrier,new/obj/Sense,\
+		new/obj/Meditate_Level_2,new/obj/Shadow_Spar)
+		src<<"<font color=yellow>You were given the Yardrat Master rank"
+	Alien_Skill_Master(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Alien Master")
+		Ranks+="Alien Skill Master"
+		contents.Add(new/obj/Attacks/Blast,new/obj/Attacks/Charge,new/obj/Attacks/Beam,\
+		new/obj/Attacks/Spin_Blast,new/obj/Attacks/Explosion,new/obj/Attacks/Sokidan,new/obj/Fly,\
+		new/obj/Power_Control,new/obj/SplitForm,new/obj/Attacks/Shockwave)
+		Attack_Gain(1000,apply_hbtc_gains=0,include_weights=0)
 
-proc/Load_Ranks()
-	if(fexists("data/ranks"))
-		var/savefile/F = new("data/ranks")
-		F >> AllRanks
-	else InitializeDefaultRanks()
+		var/bp_get=500
+		if(base_bp<bp_get)
+			bp_get-=base_bp
+			if(bp_get>0) hbtc_bp+=bp_get
 
-proc/Save_Ranks()
-	var/savefile/F = new("data/ranks")
-	F << AllRanks
+		src<<"<font color=yellow>You were given the Alien Master rank"
+	Ice_Skill_Master(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Ice Master")
+		Ranks+="Ice Skill Master"
+		contents.Add(new/obj/Attacks/Blast,new/obj/Attacks/Charge,new/obj/Attacks/Explosion,\
+		new/obj/Attacks/Beam,new/obj/Attacks/Ray,new/obj/Attacks/Sokidan,new/obj/Attacks/Genki_Dama/Death_Ball,\
+		new/obj/Fly,new/obj/Power_Control,new/obj/Shield,new/obj/Attacks/Kienzan,\
+		new/obj/Attacks/Shockwave)
+		src<<"<font color=yellow>You were given the Ice Master rank"
+	Android_Skill_Master(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Android Master")
+		Ranks+="Android Skill Master"
+		contents.Add(new/obj/Attacks/Blast,new/obj/Attacks/Charge,new/obj/Attacks/Attack_Barrier,\
+		new/obj/Attacks/Beam,new/obj/Attacks/Ray,new/obj/Attacks/Genki_Dama/Death_Ball,\
+		new/obj/Fly,new/obj/Shield)
+		src<<"<font color=yellow>You were given the Android Master rank"
+	Kaioshin(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Kaioshin")
+		Can_Remake=0
+		Ranks+="Kaioshin"
+		contents.Add(new/obj/Attacks/Blast,new/obj/Attacks/Charge,new/obj/Attacks/Beam,\
+		new/obj/Attacks/Sokidan,new/obj/Attacks/Scatter_Shot,new/obj/Heal,new/obj/Shield,\
+		new/obj/Give_Power,new/obj/Fly,new/obj/Power_Control,new/obj/Materialization,\
+		new/obj/Unlock_Potential,new/obj/Keep_Body,new/obj/Restore_Youth,new/obj/Kaio_Revive,\
+		new/obj/Bind,new/obj/Make_Fruit,new/obj/Teleport,new/obj/Make_Holy_Pendant,new/obj/Meditate_Level_2)
+		contents.Add(new/obj/Telepathy,new/obj/Observe,new/obj/Reincarnation,new/obj/Sense,new/obj/Advanced_Sense,\
+		new/obj/Shadow_Spar,new/obj/Mystic,new/obj/Focusin_revert)
+		contents+=new/obj/RankChat
+		contents += new/obj/Hakai
+		Attack_Gain(1000,apply_hbtc_gains=0,include_weights=0)
 
-proc/Give_Rank(mob/M)
-	var/rank/R = input("Which rank?", "Give Rank") in list("Cancel") + AllRanks
-	if(!R || R == "Cancel") return
-	R.Apply(M)
+		var/bp_get=2000
+		if(base_bp<bp_get)
+			bp_get-=base_bp
+			if(bp_get>0) hbtc_bp+=bp_get
 
-proc/InitializeDefaultRanks()
-	AllRanks = new
-	var/rank/R = new/rank
-	R.name = "Guardian"
-	R.location = "Earth"
-	R.skills = list(/obj/Skills/Combat/Ki/Blast,/obj/Skills/Combat/Ki/Charge,/obj/Skills/Combat/Ki/Beam,/obj/Skills/Utility/Fly,\
-		/obj/Skills/Utility/Power_Control,/obj/Skills/Utility/Heal,/obj/Skills/Divine/Materialization,/obj/Skills/Combat/Ki/Shield,/obj/Skills/Utility/Give_Power,\
-		/obj/Skills/Divine/Keep_Body,/obj/Skills/Divine/Bind,/obj/Skills/Utility/Sense,/obj/Skills/Utility/Sense/Level2,\
-		/obj/Skills/Utility/Telepathy,/obj/Skills/Utility/Observe,/obj/Skills/Divine/Reincarnation,/obj/Skills/Utility/Meditate/Level2,\
-		/obj/Skills/Utility/Hide_Energy,/obj/Skills/Divine/Make_Dragon_Balls)
-	AllRanks += R
-	R = new/rank
-	R.name = "Turtle Hermit"
-	R.location = "Earth"
-	R.skills = list(/obj/Skills/Combat/Ki/Charge,/obj/Skills/Combat/Ki/Beam,/obj/Skills/Combat/Ki/Kamehameha,\
-		/obj/Skills/Utility/Zanzoken,/obj/Skills/Utility/Fly,/obj/Skills/Utility/Heal,/obj/Skills/Utility/Give_Power,/obj/Skills/Utility/Sense,\
-		/obj/Skills/Utility/Meditate/Level2)
-	AllRanks += R
-	R = new/rank
-	R.name = "Crane Hermit"
-	R.location = "Earth"
-	R.skills = list(/obj/Skills/Combat/Ki/Blast,/obj/Skills/Combat/Ki/Beam,/obj/Skills/Combat/Ki/Dodompa,/obj/Skills/Combat/Ki/Taiyoken,\
-		/obj/Skills/Combat/SplitForm,/obj/Skills/Combat/Ki/Self_Destruct,/obj/Skills/Combat/Ki/Kikoho,/obj/Skills/Utility/Fly,/obj/Skills/Utility/Sense,\
-		/obj/Skills/Utility/Meditate/Level2)
-	AllRanks += R
-	R = new/rank
-	R.name = "Elder Puran"
-	R.location = "Puranto"
-	R.skills = list(/obj/Skills/Combat/Ki/Charge,/obj/Skills/Utility/Fly,/obj/Skills/Utility/Heal,/obj/Skills/Utility/Power_Control,\
-		/obj/Skills/Divine/Materialization,/obj/Skills/Divine/Unlock_Potential,/obj/Skills/Utility/Give_Power,/obj/Skills/Combat/Ki/Shield,\
-		/obj/Skills/Utility/Meditate/Level2,/obj/Puranto_Fusion,/obj/Skills/Utility/Hide_Energy,\
-		/obj/Skills/Divine/Make_Dragon_Balls,/obj/Skills/Divine/Reincarnation, /obj/Skills/Utility/Telepathy,/obj/Skills/Utility/Observe,\
-		/obj/Skills/Utility/Sense,/obj/Skills/Utility/Sense/Level2, /obj/Skills/Combat/Ki/Masenko)
-	AllRanks += R
-	R = new/rank
-	R.name = "Elite Alien"
-	R.location = "Other"
-	R.skills = list(/obj/Skills/Combat/Ki/Charge,/obj/Skills/Combat/Ki/Explosion,/obj/Skills/Combat/Ki/Beam,\
-		/obj/Skills/Utility/Fly,/obj/Skills/Combat/Ki/Shockwave)
-	AllRanks += R
-	R = new/rank
-	R.name = "Supreme Kaioshin"
-	R.location = "Heaven"
-	R.skills = list(/obj/Skills/Combat/Ki/Blast,/obj/Skills/Combat/Ki/Charge,/obj/Skills/Combat/Ki/Beam,\
-		/obj/Skills/Combat/Ki/Sokidan,/obj/Skills/Combat/Ki/Scatter_Shot,/obj/Skills/Utility/Heal,/obj/Skills/Combat/Ki/Shield,\
-		/obj/Skills/Utility/Give_Power,/obj/Skills/Utility/Fly,/obj/Skills/Utility/Power_Control,/obj/Skills/Divine/Materialization,\
-		/obj/Skills/Divine/Unlock_Potential,/obj/Skills/Divine/Keep_Body,/obj/Skills/Divine/Restore_Youth,/obj/Skills/Divine/Kaio_Revive,\
-		/obj/Skills/Divine/Bind,/obj/Skills/Divine/Make_Fruit,/obj/Skills/Divine/Kai_Teleport,/obj/Make_Holy_Pendant,/obj/Skills/Utility/Meditate/Level2,\
-		/obj/Skills/Utility/Telepathy,/obj/Skills/Utility/Observe,/obj/Skills/Divine/Reincarnation,/obj/Skills/Utility/Sense,/obj/Skills/Utility/Sense/Level2)
-	AllRanks += R
-	R = new/rank
-	R.name = "North Kai"
-	R.location = "Checkpoint"
-	R.skills = list(/obj/Skills/Combat/Ki/Charge,/obj/Skills/Combat/Ki/Sokidan,/obj/Skills/Utility/Fly,/obj/Skills/Utility/Heal,/obj/Skills/Utility/Give_Power,\
-		/obj/Skills/Utility/Power_Control,/obj/Skills/Divine/Keep_Body,/obj/Skills/Divine/Kaio_Revive,/obj/Skills/Divine/Materialization,\
-		/obj/Skills/Divine/Bind,/obj/Skills/God_Fist,/obj/Skills/Combat/Ki/Genki_Dama,/obj/Skills/Utility/Sense,/obj/Skills/Utility/Sense/Level2,\
-		/obj/Skills/Utility/Telepathy,/obj/Skills/Utility/Observe,/obj/Skills/Divine/Reincarnation,/obj/Skills/Utility/Meditate/Level2)
-	AllRanks += R
-	R = new/rank
-	R.name = "Demon Lord"
-	R.location = "Hell"
-	R.skills = list(/obj/Skills/Combat/Ki/Blast,/obj/Skills/Combat/Ki/Charge,/obj/Skills/Combat/Ki/Explosion,\
-		/obj/Skills/Combat/Ki/Beam,/obj/Skills/Combat/Ki/Sokidan,/obj/Skills/Combat/Ki/Piercer,\
-		/obj/Skills/Combat/Ki/Self_Destruct,/obj/Skills/Utility/Fly,/obj/Skills/Combat/Ki/Shield,\
-		/obj/Skills/Combat/SplitForm,/obj/MakeAmulet,/obj/Skills/Divine/Keep_Body,/obj/Skills/Divine/Majin,\
-		/obj/Skills/Divine/Restore_Youth,/obj/Skills/Divine/Materialization,/obj/Skills/Divine/Bind,/obj/Skills/Divine/Make_Fruit,/obj/Skills/Divine/Demon_Contract,\
-		/obj/Skills/Divine/Kaio_Revive,/obj/Skills/Combat/Ki/Kienzan,/obj/Skills/Combat/Ki/Shockwave,/obj/Make_Holy_Pendant,\
-		/obj/Skills/Utility/Telepathy,/obj/Skills/Utility/Observe,/obj/Skills/Divine/Reincarnation,\
-		/obj/Skills/Utility/Sense,/obj/Skills/Utility/Sense/Level2,/obj/Skills/Utility/Meditate/Level2)
-	AllRanks += R
-	R = new/rank
-	R.name = "Elite Yasai"
-	R.location = "Braal"
-	R.skills = list(/obj/Skills/Combat/Ki/Charge,/obj/Skills/Combat/Ki/Explosion,/obj/Skills/Combat/Ki/Beam,\
-	/obj/Skills/Combat/Ki/Onion_Gun,/obj/Skills/Combat/Ki/Final_Flash,/obj/Skills/Utility/Fly,/obj/Skills/Combat/Ki/Kienzan,\
-	/obj/Skills/Combat/Ki/Shockwave,/obj/Skills/Combat/Ki/Blast)
-	AllRanks += R
+		src<<"<font color=yellow>You were given the Kaioshin rank"
+	North_Kai(mob/P)
+		if(P) Log(P,"[P.key] gave [key] North Kai")
+		Can_Remake=0
+		Ranks+="North Kai"
+		contents.Add(new/obj/Attacks/Charge,new/obj/Attacks/Sokidan,new/obj/Fly,new/obj/Heal,new/obj/Give_Power,\
+		new/obj/Power_Control,new/obj/Keep_Body,new/obj/Kaio_Revive,new/obj/Materialization,\
+		new/obj/Bind,new/obj/God_Fist,new/obj/Attacks/Genki_Dama,new/obj/Sense,new/obj/Advanced_Sense)
+		contents.Add(new/obj/Telepathy,new/obj/Observe,new/obj/Reincarnation,new/obj/Meditate_Level_2,\
+		new/obj/Shadow_Spar)
+		contents+=new/obj/RankChat
+		Attack_Gain(1000,apply_hbtc_gains=0,include_weights=0)
+
+		var/bp_get=1000
+		if(base_bp<bp_get)
+			bp_get-=base_bp
+			if(bp_get>0) hbtc_bp+=bp_get
+
+		src<<"<font color=yellow>You were given the North Kai rank"
+	Cardinal_Kai(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Cardinal Kai")
+		Ranks+="Cardinal Kai"
+		contents.Add(new/obj/Attacks/Blast,new/obj/Attacks/Charge,new/obj/Attacks/Beam,new/obj/Attacks/Sokidan,\
+		new/obj/Fly,new/obj/Heal,new/obj/Shield,new/obj/Give_Power,new/obj/Power_Control,\
+		new/obj/Materialization,new/obj/Keep_Body,new/obj/Kaio_Revive,new/obj/Limit_Breaker,new/obj/Bind)
+		contents.Add(new/obj/Telepathy,new/obj/Observe,new/obj/Reincarnation,new/obj/Sense,new/obj/Advanced_Sense,\
+		new/obj/Meditate_Level_2,new/obj/Shadow_Spar)
+		contents+=new/obj/RankChat
+		Attack_Gain(1000,apply_hbtc_gains=0,include_weights=0)
+
+		var/bp_get=1000
+		if(base_bp<bp_get)
+			bp_get-=base_bp
+			if(bp_get>0) hbtc_bp+=bp_get
+
+		src<<"<font color=yellow>You were given the Cardinal Kai rank"
+	Kaio_Helper(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Kaio Helper")
+		Ranks+="Kaio Helper"
+		contents.Add(new/obj/Kaio_Revive,new/obj/Keep_Body,new/obj/Heal,new/obj/Bind,new/obj/Reincarnation)
+		src<<"<font color=yellow>You were given the Kai Helper rank"
+
+	Daimaou(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Daimao")
+		Can_Remake=0
+		Ranks+="Daimao"
+		contents.Add(new/obj/Attacks/Blast,new/obj/Attacks/Charge,new/obj/Attacks/Explosion,\
+		new/obj/Attacks/Beam,new/obj/Attacks/Spin_Blast,new/obj/Attacks/Sokidan,new/obj/Attacks/Piercer,\
+		new/obj/Self_Destruct,new/obj/Attacks/Genocide,new/obj/Fly,new/obj/Shield,\
+		new/obj/SplitForm,new/obj/MakeAmulet,new/obj/Keep_Body,new/obj/Majin,\
+		new/obj/Restore_Youth,new/obj/Materialization,new/obj/Bind,new/obj/Make_Fruit,new/obj/Demon_Contract,\
+		new/obj/Kaio_Revive,new/obj/Attacks/Kienzan,new/obj/Attacks/Shockwave,new/obj/Make_Holy_Pendant)
+		contents.Add(new/obj/Telepathy,new/obj/Observe,new/obj/Attacks/Attack_Barrier,new/obj/Reincarnation,\
+		new/obj/Sense,new/obj/Advanced_Sense,new/obj/Meditate_Level_2,new/obj/Shadow_Spar,new/obj/Giant_Form)
+		contents+=new/obj/RankChat
+		contents += new/obj/Hakai
+		Attack_Gain(1000,apply_hbtc_gains=0,include_weights=0)
+
+		var/bp_get=2500
+		if(base_bp<bp_get)
+			bp_get-=base_bp
+			if(bp_get>0) hbtc_bp+=bp_get
+
+		src<<"<font color=yellow>You were given the Daimao (Demon Lord) rank"
+
+	Demon_Master(mob/P)
+		if(P) Log(P,"[P.key] gave [key] Demon Master")
+		Ranks+="Demon Master"
+		contents.Add(new/obj/Attacks/Blast,new/obj/Attacks/Charge,new/obj/Attacks/Explosion,\
+		new/obj/Attacks/Spin_Blast,new/obj/Attacks/Beam,new/obj/Attacks/Sokidan,new/obj/Attacks/Piercer,\
+		new/obj/Self_Destruct,new/obj/Attacks/Genocide,new/obj/Fly,new/obj/SplitForm,\
+		new/obj/Keep_Body,new/obj/Materialization,new/obj/Majin,new/obj/Restore_Youth,\
+		new/obj/Attacks/Shockwave,new/obj/Reincarnation,new/obj/Sense,new/obj/Meditate_Level_2,new/obj/Shadow_Spar)
+		Attack_Gain(1000,apply_hbtc_gains=0,include_weights=0)
+
+		var/bp_get=1000
+		if(base_bp<bp_get)
+			bp_get-=base_bp
+			if(bp_get>0) hbtc_bp+=bp_get
+
+		src<<"<font color=yellow>You were given the Demon Master rank"
+mob/proc/Carrot_Man(mob/P)
+	if(P) Log(P,"[P.key] gave [key] Carrot_Man Skills")
+	contents.Add(new/obj/Attacks/Genki_Dama,new/obj/Attacks/Kamehameha,new/obj/Taiyoken,\
+	new/obj/Heal,new/obj/God_Fist,new/obj/Bind,new/obj/Keep_Body,\
+	new/obj/Materialization,new/obj/Shield,new/obj/Shunkan_Ido,new/obj/SplitForm,new/obj/Attacks/Kienzan,\
+	new/obj/Unlock_Potential,new/obj/items/Senzu,new/obj/items/Senzu,new/obj/items/Senzu,\
+	new/obj/Sense,new/obj/Advanced_Sense,new/obj/Meditate_Level_2,new/obj/Shadow_Spar)
+	SSj3Able=Year;ssj3drain=300;Age=29;real_age=137+Year;BirthYear=-136;Decline+=15
+	for(var/obj/Shunkan_Ido/I in src) I.Level=100
+	Z_Character_Masteries()
+mob/proc/Braal(mob/P)
+	if(P) Log(P,"[P.key] gave [key] Braal Skills")
+	contents.Add(new/obj/Attacks/Explosion,new/obj/Attacks/Final_Flash,new/obj/Attacks/Onion_Gun,\
+	new/obj/Attacks/Ray,new/obj/Self_Destruct,new/obj/Shield,new/obj/Attacks/Spin_Blast,\
+	new/obj/Attacks/Kienzan,new/obj/Sense,new/obj/Advanced_Sense)
+	Age=43;real_age=143+Year;BirthYear=-141;Decline+=13
+	Z_Character_Masteries()
+mob/proc/Blowhan(mob/P)
+	if(P) Log(P,"[P.key] gave [key] Blowhan Skills")
+	contents.Add(new/obj/Attacks/Kamehameha,new/obj/Attacks/Masenko,new/obj/Attacks/Piercer,\
+	new/obj/Heal,new/obj/Mystic,new/obj/Shield,new/obj/Taiyoken,new/obj/items/Senzu,\
+	new/obj/Sense,new/obj/Advanced_Sense,new/obj/Meditate_Level_2)
+	Age=18;real_age=118+Year;BirthYear=-117;Decline+=5
+	Z_Character_Masteries()
+mob/proc/Piccolo(mob/P)
+	if(P) Log(P,"[P.key] gave [key] Piccolo Skills")
+	contents.Add(new/obj/Attacks/Scatter_Shot,new/obj/Attacks/Makosen,new/obj/Attacks/Masenko,\
+	new/obj/Attacks/Piercer,new/obj/Attacks/Ray,new/obj/Heal,\
+	new/obj/Keep_Body,new/obj/Materialization,new/obj/Unlock_Potential,new/obj/Sense,new/obj/Advanced_Sense,\
+	new/obj/Meditate_Level_2,new/obj/Shadow_Spar)
+	Age=22;real_age=122+Year;BirthYear=-121;Decline+=10
+	Z_Character_Masteries()
+mob/proc/Trunks(mob/P)
+	if(P) Log(P,"[P.key] gave [key] Trunks Skills")
+	contents.Add(new/obj/Shield,new/obj/Sense,new/obj/Advanced_Sense)
+	Age=18;real_age=108+Year;BirthYear=-108;Decline+=5
+	Z_Character_Masteries()
+mob/proc/Tien(mob/P)
+	if(P) Log(P,"[P.key] gave [key] Tien Skills")
+	contents.Add(new/obj/Attacks/Dodompa,new/obj/Attacks/Kikoho,new/obj/Taiyoken,\
+	new/obj/Attacks/Explosion,new/obj/Bind,new/obj/Heal,\
+	new/obj/Materialization,new/obj/Shield,new/obj/SplitForm,new/obj/Third_Eye,new/obj/Unlock_Potential,\
+	new/obj/Attacks/Kamehameha,new/obj/Sense,new/obj/Advanced_Sense,new/obj/Meditate_Level_2,new/obj/Shadow_Spar)
+	Age=40;real_age=141+Year;BirthYear=-141;Decline+=20
+	Z_Character_Masteries()
+mob/proc/Yamcha(mob/P)
+	if(P) Log(P,"[P.key] gave [key] Yamcha Skills")
+	contents.Add(new/obj/Attacks/Kamehameha,new/obj/Attacks/Dodompa,\
+	new/obj/Heal,new/obj/Materialization,new/obj/Shield,new/obj/SplitForm,new/obj/Taiyoken,\
+	new/obj/Unlock_Potential,new/obj/Sense,new/obj/Advanced_Sense,new/obj/Meditate_Level_2,new/obj/Shadow_Spar)
+	Age=40;real_age=141+Year;BirthYear=-141;Decline+=20
+	Z_Character_Masteries()
+mob/proc/Krillin(mob/P)
+	if(P) Log(P,"[P.key] gave [key] Krillin Skills")
+	contents.Add(new/obj/Attacks/Kamehameha,new/obj/Attacks/Masenko,new/obj/Heal,\
+	new/obj/Materialization,new/obj/Shield,new/obj/SplitForm,new/obj/Taiyoken,new/obj/Unlock_Potential,\
+	new/obj/items/Senzu,new/obj/items/Senzu,new/obj/items/Senzu,new/obj/Attacks/Kienzan,new/obj/Sense,\
+	new/obj/Advanced_Sense,new/obj/Meditate_Level_2,new/obj/Shadow_Spar)
+	Age=37;real_age=138+Year;BirthYear=-138;Decline+=20
+	Z_Character_Masteries()
+mob/proc/Chaotsu(mob/P)
+	if(P) Log(P,"[P.key] gave [key] Chaotsu Skills")
+	contents.Add(new/obj/Attacks/Dodompa,new/obj/Attacks/Explosion,new/obj/Heal,\
+	new/obj/Materialization,new/obj/Shield,new/obj/Self_Destruct,new/obj/Sense,new/obj/Advanced_Sense,\
+	new/obj/Meditate_Level_2,new/obj/Shadow_Spar)
+	Age=38;real_age=139+Year;BirthYear=-139;Decline+=25
+	Z_Character_Masteries()
+mob/proc/Freeza(mob/P)
+	if(P) Log(P,"[P.key] gave [key] Freeza Skills")
+	contents.Add(new/obj/Attacks/Genki_Dama/Death_Ball,new/obj/Attacks/Explosion,new/obj/Attacks/Ray,\
+	new/obj/Attacks/Spin_Blast,new/obj/Planet_Destroy,new/obj/Shield,new/obj/Attacks/Kienzan)
+	Age=100;real_age=200+Year;BirthYear=-200;Decline=110
+	Z_Character_Masteries()
+mob/proc/Cell(mob/P)
+	if(P) Log(P,"[P.key] gave [key] Cell Skills")
+	Age=10;real_age=110+Year;BirthYear=-110;Decline+=5;max_ki=8000*Eff
+	contents.Add(new/obj/Attacks/Kamehameha,new/obj/Attacks/Piercer,new/obj/Attacks/Genki_Dama/Death_Ball,\
+	new/obj/Attacks/Explosion,new/obj/Attacks/Onion_Gun,new/obj/Attacks/Scatter_Shot,\
+	new/obj/Attacks/Spin_Blast,new/obj/Planet_Destroy,new/obj/Self_Destruct,\
+	new/obj/Shunkan_Ido,new/obj/SplitForm,new/obj/Taiyoken,new/obj/Attacks/Kienzan,new/obj/Sense,\
+	new/obj/Advanced_Sense,new/obj/Meditate_Level_2,new/obj/Shadow_Spar)
+	Z_Character_Masteries()
+mob/proc/Majin_Buu(mob/P)
+	if(P) Log(P,"[P.key] gave [key] Majin Buu Skills")
+	Age=5000;real_age=5000+Year;BirthYear=-5000;Decline=5025;max_ki=10000*Eff
+	contents.Add(new/obj/Attacks/Kamehameha,new/obj/Attacks/Explosion,new/obj/Attacks/Scatter_Shot,\
+	new/obj/Attacks/Ray,new/obj/Attacks/Spin_Blast,new/obj/Heal,new/obj/Materialization,\
+	new/obj/Planet_Destroy,new/obj/Self_Destruct,new/obj/Shield,new/obj/SplitForm,new/obj/Taiyoken,\
+	new/obj/Unlock_Potential,new/obj/Sense,new/obj/Advanced_Sense)
+	Z_Character_Masteries()
+mob/proc/Z_Character_Masteries()
+	if(Race in list("Yasai","Half Yasai")) SSjAble=Year;ssjdrain=300;SSj2Able=Year;ssj2drain=300
+	contents.Add(new/obj/Fly,new/obj/Power_Control,new/obj/Zanzoken,new/obj/Give_Power,new/obj/Attacks/Blast,\
+	new/obj/Attacks/Charge,new/obj/Attacks/Beam,new/obj/Telepathy,new/obj/Attacks/Sokidan)
+	for(var/obj/Fly/F in src) F.Mastery=1000
+	for(var/obj/O in src) if(O.Mastery<10000) O.Mastery=10000
+	Remove_Duplicate_Moves()

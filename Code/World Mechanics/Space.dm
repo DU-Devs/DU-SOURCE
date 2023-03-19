@@ -27,9 +27,20 @@ obj/Planets
 	Spawn_Timer=6000
 	var/tmp/turf/planet_turf
 	New()
-		planets ||= list()
-		planets |= src
+		planets+=src
 		. = ..()
+		RestrictedPlanetDeleteCheck()
+
+	proc
+		RestrictedPlanetDeleteCheck()
+			set waitfor=0
+			sleep(600)
+			var/turf/t = locate(Planet_X, Planet_Y, Planet_Z)
+			if(!t) return
+			var/area/a = t.loc
+			if(!a) return
+			if(map_restriction_on && a.restricted_area)
+				del(src)
 
 	Earth
 		icon_state="Earth"
@@ -43,7 +54,7 @@ obj/Planets
 			walk_rand(src,50)
 			. = ..()
 	Puranto
-		icon_state="Namek"
+		icon_state="Puranto"
 		Planet_X=250
 		Planet_Y=250
 		Planet_Z=3
@@ -128,7 +139,6 @@ obj/items/Spacesuit
 	density=0
 	desc="You can survive in space if you equip this"
 	Stealable=1
-	can_change_icon = 1
 
 //turf/var/tmp/Interior_Number=0
 var/ship_interior_resets = 0 //increments +1 every time a ship interior is reset
@@ -173,8 +183,7 @@ obj/Ship_exit
 	Bolted=1
 	Savable=0
 	New()
-		ship_exits ||= list()
-		ship_exits |= src
+		ship_exits+=src
 
 var/list/ship_controls=new
 
@@ -191,8 +200,7 @@ obj/Controls
 	Bolted=1
 	var/Ship=0
 	New()
-		ship_controls ||= list()
-		ship_controls |= src
+		ship_controls+=src
 		spawn(10) if(src)
 			if(src&&!Ship) Ship=text2num("[x]"+"[y]"+"[z]")
 			for(var/obj/Controls/C in ship_controls) if(C.loc==loc&&C!=src)
@@ -265,7 +273,6 @@ obj/Controls
 					M<<"You stopped the ship from moving randomly"
 				else
 					M<<"The ship is now moving randomly"
-					if(!S) return
 					S.Move_Randomly=rand(1,99999999)
 					var/N=S.Move_Randomly
 					while(S&&S.Move_Randomly==N && S.Ki>0)
@@ -324,18 +331,12 @@ obj/Ships
 	var/list/Planets=new
 	var/tmp/Moving
 	var/Small
-	var/Comms = 1
 	var/Ship //The ID of the ship which attaches it to the proper control panel
 	var/tmp/Repairing
 	var/Launchable=1
 	var/tmp/Move_Randomly
 	proc/Update_Pod_Description()
 	proc/Weapon_Mount_Cost(mob/P) return round((500000/P.Intelligence())*((Weapon_Mounts+1)**3))
-	verb/Toggle_Comms()
-		set src in view(1)
-		if(usr != Pilot) return
-		Comms = !Comms
-		usr << "You [Comms ? "enable" : "disable"] the comms."
 	verb/Mount_Weapon()
 		set src in view(1)
 		switch(input("Do you want to mount a weapon or just add ammo to the pod for reloading purposes?") in \
@@ -490,6 +491,23 @@ obj/Ships
 		player_view(15,usr)<<"[usr] refuels the ship to [Amount]%"
 		usr<<"Cost: [Commas(Cost)]$"
 
+	/*verb/Customize()
+		set src in view(1)
+		usr<<"This feature is not complete. Your [src]'s stats have just now been randomized."
+		Str=initial(Str)
+		Dur=initial(Dur)
+		Spd=initial(Spd)
+		Eff=initial(Eff)
+		var/Amount=20
+		while(Amount)
+			Amount-=1
+			switch(pick("Str","Dur","Spd","Eff"))
+				if("Str") Str+=1
+				if("Dur") Dur+=1
+				if("Spd") Spd+=1
+				if("Eff") Eff+=1
+		Eff=Eff**2*/
+
 	Move(NewLoc,Dir=0,step_x=0,step_y=0)
 		if(!Can_Move||Launching) return
 		var/Former_Location=loc
@@ -526,7 +544,7 @@ obj/Ships
 		break
 
 	proc/Fuel()
-		Ki -= 3/Eff
+		Ki-=3/Eff
 		if(Ki<0)
 			usr<<"Your ship is out of fuel"
 			Ki=0
@@ -634,8 +652,7 @@ obj/Ships
 				Pilot=null
 				usr.Ship=null
 		New()
-			ships ||= list()
-			ships |= src
+			ships+=src
 
 			if(world.maxz<5) return
 
@@ -657,12 +674,10 @@ obj/Ships
 		Small=1
 		can_change_icon=1
 		can_blueprint = 1
-		var/dna_verification = null
 
 		New()
 			. = ..()
-			ships ||= list()
-			ships |= src
+			ships+=src
 			CenterIcon(src)
 			overlays-='GochekPods.dmi'
 
@@ -673,23 +688,10 @@ obj/Ships
 		proc/Pod_Trail()
 			var/turf/T=loc
 			if(T&&isturf(T)) T.Pod_Trail()
-		
-		verb/Set_DNA_Verification()
-			set src in view(1,usr)
-			if(!dna_verification)
-				usr<<"This spacepod has been set to your DNA and will not work if anyone else tries to use it."
-				dna_verification=usr.Mob_ID
-			else if(dna_verification && dna_verification == usr.Mob_ID)
-				switch(alert(usr, "This spacepod is already locked to your DNA.  Reset it?", "DNA Verification", "No", "Yes"))
-					if("Yes")
-						dna_verification = null
 
 		verb/Use()
 			set src in view(1,usr)
 			if(get_dist(src, usr) <= 1 || usr.Ship == src)
-				if(dna_verification && dna_verification != usr.Mob_ID)
-					usr << "The door won't respond."
-					return
 				//exit
 				if(Pilot == usr)
 					usr.ReleaseGrab()
@@ -729,9 +731,6 @@ obj/Ships
 
 		Click(location)
 			if(usr.loc == src)
-				if(dna_verification && dna_verification != usr.Mob_ID)
-					usr << "The launch codes are DNA locked."
-					return
 				if(!Launchable)
 					usr<<"[src] has not had a launch feature installed, it is incapable of space travel."
 					return
@@ -816,7 +815,7 @@ obj/SpaceDebris
 			M.TakeDamage(dmg)
 			var/kb_dist=meteor_damage * 3 * (Avg_BP/M.BP) * (Avg_Str()/M.End)
 			M.Shockwave_Knockback(kb_dist,loc)
-			if(M.Health<=0) M.KnockOut("meteor impact!")
+			if(M.Health<=0) M.KO("meteor impact!")
 		del(src)
 
 	proc/Meteor_fly(move_delay = 1)

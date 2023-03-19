@@ -40,7 +40,7 @@ mob/proc/Drone_initialize()
 mob/proc/Drone_self_repair()
 	//because i updated to make androids stuck at 1 bp and fully rely on cyber bp
 	base_bp=1
-	static_bp=1
+	hbtc_bp=1
 	if(Health>=90&&Ki>=max_ki*0.9) return
 	if(drone_attack_loop) return
 	Say("Initializing self repair")
@@ -85,10 +85,10 @@ mob/proc/Drone_Beam_Response() while(src)
 				else if(ismob(B.Owner))
 					dir=get_dir(src,B)
 					var/mob/P=B.Owner
-					var/obj/Skills/Combat/Ki/Beam/O
-					for(var/obj/Skills/Combat/Ki/Z in P.ki_attacks) if(Z.streaming) O=Z
+					var/obj/Attacks/Beam/O
+					for(var/obj/Attacks/Z in P.ki_attacks) if(Z.streaming) O=Z
 					if(P&&O)
-						for(var/obj/Skills/Combat/Ki/Beam/C in ki_attacks)
+						for(var/obj/Attacks/Beam/C in ki_attacks)
 							if(!C.charging&&!C.streaming&&!attacking)
 								Beam_Macro(C)
 								sleep(rand(8,12))
@@ -129,7 +129,7 @@ mob/proc/Drone_get_bp_loop() while(src)
 		if(Age<0) Age=0
 		if(real_age<0) real_age=0
 		Body()
-		BP = get_bp() * Progression.GetSettingValue("Drone Power Multiplier") * 0.75
+		BP = get_bp() * drone_power
 		sleep(rand(40,60))
 	else sleep(600)
 
@@ -214,7 +214,7 @@ mob/proc/Drone_Attack(mob/P,lethal)
 							sleep(world.tick_lag)
 							if(!P || getdist(src,P.base_loc())<=1) break
 						if(P && getdist(src,P.base_loc())<=1) Drone_steal_from_player(P)
-						if(lethal && P && getdist(src,P.base_loc())<=1 && prob(100 - P.determination))
+						if(lethal && P && getdist(src,P.base_loc())<=1)
 							if(P.client) drone_master_msg("<font color=red>[P] was just killed by [src] on [P.get_area()] ([P.x],[P.y],[P.z])")
 							else if(P.drone_module) drone_master_msg("<font color=red>[P] was just killed by [src] on [P.get_area()] (Enemy Drone)")
 							P.Death(src,Force_Death=1,lose_immortality=0)
@@ -257,6 +257,9 @@ mob/proc/Is_drone_master(mob/m)
 
 	var/list/l=m.Key_Passwords()
 	if(df in l) return 1
+
+	var/list/league_ids=m.Get_league_drone_IDs()
+	if(league_ids && (df in league_ids)) return 1
 
 	for(var/obj/items/Robotics_Tools/rt in m.item_list) if(df==rt.Password) return 1
 
@@ -658,7 +661,7 @@ mob/proc/Steal_Resources(Max,mob/P)
 				if(!Stealables) Stealables=new/list
 				if(Stealables.len<10) Stealables+=DD
 			var/area/a=get_area()
-			if(a) for(var/mob/M in a.player_list) if(M.locz()==z&&M.Res()>=drone_res_steal_amount*Mechanics.GetSettingValue("Resource Generation Rate")&&!Is_drone_master(M)&&get_area()==M.get_area())
+			if(a) for(var/mob/M in a.player_list) if(M.locz()==z&&M.Res()>=drone_res_steal_amount*Resource_Multiplier&&!Is_drone_master(M)&&get_area()==M.get_area())
 				if(!M.tournament_override(fighters_can=0,show_message=0))
 					if(BP>M.BP*0.65) //dont fight someone too far beyond them to avoid losing
 						if(!Stealables) Stealables=new/list
@@ -683,7 +686,7 @@ mob/proc/Steal_Resources(Max,mob/P)
 						Drill.Resources=0
 						del(Drill)
 						Vaccuum_resources(display_message=0)
-					else if(ismob(M)&&M.Res()>=drone_res_steal_amount*Mechanics.GetSettingValue("Resource Generation Rate")&&getdist(src,M.base_loc())<=5&&viewable(src,M)&&("Steal" in D.Commands)&&!Master_is_near()&&!Is_drone_master(M))
+					else if(ismob(M)&&M.Res()>=drone_res_steal_amount*Resource_Multiplier&&getdist(src,M.base_loc())<=5&&viewable(src,M)&&("Steal" in D.Commands)&&!Master_is_near()&&!Is_drone_master(M))
 						var/Timer=7
 						var/res_amount=M.Res()
 						Say("[M]. Do not attempt to run. Drop your resources. We will take them in the name of [Get_by_key(Pkey)].\
@@ -755,6 +758,12 @@ mob/proc/Drone_Genocide(R,mob/P) //R=Race to kill
 			if(M.get_area()==get_area()&&!M.Binded_at_bind_spawn())
 				if(M.locz()==z&&(M.Race==Race_to_Genocide||!Race_to_Genocide)&&(!M.Dead||M.locz()!=5)) Mobs+=M
 				if(M.locz()==z&&Race_to_Genocide=="Vampires"&&M.Vampire&&(!M.Dead||M.locz()!=5)) Mobs+=M
+				if(alignment_on && M.locz()==z && (!M.Dead || M.locz()!=5))
+					if(Race_to_Genocide=="Good People" && M.alignment=="Good") Mobs+=M
+					else if(Race_to_Genocide=="Evil People" && M.alignment=="Evil") Mobs+=M
+		if(Race_to_Genocide=="Zombies")
+			var/area/a=get_area()
+			if(a) for(var/mob/M in a.npc_list) if(istype(M,/mob/Enemy/Zombie)&&M.locz()==z) Mobs+=M
 		if(Mobs.len)
 			var/mob/M=pick(Mobs)
 			var/Steps=500
@@ -767,13 +776,15 @@ mob/proc/Drone_Genocide(R,mob/P) //R=Race to kill
 			if(Instance==Drone_Order) if(ismob(M)&&M.locz()==z&&getdist(src,M.base_loc())<=8&&viewable(src,M)&&!Is_drone_master(M))
 				if(M.client)
 					if(Race_to_Genocide=="Vampires") Say("Vampires have been listed for extermination. Prepare to be exterminated [M]")
+					else if(Race_to_Genocide in list("Good People","Evil People"))
+						Say("Those with [lowertext(M.alignment)] energy have been listed for extermination. Prepare to be exterminated [M]")
 					else
 						Say("[M] your species has been listed for extermination. Prepare to be exterminated.")
 					sleep(20)
 				Drone_Attack(M,lethal=1)
 			Detect_Illegal_Activity()
 
-		if(Limits.GetSettingValue("Drone Genocide")) Cancel_Orders()
+		if(drone_genocide_off) Cancel_Orders()
 
 		sleep(rand(40,60))
 
@@ -839,16 +850,20 @@ mob/proc/Cancel_Orders(mob/P)
 	Drone_Order++
 
 mob/proc/Get_max_cyber_bp_upgrade(race)
-	var/n = Knowledge * (Intelligence()**0.15) * Mechanics.GetSettingValue("Cybernetic BP Multiplier")
+	var/n = Knowledge * (Intelligence()**0.1) * cyber_bp_mod
+	if(race=="Android") n *= android_extra_cyber_bp_mult
+
+	//special ss1 era boost
+	for(var/client/c in clients)
+		var/mob/m = c.mob
+		if(m && m.ssj >= 1)
+			n += 15000000
+			break
 
 	var/rt_mult=1
 	for(var/obj/items/Robotics_Tools/rt in src) if(rt.Upgrade_Power>rt_mult) rt_mult = rt.Upgrade_Power
 	n *= rt_mult
-
-	n = Math.Min(n, Knowledge * Mechanics.GetSettingValue("Cybernetic BP Multiplier") * rt_mult)
-	if(race=="Android") n *= Mechanics.GetSettingValue("Android BP Multiplier")
-
-	return n
+	return n * 1.1
 
 mob/proc/Drone_Options(obj/Cybernetics_Computer/R) while(src&&R)
 	if(!R.Password) R.Password=input(src,"You must set a frequency on your [R] so that it can command drones \
@@ -878,14 +893,16 @@ mob/proc/Drone_Options(obj/Cybernetics_Computer/R) while(src&&R)
 							Alter_Res(-res_cost)
 
 							var/bp_upgrade=Get_max_cyber_bp_upgrade()
+							var/relative_base=base_bp/bp_mod
+							var/relative_hbtc=hbtc_bp/bp_mod
 
 							for(var/obj/o in drone_list) if(ismob(o.loc) && o.Password==R.Password)
 								var/mob/m=o.loc
-								var/adj_cyber_bp = bp_upgrade
-								if(m.Race=="Android") adj_cyber_bp *= Mechanics.GetSettingValue("Android BP Multiplier")
-								if(m.cyber_bp<adj_cyber_bp) m.cyber_bp = adj_cyber_bp
-								if(m.base_bp < base_bp) m.base_bp = base_bp
-								if(m.static_bp < static_bp) m.static_bp = static_bp
+								var/adj_cyber_bp=bp_upgrade
+								if(m.Race=="Android") adj_cyber_bp*=android_extra_cyber_bp_mult
+								if(m.cyber_bp<adj_cyber_bp) m.cyber_bp=adj_cyber_bp
+								if(m.base_bp/m.bp_mod<relative_base) m.base_bp=relative_base*m.bp_mod
+								if(m.hbtc_bp/m.bp_mod<relative_hbtc) m.hbtc_bp=relative_hbtc*m.bp_mod
 
 							alert(src,"All drones have now been upgraded to have the maximum amount of cyber bp that you can grant")
 		if("Check drone resources")
@@ -981,13 +998,16 @@ mob/proc/Drone_Options(obj/Cybernetics_Computer/R) while(src&&R)
 				P.Say("Order Recieved. Assembling at location [T.x],[T.y],[T.z]")
 				P.Drone_Assemble(T,src)
 		if("Patrol")
-			var/list/L=Choosable_Drones("Which drones do you want to send on patrol? This will cause them to locate \
-			life forms on the planet, and go check out what they are doing. This is a good way for drones to spot \
-			illegal activities and such.",R.Password)
-			for(var/mob/P in L) spawn if(P)
-				P.Cancel_Orders(src)
-				P.Say("Commencing Patrol")
-				P.Drone_Patrol(src)
+			if(alignment_on&&alignment=="Good")
+				alert(src,"Only evil people can command drones to do evil things")
+			else
+				var/list/L=Choosable_Drones("Which drones do you want to send on patrol? This will cause them to locate \
+				life forms on the planet, and go check out what they are doing. This is a good way for drones to spot \
+				illegal activities and such.",R.Password)
+				for(var/mob/P in L) spawn if(P)
+					P.Cancel_Orders(src)
+					P.Say("Commencing Patrol")
+					P.Drone_Patrol(src)
 		if("Cancel All Orders")
 			var/list/L=Choosable_Drones("Which drones will have their orders cancelled? This will just make them \
 			stop trying to accomplish their current goal, and just stay where they are, doing nothing.",R.Password)
@@ -995,62 +1015,68 @@ mob/proc/Drone_Options(obj/Cybernetics_Computer/R) while(src&&R)
 				P.Say("Stand-down orders recieved.")
 				P.Cancel_Orders(src)
 		if("Kill List")
-			var/list/drone_info=drone_instructions[R.Password]
-			if(!drone_info)
-				src<<"No drone instructions were found for this frequency"
-				return
+			if(alignment_on&&alignment=="Good")
+				alert(src,"Only evil people can command drones to do evil things")
+			else
 
-			switch(input(src,"Do you want to add or remove a person from the Kill List?") in list("Cancel","Add","Remove"))
-				if("Cancel") break
-				if("Add")
+				var/list/drone_info=drone_instructions[R.Password]
+				if(!drone_info)
+					src<<"No drone instructions were found for this frequency"
+					return
+
+				switch(input(src,"Do you want to add or remove a person from the Kill List?") in list("Cancel","Add","Remove"))
+					if("Cancel") break
+					if("Add")
+						while(src)
+							var/list/Mobs=list("Cancel")
+							for(var/mob/P in players) if(P.key&&!(P.key in drone_info["kill list"])) Mobs+=P.key
+							var/mob/M=input(src,"Who do you want to add to the kill list?") in Mobs
+							if(M!="Cancel") M=Get_by_key(M)
+							if(M=="Cancel"||!M) break
+							else
+								src<<"[M.key] added to the kill list"
+								drone_info["kill list"]+=M.key
+								drone_instructions[R.Password]=drone_info
+				if("Remove")
 					while(src)
 						var/list/Mobs=list("Cancel")
-						for(var/mob/P in players) if(P.key&&!(P.key in drone_info["kill list"])) Mobs+=P.key
-						var/mob/M=input(src,"Who do you want to add to the kill list?") in Mobs
-						if(M!="Cancel") M=Get_by_key(M)
+						for(var/P in drone_info["kill list"]) Mobs+=P
+						var/M=input(src,"Who's key do you want to remove from the kill list?") in Mobs
 						if(M=="Cancel"||!M) break
 						else
-							src<<"[M.key] added to the kill list"
-							drone_info["kill list"]+=M.key
+							src<<"[M] removed from kill list"
+							drone_info["kill list"]-=M
 							drone_instructions[R.Password]=drone_info
-			if("Remove")
-				while(src)
-					var/list/Mobs=list("Cancel")
-					for(var/P in drone_info["kill list"]) Mobs+=P
-					var/M=input(src,"Who's key do you want to remove from the kill list?") in Mobs
-					if(M=="Cancel"||!M) break
-					else
-						src<<"[M] removed from kill list"
-						drone_info["kill list"]-=M
-						drone_instructions[R.Password]=drone_info
-
 		if("Declare something illegal")
-			var/list/drone_info=drone_instructions[R.Password]
-			if(!drone_info)
-				src<<"No drone instructions were found for this frequency"
-				return
+			if(alignment_on&&alignment=="Good")
+				alert(src,"Only evil people can command drones to do evil things")
+			else
 
-			while(src&&R)
-				var/list/L=list("Cancel")
-				if(!("Enemy Drones" in drone_info["illegals"])) L+="Enemy Drones"
-				if(!("Doors" in drone_info["illegals"])) L+="Doors"
-				if(!("Training" in drone_info["illegals"])) L+="Training"
-				if(!("Meditating" in drone_info["illegals"])) L+="Meditating"
-				if(!("Combat" in drone_info["illegals"])) L+="Combat"
-				if(!("Ki Use" in drone_info["illegals"])) L+="Ki Use"
-				if(!("Ships/Pods" in drone_info["illegals"])) L+="Ships/Pods"
-				if(!("Turrets" in drone_info["illegals"])) L+="Turrets"
-				for(var/obj/O) if(!(locate(O.type) in L)&&!(locate(O.type) in drone_info["illegals"])) if(O.Cost)
-					if(!istype(O,/obj/Turret)) L+=new O.type
-				var/obj/A=input(src,"What do you want to make illegal? This will be stored in the [R] hard drive. \
-				Drones set to the same frequency will use this data to decide what is illegal \
-				or not.") in L
-				if(!A||A=="Cancel") break
-				else
-					if(isobj(A)) drone_info["illegals"]+=new A.type
-					else drone_info["illegals"]+=A
-					drone_instructions[R.Password]=drone_info
+				var/list/drone_info=drone_instructions[R.Password]
+				if(!drone_info)
+					src<<"No drone instructions were found for this frequency"
+					return
 
+				while(src&&R)
+					var/list/L=list("Cancel")
+					if(!("Enemy Drones" in drone_info["illegals"])) L+="Enemy Drones"
+					if(!("Doors" in drone_info["illegals"])) L+="Doors"
+					if(!("Training" in drone_info["illegals"])) L+="Training"
+					if(!("Meditating" in drone_info["illegals"])) L+="Meditating"
+					if(!("Combat" in drone_info["illegals"])) L+="Combat"
+					if(!("Ki Use" in drone_info["illegals"])) L+="Ki Use"
+					if(!("Ships/Pods" in drone_info["illegals"])) L+="Ships/Pods"
+					if(!("Turrets" in drone_info["illegals"])) L+="Turrets"
+					for(var/obj/O) if(!(locate(O.type) in L)&&!(locate(O.type) in drone_info["illegals"])) if(O.Cost)
+						if(!istype(O,/obj/Turret)) L+=new O.type
+					var/obj/A=input(src,"What do you want to make illegal? This will be stored in the [R] hard drive. \
+					Drones set to the same frequency will use this data to decide what is illegal \
+					or not.") in L
+					if(!A||A=="Cancel") break
+					else
+						if(isobj(A)) drone_info["illegals"]+=new A.type
+						else drone_info["illegals"]+=A
+						drone_instructions[R.Password]=drone_info
 		if("Declare something legal")
 
 			var/list/drone_info=drone_instructions[R.Password]
@@ -1074,11 +1100,14 @@ mob/proc/Drone_Options(obj/Cybernetics_Computer/R) while(src&&R)
 						drone_info["illegals"]-=A
 						drone_instructions[R.Password]=drone_info
 		if("Genocide")
-			if(Limits.GetSettingValue("Drone Genocide"))
+			if(drone_genocide_off)
 				alert(src,"This server has drone genocide off")
+			else if(alignment_on&&alignment=="Good")
+				alert(src,"Only evil people can command drones to do evil things")
 			else
 				var/list/L=Choosable_Drones("Drone Genocide Options",R.Password)
-				var/list/O=list("Cancel","All Races","Vampires")
+				var/list/O=list("Cancel","All Races","Vampires","Zombies")
+				if(alignment_on) O.Add("Evil People","Good People")
 				for(var/A in Race_List()) O+=A
 				var/Race_to_kill=input(src,"Which race do you want the drone to kill?") in O
 				if(Race_to_kill=="Cancel") return
@@ -1107,12 +1136,15 @@ mob/proc/Drone_Options(obj/Cybernetics_Computer/R) while(src&&R)
 				P.Say("Order recieved. Gathering resources.")
 				P.Collect_Resources(Max,src)
 		if("Steal from Players/Drills")
-			var/list/L=Choosable_Drones("Which drones will be set to steal resources from players/drills?",R.Password)
-			var/Max=input(src,"How many resources should each drone gather before returning to you?") as num
-			for(var/mob/P in L) spawn if(P)
-				P.Cancel_Orders(src)
-				P.Say("Order recieved. Taking resources from drills and players.")
-				P.Steal_Resources(Max,src)
+			if(alignment_on&&alignment=="Good")
+				alert(src,"Only evil people can command drones to do evil things")
+			else
+				var/list/L=Choosable_Drones("Which drones will be set to steal resources from players/drills?",R.Password)
+				var/Max=input(src,"How many resources should each drone gather before returning to you?") as num
+				for(var/mob/P in L) spawn if(P)
+					P.Cancel_Orders(src)
+					P.Say("Order recieved. Taking resources from drills and players.")
+					P.Steal_Resources(Max,src)
 
 mob/proc/Drone_Self_Destruct()
 	Disable_Modules()

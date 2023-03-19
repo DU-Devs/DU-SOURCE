@@ -13,7 +13,7 @@ atom/var/Grabbable=1
 turf/Grabbable=0
 
 var
-	max_items = 50
+	max_items = 20
 
 mob/proc/item_count()
 	var/n=0
@@ -31,15 +31,12 @@ mob/proc/ReleaseGrab()
 			m.Regenerator_loop()
 
 mob/verb/Grab()
-	set category = "Skills"
+	//set category="Skills"
 
 	if(dash_attacking || in_dragon_rush) return
 
-	if(InFinalRealm())
-		src.SendMsg("Grab can not be used in the final realm", CHAT_IC)
-		return
-	if(usr.Redoing_Stats)
-		usr.SendMsg("You can not grab things while redoing stats!", CHAT_IC)
+	if(Final_Realm())
+		src<<"Grab can not be used in the final realm"
 		return
 	if(is_grabbing)
 		is_grabbing=0
@@ -48,8 +45,7 @@ mob/verb/Grab()
 	if(using_final_explosion) return
 	Safezone() //see safezone proc, related to having Wish Orbs
 	if(Action in list("Meditating","Training")) return
-	if(grabbedObject)
-		ReleaseGrab()
+	if(grabbedObject) ReleaseGrab()
 	else if(!KO&&z)
 
 		for(var/mob/m in get_step(src,dir))
@@ -80,11 +76,13 @@ mob/verb/Grab()
 				if(O.type != /obj/items/Dragon_Ball || !(O.type in obj_list))
 					L += O.name
 					obj_list += O
-		if(L.len>1)
-			L+="Cancel"
-		var/T=input(src,"Grab what?") in L
-		if(!T || T=="Cancel") return
-
+		L+="Cancel"
+		var/T
+		if(L.len<=2)
+			L-="Cancel"
+			for(var/V in L) T=V
+		else T=input(src,"Grab what?") in L
+		if(T=="Cancel") return
 		var/obj/O
 		for(var/atom/movable/A in Get_step(src,dir)) if(A.name==T && !A.grabber && A.Grabbable && A != src)
 			O=A
@@ -109,17 +107,15 @@ mob/verb/Grab()
 			if(Temp.Shielding())
 				return
 			if(Temp.Safezone)
-				src.SendMsg("You can not grab people in safezones", CHAT_IC)
+				src<<"You can not grab people in safezones"
 				return
 			if(Temp.Prisoner())
-				src.SendMsg("You can not grab prisoners", CHAT_IC)
+				src<<"You can not grab prisoners"
 				return
-			if(tournament_override(fighters_can=1))
-				return
+		if(ismob(O)&&tournament_override(fighters_can=1)) return
 		if(O.Bolted)
-			src.SendMsg("It is bolted, you can not get it.", CHAT_IC)
+			src<<"It is bolted, you can not get it."
 			return
-		
 		if(istype(O,/obj/items) && item_count() >= MaxItems())
 			if(O.type != /obj/items/Dragon_Ball)
 				alert(src,"Your inventory is full")
@@ -135,7 +131,6 @@ mob/verb/Grab()
 				move=1
 			spawn(4) icon_state=old_state
 			is_grabbing=0
-		
 		if(!O||isturf(O)) return
 
 		O.ExplodeLandMines()
@@ -144,17 +139,14 @@ mob/verb/Grab()
 			var/obj/Resources/R=O
 			Alter_Res(R.Value)
 			R.Value = 0
-			for(var/mob/M in player_view(15,src))
-				M.SendMsg("[src] picks up [O]", CHAT_IC)
+			player_view(15,src)<<"[src] picks up [O]"
 			del(O)
 
 		else if(istype(O,/obj/items)||istype(O,/obj/Module))
-			for(var/mob/M in player_view(15,src))
-				M.SendMsg("[src] picks up [O]", CHAT_IC)
+			player_view(15,src)<<"[src] picks up [O]"
 			if(istype(O,/obj/items/Gravity)) O:Deactivate()
 			if(istype(O,/obj/items/Senzu)) O:Senzu_pickup()
 			O.Move(src)
-			
 			Restore_hotbar_from_IDs()
 
 		else
@@ -165,8 +157,7 @@ mob/verb/Grab()
 			if(ismob(grabbedObject) && grabbedObject.dir==dir)
 				grabbedObject.grabbed_from_behind=1
 				if(grabbedObject.Tail)
-					for(var/mob/M in player_view(15,src))
-						M.SendMsg("<font color=red>[src] grabs [grabbedObject] by the tail!", CHAT_IC)
+					player_view(15,src)<<"<font color=red>[src] grabs [grabbedObject] by the tail!"
 					grabbedObject.Grabbed_by_tail()
 			if(ismob(grabbedObject)) grabbedObject.update_area()
 			Update_grab_loop()
@@ -174,7 +165,7 @@ mob/verb/Grab()
 mob/proc/Grabbed_by_tail()
 	set waitfor=0
 	while(grabber&&grabbed_from_behind&&Tail)
-		IncreaseKi(-(max_ki / 2 / tail_level))
+		Ki-=max_ki / 2 / tail_level
 		sleep(10)
 
 proc/remove_nulls(list/l)
@@ -206,10 +197,7 @@ mob/proc
 		for(var/a in targets3) targets += a
 
 		var/list/mobs = new
-		for(var/mob/m in targets)
-			if(m.IsRoundFighter() && !IsRoundFighter()) continue
-			if(m != src) mobs += m
-
+		for(var/mob/m in targets) if(m != src) mobs += m
 
 		var/mob/preferred_mob
 		if(mobs.len)
@@ -244,10 +232,37 @@ mob/proc
 		if(!m) return
 		if(ismob(m))
 			if(!m.grabber && m.Grabbable)
-				if(!OngoingTournament() || (!m.client || !m.tournament_override(show_message = 0)))
+				if(!Tournament || (!m.client || !m.tournament_override(show_message = 0)))
 					return 1
 		if(isobj(m))
 			if(m.Grabbable && !istype(m, /obj/Trees) && !istype(m, /obj/Turfs)) return 1
+
+	/*GetArmStretchTarget(grab_dist=10)
+		if(Extendo_module()) grab_dist = Extendo_module_range()
+		var/list/targets = new
+		var/turf/t = Get_step(src,dir)
+		if(t) for(var/v in 1 to grab_dist)
+			t = Get_step(t,dir)
+			if(t)
+				for(var/mob/m in t) if(!m.grabber) targets+=m
+				for(var/obj/o in t) if(o.Grabbable || o.density)
+					if(!istype(o,/obj/Trees)&&!istype(o,/obj/Turfs)) targets+=o
+				//if(t.density) return t
+				if(!t.FlyOverAble) return t
+				if(istype(t,/turf/Other/Blank)) return t
+
+		t=Get_step(src,turn(dir,45))
+		if(t) for(var/v in 1 to 30)
+			t=Get_step(t,dir)
+			if(t) for(var/mob/m in t) if(!m.grabber) targets+=m
+
+		t=Get_step(src,turn(dir,-45))
+		if(t) for(var/v in 1 to 30)
+			t=Get_step(t,dir)
+			if(t) for(var/mob/m in t) if(!m.grabber) targets+=m
+
+		for(var/mob/m in targets) if(m.Grabbable) if(!Tournament || (!m.client || !m.tournament_override(show_message=0))) return m
+		for(var/obj/o in targets) if(o.Grabbable) return o*/
 
 	Get_arm_state(obj/old_arm,obj/new_arm)
 		if(get_dir(old_arm,new_arm)==old_arm.dir) return ""
@@ -352,14 +367,14 @@ obj/stretch_arm
 mob/proc/Update_grab()
 	set waitfor=0
 	if(grabbedObject)
-		if(ismob(grabbedObject) || isobj(grabbedObject)) 
+		if(ismob(grabbedObject)) grabbedObject.SafeTeleport(loc)
+		else if(isobj(grabbedObject))
 			grabbedObject.SafeTeleport(loc)
 		if(ismob(grabbedObject))
 			grabbedObject.dir=turn(dir,180)
 			if(grabbedObject.grabbedObject && grabbedObject.grabbedObject!=src) grabbedObject.Update_grab()
-		if(istype(grabbedObject,/mob/Body))
-			if(Cook_Check(grabbedObject))
-				Cook(grabbedObject)
+		if(istype(grabbedObject,/mob/Body)) if(Cook_Check(grabbedObject)) Cook(grabbedObject)
+	if(grabber) SafeTeleport(grabber.loc)
 
 mob/proc/Update_grab_loop()
 	while(grabbedObject)

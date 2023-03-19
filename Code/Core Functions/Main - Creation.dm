@@ -1,18 +1,36 @@
-mob/proc/GetSpawns(excludeShips = 0)
-	var/list/L = new
-	for(var/obj/Spawn/S in RaceSpawns)
-		if(!S.z && S.is_on_destroyed_planet()) continue
-		var/area/A = locate(/area) in range(0,S)
-		if(excludeShips && A && A.type == /area/ship_area) continue
-		if(Spawn_Bind && S.desc == Spawn_Bind)
-			L = new/list
-			L += S
+mob/proc/Get_spawns(excludeShips = 0)
+
+	if(Teleport_nulled())
+		var/list/L=new
+		for(var/obj/Spawn/s in Spawn_List)
+			var/area/a=locate(/area) in range(0,s)
+			if(excludeShips && a && a.type == /area/ship_area) continue
+			if(a==get_area()) L+=s
+		return L
+
+
+	var/list/L=new
+	if(Earth_Only)
+		for(var/obj/Spawn/s in Spawn_List) if(s.z==1)
+			L+=s
 			break
-		if(S.name == Race)
-			L += S
+	else
+		if(Spawn_Bind) for(var/obj/Spawn/s in Spawn_List)
+			if(s.z&&s.desc==Spawn_Bind&&!s.is_on_destroyed_planet())
+				var/area/a = s.get_area()
+				if(excludeShips && a && a.type == /area/ship_area) continue
+				L+=s
+		if(!L.len)
+			for(var/obj/Spawn/s in Spawn_List) if(s.z&&!s.is_on_destroyed_planet())
+				var/area/a = s.get_area()
+				if(excludeShips && a && a.type == /area/ship_area) continue
+				if(s.name==Race) L+=s
 	return L
 
 mob/proc/Go_to_spawn(First_time = 0, butNotInShipArea)
+	if(world.maxz<5)
+		SafeTeleport(locate(1,1,1))
+		return
 
 	if(override_spawn[1] != 0 && override_spawn[2] != 0 && override_spawn[3] != 0)
 		SafeTeleport(locate(override_spawn[1], override_spawn[2], override_spawn[3]))
@@ -22,29 +40,23 @@ mob/proc/Go_to_spawn(First_time = 0, butNotInShipArea)
 
 		return
 
-	var/list/spawns = GetSpawns(excludeShips = butNotInShipArea)
+	var/list/spawns = Get_spawns(excludeShips = butNotInShipArea)
 	if(!spawns.len)
 		src<<"There are no spawns for your race, you have been sent to space."
 		SafeTeleport(locate(12,496,17))
 		return
-
 	var/list/spawn_names=new
-	for(var/obj/o in spawns)
-		spawn_names += o.desc
-
+	for(var/obj/o in spawns) spawn_names += o.desc
 	var/spawn_name
 	if(client&&spawn_names.len>1)
 		spawn_name=input(src,"Choose your starting location") in spawn_names
 	else spawn_name=pick(spawn_names)
-
 	var/obj/Spawn/s
-	for(var/obj/o in spawns)
-		if(o.desc==spawn_name)
-			s=o
-			break
+	for(var/obj/o in spawns) if(o.desc==spawn_name) s=o
 	SafeTeleport(s.loc)
 	if(!Spawn_Bind) Spawn_Bind=s.desc
 
+	//if(!Teleport_nulled())
 	for(var/obj/Spawn_Redirector/SR in s.loc)
 		if(SR.respawn_x)
 			SafeTeleport(locate(SR.respawn_x,SR.respawn_y,SR.respawn_z))
@@ -88,15 +100,18 @@ mob/proc
 
 mob/proc
 	Human_Skins()
+		//if(gender == "male") icon = pick('BaseHumanPale.dmi', 'BaseHumanTan.dmi', 'BaseHumanDark.dmi')
+		//if(gender == "female") icon = pick('New Pale Female.dmi', 'New Tan Female.dmi', 'New Black Female.dmi')
+		//return
+
 		if(gender=="male") switch(alert(src,"Choose your skin color","Options","Pale","Tan","Dark"))
 			if("Pale") icon='BaseHumanPale.dmi'
 			if("Tan") icon='BaseHumanTan.dmi'
 			if("Dark") icon='BaseHumanDark.dmi'
 		else switch(alert(src,"Choose your skin color","Options","Pale","Tan","Dark"))
-			if("Pale") icon='BaseHumanPaleFem.dmi'
-			if("Tan") icon='BaseHumanTanFem.dmi'
-			if("Dark") icon='BaseHumanDarkFem.dmi'
-
+			if("Pale") icon='New Pale Female.dmi'
+			if("Tan") icon='New Tan Female.dmi'
+			if("Dark") icon='New Black Female.dmi'
 	Skin()
 		var/Colorable
 		if(Race=="Alien") Grid(Alien_Icons)
@@ -148,7 +163,9 @@ mob/proc
 			var/A = input(src,"Choose a color for your character's icon. Select Cancel to have no added color") as color|null
 			if(A) icon += A
 			base_icon_color = A
-
+		//if(IsTens())
+			//arm_stretch=1
+			//arm_stretch_icon='generic arm.dmi'
 		if(arm_stretch&&arm_stretch_icon=='generic arm.dmi') Auto_color_arm_stretch_icon()
 
 mob/var/base_icon_color
@@ -244,21 +261,11 @@ obj/Demon_Icons
 	Human suffix="Look like a Human"
 mob/proc/icer_Icons()
 	var/list/L=new
-	var/count = 0
 	for(var/B in typesof(/obj/Icer)) L+=new B
 	while(!Form4Icon)
 		Grid(L)
 		if(!Form4Icon)
-			if(count >= 50) del src
 			alert(src,"You must continue choosing icons for all your transformations")
-		count++
-
-mob/var
-	Form1Icon
-	Form2Icon
-	Form3Icon
-	Form4Icon
-
 obj/Icer
 	name="Icon"
 	Givable=0
@@ -266,6 +273,7 @@ obj/Icer
 	Click()
 		if(!usr.Form1Icon)
 			alert("First form icon chosen. Now choose 2nd form.")
+			usr.icon=icon
 			usr.Form1Icon=icon
 		else if(!usr.Form2Icon)
 			alert("Second form icon chosen. Now choose 3rd form.")
@@ -274,7 +282,6 @@ obj/Icer
 			alert("Third form icon chosen. Now choose Final Form.")
 			usr.Form3Icon=icon
 		else if(!usr.Form4Icon)
-			usr.icon=icon
 			usr.Form4Icon=icon
 			usr.Hide_Main_Grid()
 	C30 icon='C1.dmi'
@@ -319,18 +326,25 @@ obj/Icer
 	C29 icon='Changeling Frieza BE.dmi'
 
 mob/proc/Choose_Hair(force_hair)
+
+	if(force_hair)
+		DBZ_hair(force_hair)
+		return
+	if(dbz_character)
+		src<<"Wish Orbs characters can not change their hair"
+		return
+
 	if((Race in list("Majin","Bio-Android","Puranto","Android","Frost Lord"))&&!icon) return
 	Grid(Hairs)
 
 mob/proc/RandomHair()
+	if(dbz_character) return
 	if(Race in list("Majin","Bio-Android","Puranto","Android","Frost Lord")) return
 	var/obj/Hairs/h = pick(Hairs)
 	var/clr = rgb(1,1,1)
 	if(Race != "Yasai")
 		if(prob(50)) clr = rgb(rand(0,255), rand(0,255), rand(0,255))
-	h = (resourceManager.GetResourceName(h.icon) || resourceManager.GenerateDynResource(h.icon))
-	AddHair("Base", h, clr)
-	SetVisual("Hairs", "Base")
+	Apply_Hair(src, h, clr)
 
 var/list/Hairs=new
 
@@ -786,11 +800,26 @@ proc/Apply_Hair(mob/P,obj/Hairs/O,force_color)
 
 	P.Hair_Base=P.hair
 	P.Hair_Age=P.Age
+	P.ssj4hair=null
 	if(O.icon)
+
+		//SSJ BLUE HAIR
+		var/icon/ssjb_hair = new(O.SSj_Hair)
+		var/ssb_color = rgb(0,0,102)
+		ssjb_hair.MapColors(ssb_color, "#ffffff", "#000000")
+		ssjb_hair -= rgb(255,0,0)
+		P.ssj_blue_hair = ssjb_hair
+
+		P.AssignRoyalBlueHair()
+
+		P.ssj_god_hair = O.icon + rgb(200,0,0)
+
 		if(force_color) P.HairColor=force_color
-		else if((P.Race!="Yasai"&&P.hair)||(P.Race=="Yasai"&&P.icon))
+		else if(!P.dbz_character) if((P.Race!="Yasai"&&P.hair)||(P.Race=="Yasai"&&P.icon))
 			P.HairColor=input(P,"Choose a hair color. Hit Cancel to have default color.") as color|null
 		if(P.HairColor) P.hair+=P.HairColor
+		P.ssj4hair='Hair_SSj4.dmi'
+		if(P.HairColor) P.ssj4hair+=P.HairColor
 		P.base_hair=P.hair
 		P.overlays+=P.hair
 	//if(Had_Tail) P.Tail_Add()

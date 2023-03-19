@@ -15,7 +15,6 @@ atom/movable/proc
 	FindTarget(dir_angle=NORTH, angle_limit=33, max_dist=9, prefer_auto_target=1)
 		var/list/targets = FindTargets(dir_angle, angle_limit, max_dist, prefer_auto_target)
 		if(!targets) return
-		if(targets.Find(Target)) return Target
 		return targets[1]
 
 	IsValidTarget(mob/m, max_dist=10)
@@ -32,9 +31,6 @@ atom/movable/proc
 			var/angle = abs(ShortestDegreesBetweenAngles(dir_angle,get_global_angle(src,m)))
 			var/dist = bounds_dist(src,m) / world.icon_size
 			if(dist > max_dist || angle > angle_limit) continue
-			if(ismob(src))
-				var/mob/M = src
-				if(M.IsPartyMember(m)) continue
 
 			if(IsValidTarget(m, max_dist = max_dist))
 				if(!targets) targets = new/list

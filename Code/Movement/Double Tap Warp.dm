@@ -1,7 +1,7 @@
 //Remember to take some lessons from flash step code for this
 
 var
-	tapwarp_stam_drain = 25
+	tapwarp_stam_drain = 5
 
 mob/var/tmp
 	last_tap_warp = 0
@@ -13,13 +13,12 @@ mob/proc
 	CanTapWarp()
 		if(!CanInputMove()) return 0
 		if(stamina < tapwarp_stam_drain) return 0
-		if(BeamStruggling()) return 0
+		if(BeamStruggling() || UsingAttackBarrier()) return 0
 		if(!zanzoken_obj) return 0
 		return Can_flash_step()
 
 	DoubleTapWarp(d)
 		set waitfor=0
-		if(Flying && !flight_boosted) return FlyBoost()
 		if(!CanTapWarp()) return
 
 		if(d)
@@ -39,7 +38,7 @@ mob/proc
 		if(warped_to_mob_success || warped_to_dir_success)
 			if(warped_to_mob_success && m) m.last_tap_warp = world.time
 			last_tap_warp = world.time
-			IncreaseStamina(-tapwarp_stam_drain)
+			AddStamina(-tapwarp_stam_drain)
 			AfterImage(50, loc_override = oloc)
 			flick('Zanzoken.dmi',src)
 			player_view(20,src) << sound('teleport.ogg',volume=15)

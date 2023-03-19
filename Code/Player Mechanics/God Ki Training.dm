@@ -1,10 +1,10 @@
 var
 	godMasteryToTrainOutsideGodRealm = 25
+	godKiMasteryMod = 1
 
 proc
 	GodKiRealmKillLoop()
 		set waitfor=0
-		set background = TRUE
 		while(1)
 			for(var/mob/m in players)
 				m.GodKiRealmDeathCheck()
@@ -40,7 +40,7 @@ mob/proc
 		if(mod > 1) mod = 1
 		if(mod < 0.1) mod = 0.1 //they have to be allowed to reach 100 at some point
 		n *= mod / 333
-		if(z == 10 && Total_HBTC_Time < 2) n *= 10
+		n *= godKiMasteryMod
 		var/godKiBefore = god_ki_mastery
 		RaiseGodKi(n)
 		if(godKiBefore < godMasteryToTrainOutsideGodRealm && god_ki_mastery >= godMasteryToTrainOutsideGodRealm)

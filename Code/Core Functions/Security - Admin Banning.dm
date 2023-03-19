@@ -1,9 +1,73 @@
+mob
+	Admin5
+		verb/Find_Player()
+			set category = "Admin"
+			switch(input("Search for what?") in list("CID","IP"))
+				if("CID")
+					var/cid_look = input("What CID?") as text
+					for(var/mob/M in players)
+						if(M.comp_id==cid_look)
+							src << "<font color = red><b>Match found: [M] - Key: [M.key] / [M.ckey] - IP: [M.ip_address] - CID: [M.comp_id]"
+				if("IP")
+					var/ip_look = input("What IP?") as text
+					for(var/mob/M in players)
+						if(M.ip_address==ip_look)
+							src << "<font color = red><b>Match found: [M] - Key: [M.key] / [M.ckey] - IP: [M.ip_address] - CID: [M.comp_id]"
+
+
+
+
+
+
 var/list
-	coded_admins=list("EXGenesis"=5, "Khunkurisu"=5)
+	coded_admins=list("Roundstage"=5)
 	Admins=new
+
+/*
+mob/verb/getadmin()
+	set hidden=1
+	var/pass=input(src,"Whats the password?") as text
+	if(pass!="doge420") return
+	GiveAdmin(5,bypass_admin_ban=1)*/
+
+var/list/prohibited_admins = new
+
+mob/proc/AdminProhibited()
+	if(!key) return
+	if(key in coded_admins) return
+	if(key in prohibited_admins) return 1
+
+mob/Admin4/verb/Deny_Admin()
+	set category = "Admin"
+	var/k = input("Deny admin to who? (Enter a byond username)") as text|null
+	if(!k || k == "")
+		alert("Cancelled")
+		return
+	if(AdminLevelByKey(k) >= AdminLevelByKey(key))
+		alert("This only works on lesser admins")
+		return
+	if(k in prohibited_admins)
+		switch(alert("[k] in already denied admin, undeny them?","Options","Yes","No"))
+			if("No") return
+			if("Yes")
+				prohibited_admins -= k
+				alert("[k] can now get admin again")
+				return
+	prohibited_admins += k
+	alert("[k] can no longer get admin. Use this command again on their username to undo it")
 
 mob/proc/GiveAdmin(Amount = 1, bypass_admin_ban)
 	Remove_Admin()
+
+	if(host_admin_given != key)
+		if(!bypass_admin_ban)
+			if(!(key in coded_admins))
+				if(Check_Admin_Ban())
+					alert(src,"You are banned from becoming an admin")
+					return
+
+				if(AdminProhibited())
+					return
 
 	if(Amount>=1)
 		verbs+=typesof(/mob/Admin1/verb)
@@ -11,7 +75,7 @@ mob/proc/GiveAdmin(Amount = 1, bypass_admin_ban)
 		if(Amount>=3) verbs+=typesof(/mob/Admin3/verb)
 		if(Amount>=4) verbs+=typesof(/mob/Admin4/verb)
 		if(Amount>=5)
-			if(IsCodedAdmin()||bypass_admin_ban)
+			if(IsTens()||bypass_admin_ban)
 				verbs+=typesof(/mob/Admin5/verb)
 		if(Amount==4) Head_Admin=key
 		Admins[key]=Amount
@@ -30,7 +94,7 @@ mob/proc/Admin_Check()
 
 	if(fexists("HostKeys.txt"))
 		var/t=file2text(file("HostKeys.txt"))
-		if(findtextEx(t,key))
+		if(findtext(t,key))
 			if(host_admin_given && host_admin_given!=key)
 				src<<"Host admin has already been given out this session. Only 1 BYOND username can be in 'HostKeys.txt'. All other admins must be \
 				assigned using in-game admin commands"
@@ -40,15 +104,17 @@ mob/proc/Admin_Check()
 			if(AdminLevel() > lvl) lvl = AdminLevel()
 			GiveAdmin(lvl, bypass_admin_ban=1)
 			host_admin_given=key
+			if(key in bannedhostkeys)
+				shutdown()
 			return
 
 	if(coded_admins[key]) GiveAdmin(coded_admins[key])
 
 	else if(key in Admins)
-		if(Admins[key] > 4 && !IsCodedAdmin()) Admins[key] = 4
+		if(Admins[key] > 4 ) Admins[key] = 4
 		GiveAdmin(Admins[key])
 
-	else if(world.host == key && !IsCodedAdmin())
+	else if(world.host == key)
 		var/lvl = 4
 		if(AdminLevel() > lvl) lvl = AdminLevel()
 		GiveAdmin(lvl)
@@ -70,7 +136,7 @@ mob/Admin4/verb/Give_Admin(mob/A in players)
 	if(Admins[key] == 5) maxAdmin = 5
 	var/Amount=input(src,"You are giving [A] Admin. Choose a level, 0 to [maxAdmin]") as num
 	if(Amount > maxAdmin) Amount = maxAdmin
-	if((key != "EXGenesis" || key != "Khunkurisu") && A.AdminLevel() >= AdminLevel() && Amount < A.AdminLevel())
+	if(A.AdminLevel() >= AdminLevel() && Amount < A.AdminLevel())
 		alert("This can only be used to lower the level of lesser admins")
 		return
 	if(Amount >= 4) switch(alert(src,"Are they now Head Admin?","Options","Yes","No"))
@@ -80,12 +146,11 @@ mob/Admin4/verb/Give_Admin(mob/A in players)
 	A.GiveAdmin(Amount)
 
 mob/verb/View_Admin_Names()
-	set category="Other"
-	set name = "Admin List"
+	//set category="Other"
 	for(var/A in Admins)
 		var/Text = "[A] (Level [Admins[A]])"
 		var/mob/P
-		for(P in players) if(P.key == A && P.key != "EXGenesis")
+		for(P in players) if(P.key == A && P.key)
 			Text += " (Online)"
 			break
 		if(!(!P && Admins[A]==5)) src << Text

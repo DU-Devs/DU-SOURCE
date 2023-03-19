@@ -2,22 +2,25 @@
 
 var/list/anns = new
 
-var/lastSpecialAnnouncement = 0
-proc/SpecialAnnouncements()
-	set waitfor = 0
-	if(lastSpecialAnnouncement + 600 > world.time) return
-	lastSpecialAnnouncement = world.time
-	
-	if(anns && anns.len)
-		for(var/v in anns)
-			var/list/l = anns[v]
-			var/loopTime = l[1]
-			var/lastAnnounced = l[2]
-			var/msg = l[3]
-			if(world.realtime - lastAnnounced > loopTime * 600)
-				clients << msg
-				l[1] = world.realtime
-				anns[v] = l
+proc
+	SpecialAnnouncementsLoop()
+		set waitfor=0
+		sleep(600)
+		//if("tensMsg" in anns) anns -= "tensMsg"
+		//anns["tensMsg"] = list(120, 0, tens)
+
+		while(1)
+			if(anns.len)
+				for(var/v in anns)
+					var/list/l = anns[v]
+					var/loopTime = l[1]
+					var/lastAnnounced = l[2]
+					var/msg = l[3]
+					if(world.realtime - lastAnnounced > loopTime * 600)
+						clients << msg
+						l[1] = world.realtime
+						anns[v] = l
+			sleep(600)
 
 mob/Admin2/verb/Set_Looping_Anouncement()
 	set category = "Admin"

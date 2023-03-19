@@ -1,1 +1,0 @@
-obj/screen_object/hud_panel

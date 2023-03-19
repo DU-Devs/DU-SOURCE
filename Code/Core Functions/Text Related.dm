@@ -24,7 +24,7 @@ mob/Admin1/verb/EditNotes()
 var/mob/WritingStory
 
 mob/verb/Story()
-	set category="Other"
+	//set category="Other"
 	usr<<browse(Story,"window= ;size=700x600")
 
 mob/Admin3/verb/EditStory()
@@ -37,6 +37,23 @@ mob/Admin3/verb/EditStory()
 		WritingStory=0
 		SaveStory()
 	else usr<<"<b>Someone is already editing the story."
+
+var/mob/WritingRanks
+
+/*mob/verb/Ranks()
+	set category="Other"
+	usr<<browse(rank_window,"window= ;size=700x600")*/
+
+mob/Admin3/verb/EditRanks()
+	set category="Admin"
+	if(!WritingRanks)
+		WritingRanks=src
+		Admin_Msg("[usr] is editing the ranks...")
+		rank_window=input(usr,"Edit!","Edit Ranks",Ranks) as message
+		Admin_Msg("[usr] is done editing the ranks...")
+		WritingRanks=0
+		SaveRanks()
+	else usr<<"<b>Someone is already editing the ranks."
 
 var/mob/WritingJobs
 
@@ -58,7 +75,6 @@ var/mob/WritingRules
 
 mob/verb/View_Rules()
 	set category="Other"
-	set name = "Rules"
 	usr<<browse(Rules,"window= ;size=700x600")
 
 mob/Admin3/verb/EditRules()

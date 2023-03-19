@@ -60,7 +60,7 @@ mob/new_troll
 	var
 		trollInit //whether they have already been initialized the first time
 		troll_joins_tournaments=1
-		tmp/obj/Skills/Combat/Ki/Beam/beam
+		tmp/obj/Attacks/Beam/beam
 		tmp
 			turf/troll_spawn_loc
 			trollRunAwayLoop
@@ -116,7 +116,7 @@ mob/new_troll
 			troll_spawn_loc = base_loc()
 
 			if(!trollInit)
-				var/obj/Skills/Combat/Ki/Blast/B = new(src)
+				var/obj/Attacks/Blast/B = new(src)
 				B.Spread=3
 				B.Shockwave=1
 				B.Blast_Count=2
@@ -150,8 +150,8 @@ mob/new_troll
 				Raise_Resist(10)
 				Raise_Force(10)
 
-				contents+=new/obj/Skills/Utility/Fly
-				contents+=new/obj/Skills/Utility/Zanzoken
+				contents+=new/obj/Fly
+				contents+=new/obj/Zanzoken
 				Warp=1
 				KB_On=100
 				if(name == initial(name)) troll_name()
@@ -191,9 +191,9 @@ mob/new_troll
 				lowHealthTurnCoward = rand(0,80)
 				if(prob(50)) lowHealthTurnCoward = 0 //some are brave no matter what
 
-			beam = locate(/obj/Skills/Combat/Ki/Beam) in src
+			beam = locate(/obj/Attacks/Beam) in src
 			if(!beam)
-				beam=new/obj/Skills/Combat/Ki/Beam(src)
+				beam=new/obj/Attacks/Beam(src)
 				beam.WaveMult*=1
 				beam.icon='Beam - Static Beam.dmi'
 				beam.icon += rgb(rand(0,255),rand(0,255),rand(0,255))
@@ -207,13 +207,13 @@ mob/new_troll
 			CombatTimerDecreaseLoop()
 			get_bp_loop()
 
-			UpdateGravity()
+			Gravity_Update()
 			if(Gravity>gravity_mastered) gravity_mastered=Gravity
 
 			if(!trollInit)
 				var/mob/m
 				for(var/mob/p in players) if(!m || m.base_bp < p.base_bp) m = p
-				if(m) LeechOpponent(m)
+				if(m) Leech(m, 500)
 				Attack_Gain(1200)
 				base_bp *= 0.4 //arbitrarily weaken them
 			trollInit = 1
@@ -362,14 +362,14 @@ mob/new_troll
 		troll_leech()
 			set waitfor=0
 			while(src)
-				for(var/mob/m in player_view(15,src)) LeechOpponent(m)
+				for(var/mob/m in player_view(15,src)) Leech(m, 50)
 				sleep(50)
 
 		troll_regen()
 			set waitfor=0
 			while(src)
 				if(Health < 100) Health += 1.2
-				if(Ki < max_ki) IncreaseKi(max_ki * 0.02)
+				if(Ki < max_ki) Ki += max_ki * 0.02
 				sleep(10)
 
 		detect_blasting()
@@ -669,7 +669,7 @@ mob/new_troll
 
 		TrollZanzo(turf/t)
 			if(KO) return
-			if(!t || t.density || BeamStruggling() || Charging_or_Streaming() || stun_level || Beam_stunned() || IsShielding() || !viewable(src, t) || \
+			if(!t || t.density || BeamStruggling() || Charging_or_Streaming() || stun_level || Beam_stunned() || ki_shield_on() || !viewable(src, t) || \
 			t.type == /turf/Other/Blank)
 				return
 			for(var/atom/movable/m in t) return
@@ -746,10 +746,10 @@ mob/new_troll
 								"train me","if you do not train me we will all die","im begging you",\
 								"i demand you train me","i am the chosen one","i am the chosen one plz",\
 								"nevermind","im the hero","im the hero train me plz","train me im the hero","someone train me please",\
-								"someone give me resources please","i will be the first Omega Yasai god","i will be the first ssj",\
+								"someone give me resources please","i will be the first Super Yasai god","i will be the first ssj",\
 								"can you train me plz?","whats that thing?","can i have that thing?","give me the thing plz?",\
-								"how do you become gold Frost Lord?","how do you become Omega Yasai god?","how do you become god of destruction?",\
-								"how do you become admin?","i deserve admin", "i will be the first Omega Yasai god","i am the main hero","i am the main \
+								"how do you become gold Frost Lord?","how do you become Super Yasai god?","how do you become god of destruction?",\
+								"how do you become admin?","i deserve admin", "i will be the first super Yasai god","i am the main hero","i am the main \
 								hero that means you need to listen to me","im the main hero im more important than you plz","did anyone see that shit?","lol","lmao",\
 								"whoa","holy shit","how are you so strong?","wow","i wish i was admin","this game sucks","this game sucks ass","there could be [RandomInsultName()] here",\
 								"there could be niggers anywhere","with a car, you can go anywhere","i am the muscle man","Wish Orb super is coming out again",\
@@ -876,7 +876,7 @@ mob/proc/respond_anyway(msg)
 	words += lowertext(name)
 	words += uppertext(name)
 	words += "[uppertext(copytext(name,1,2))][copytext(name,2,length(name)+1)]"
-	for(var/v in words) if(findtextEx(msg,v)) return 1
+	for(var/v in words) if(findtext(msg,v)) return 1
 
 mob/proc/NameMentioned(msg)
 	var/list/words = new
@@ -885,11 +885,11 @@ mob/proc/NameMentioned(msg)
 		words += lowertext(baseName)
 		words += uppertext(baseName)
 		words += "[uppertext(copytext(baseName,1,2))][copytext(baseName,2,length(baseName)+1)]"
-	for(var/v in words) if(findtextEx(msg,v)) return 1
+	for(var/v in words) if(findtext(msg,v)) return 1
 
 //lets the troll refer to a player by a shortened version of their name which looks more natural
 mob/proc/TrollNickName(n = "")
-	var/index_num = findtextEx(n," ") //find a space and return the index in the string it is found at
+	var/index_num = findtext(n," ") //find a space and return the index in the string it is found at
 	if(index_num != 0)
 		n = copytext(n,1,index_num)
 	return n
@@ -932,10 +932,10 @@ mob/proc/troll_respond(msg)
 
 		var/askedToAttack //if you asked the bot to attack someone
 		//this block is where you can tell the troll to attack a certain player by name, and it will
-		if(findtextEx(msg, "attack"))
+		if(findtext(msg, "attack"))
 			var/msg2 = lowertext(msg)
 			for(var/mob/m in mob_view(20,nt))
-				if(findtextEx(msg2, lowertext(m.name)))
+				if(findtext(msg2, lowertext(m.name)))
 					askedToAttack = 1
 					if(nt.cowardIfAttacked)
 						troll_response = pick(list("no","no i am peaceful","no thanks"))
@@ -947,35 +947,35 @@ mob/proc/troll_respond(msg)
 			//!!!!!!! HIGH PRIORITY RESPONSES BLOCK - when adding a new possible response put it in whatever block you think represents how prioritized it should be
 				//currently its all mixed up since i only added this system afterward without thinking about the order so its all random order mostly
 			//if the player ONLY said JUST the bot's name (essentially) then do this:
-			if(length(msg) <= length(nt.baseName) + 5 && findtextEx(msg, nt.baseName))
+			if(length(msg) <= length(nt.baseName) + 5 && findtext(msg, nt.baseName))
 				troll_response = pick(list("yes?","what do you want?","?","??","???","what?","yeah?","huh?","hm?","ya?"))
-			else if(findtextEx(msg, "should i") || findtextEx(msg, "can you") || findtextEx(msg, "can i"))
+			else if(findtext(msg, "should i") || findtext(msg, "can you") || findtext(msg, "can i"))
 				troll_response = pick(list("yes","no","maybe","i think so","i dont think so"))
-			//else if(findtextEx(msg,"fag") && provokedByWords) troll_response="im not a fag you [RandomInsultName()]"
-			/*else if(findtextEx(msg,"holocaust") || findtextEx(msg, "jew") || findtextEx(msg, "kike"))
+			//else if(findtext(msg,"fag") && provokedByWords) troll_response="im not a fag you [RandomInsultName()]"
+			/*else if(findtext(msg,"holocaust") || findtext(msg, "jew") || findtext(msg, "kike"))
 				troll_response = pick(list("the holocaust was a lie","hitler did nothing wrong","back to the ovens i say","gas the kikes","gas the kikes race war now"))*/
-			else if(findtextEx(msg,"not real") || findtextEx(msg, "not a real"))
+			else if(findtext(msg,"not real") || findtext(msg, "not a real"))
 				troll_response=pick(list("i am real","im a real player","im real its true","im real","you lie i am real"))
-			else if(findtextEx(msg,"you") && findtextEx(msg,"fake"))
+			else if(findtext(msg,"you") && findtext(msg,"fake"))
 				troll_response=pick(list("im not fake your fake","im real","im a real player","i am real",\
 				"i am real player"))
-			else if(findtextEx(msg,"annoy") && provokedByWords)
+			else if(findtext(msg,"annoy") && provokedByWords)
 				troll_response=pick(list("[RandomInsultName()] your annoying", "im not", "shut up"))
-			else if(findtextEx(msg,"girl"))
+			else if(findtext(msg,"girl"))
 				troll_response=pick(list("if you want me to be big boi","when i'm wearing a skirt, i'm a girl!","i'm a trap"))
-			/*else if(findtextEx(msg,"sex") || findtextEx(msg, "rape"))
+			/*else if(findtext(msg,"sex") || findtext(msg, "rape"))
 				troll_response = pick(list("yes rape my shitter","rape my shitter","let's fuck","fuck me hard"))*/
-			else if(findtextEx(msg,"suck") && findtextEx(msg,"dick"))
+			else if(findtext(msg,"suck") && findtext(msg,"dick"))
 				troll_response= pick(list("no i dont want to suck your dick","okay i will", "if you pay me","you are gay","get that gay shit out of here"))
-			else if(findtextEx(msg,"suck") && findtextEx(msg,"you"))
+			else if(findtext(msg,"suck") && findtext(msg,"you"))
 				troll_response=pick(list("no i dont master why would you say that?", "no you suck"))
-			else if(findtextEx(msg,"stfu") && provokedByWords)
+			else if(findtext(msg,"stfu") && provokedByWords)
 				troll_response=pick(list("you stfu you die now [RandomInsultName()]","now im mad. PAY FOR YOUR SINS","uhhh","uhh"))
 				if(prob(50))
 					spawn(65) if(src&&nt)
 						nt.attacker=src
 						nt.end_combat=30
-			else if(findtextEx(msg,"fuck") && findtextEx(msg,"you") && provokedByWords)
+			else if(findtext(msg,"fuck") && findtext(msg,"you") && provokedByWords)
 				troll_response=pick(list("NO FUCK YOU", "now im mad. PAY FOR YOUR SINS","you fuck off","no you fuck off","grrr"))
 				if(prob(50))
 					spawn(65) if(src&&nt)
@@ -985,7 +985,7 @@ mob/proc/troll_respond(msg)
 						nt.TrollSay(txt)
 						nt.attacker=src
 						nt.end_combat=30
-			else if(findtextEx(msg,"fuck off") && provokedByWords)
+			else if(findtext(msg,"fuck off") && provokedByWords)
 				troll_response=pick(list("NO FUCK YOU FUCK OFF", "now im mad. PAY FOR YOUR SINS","you fuck off","no you fuck off","grrr"))
 				if(prob(50))
 					spawn(65) if(src&&nt)
@@ -996,14 +996,14 @@ mob/proc/troll_respond(msg)
 						nt.attacker=src
 						nt.end_combat=30
 			//!!!!!!!!!!! MEDIUM PRIORITY RESPONSES BLOCK
-			else if(findtextEx(msg,"troll")) troll_response="why you call me troll?"
-			else if(findtextEx(msg,"ass") && provokedByWords) troll_response="im not ass you the ass [RandomInsultName()]"
-			else if(findtextEx(msg,"you") && findtextEx(msg,"dumb") && provokedByWords)
+			else if(findtext(msg,"troll")) troll_response="why you call me troll?"
+			else if(findtext(msg,"ass") && provokedByWords) troll_response="im not ass you the ass [RandomInsultName()]"
+			else if(findtext(msg,"you") && findtext(msg,"dumb") && provokedByWords)
 				troll_response="YOU BASTARD YOU ARE DUMB NOT ME NOW YOU DIE [uppertext(RandomInsultName())]!"
 				spawn(65) if(src&&nt)
 					nt.attacker=src
 					nt.end_combat=30
-			else if(findtextEx(msg,"kill") && provokedByWords)
+			else if(findtext(msg,"kill") && provokedByWords)
 				var/txt = pick(list("why you want to kill me?","why you say kill?","kill me?","you think you can kill me?","you think you can kill me? \
 				i am a living god","you kill me?","you dare threaten me?","you threaten my life?","THIS IS THE END FOR YOU"))
 				troll_response = txt
@@ -1014,7 +1014,7 @@ mob/proc/troll_respond(msg)
 						nt.TrollSay(txt)
 						nt.attacker=src
 						nt.end_combat=30
-			else if(findtextEx(msg,"die") && provokedByWords)
+			else if(findtext(msg,"die") && provokedByWords)
 				troll_response="why you want me to die?"
 				if(prob(50))
 					spawn(65) if(src && nt)
@@ -1024,57 +1024,57 @@ mob/proc/troll_respond(msg)
 						nt.TrollSay(txt)
 						nt.attacker=src
 						nt.end_combat=30
-			else if((findtextEx(msg,"okay i") || findtextEx(msg,"train you")) && provokedByWords)
+			else if((findtext(msg,"okay i") || findtext(msg,"train you")) && provokedByWords)
 				troll_response="TOO LATE NOW YOU DIE!"
 				spawn(65) if(src&&nt)
 					nt.attacker=src
 					nt.end_combat=30
-			else if(findtextEx(msg,"i will") && provokedByWords)
+			else if(findtext(msg,"i will") && provokedByWords)
 				troll_response="TOO LATE NOW YOU DIE"
 				spawn(65) if(src&&nt)
 					nt.attacker=src
 					nt.end_combat=30
-			else if(findtextEx(msg,"why"))
+			else if(findtext(msg,"why"))
 				troll_response="thats what i been asking you [msg]"
 			//!!!!!!!!!!!!!!! LOW PRIORITY RESPONSES BLOCK
-			else if(findtextEx(msg,"teach"))
+			else if(findtext(msg,"teach"))
 				troll_response = pick(list("spirit bomb plz","kaioken plz","kikoho plz","mystic plz"))
-			else if(findtextEx(msg, "oof")) troll_response = "oof"
-			else if(findtextEx(msg, "i am")) troll_response = pick(list("me too", "i am too"))
-			else if(findtextEx(msg, "no one")) troll_response = "i do"
-			else if(findtextEx(msg, "do you")) troll_response = pick(list("yes","no","sometimes"))
-			else if(findtextEx(msg, "follow")) troll_response = "no"
-			else if(findtextEx(msg,"no") || findtextEx(msg,"not") || findtextEx(msg,"cant") || findtextEx(msg,"can't")) troll_response = pick(list("why not?","why?","but why?"))
-			else if(findtextEx(msg, "nigger") || findtextEx(msg, "spic") || findtextEx(msg, "kike"))
+			else if(findtext(msg, "oof")) troll_response = "oof"
+			else if(findtext(msg, "i am")) troll_response = pick(list("me too", "i am too"))
+			else if(findtext(msg, "no one")) troll_response = "i do"
+			else if(findtext(msg, "do you")) troll_response = pick(list("yes","no","sometimes"))
+			else if(findtext(msg, "follow")) troll_response = "no"
+			else if(findtext(msg,"no") || findtext(msg,"not") || findtext(msg,"cant") || findtext(msg,"can't")) troll_response = pick(list("why not?","why?","but why?"))
+			else if(findtext(msg, "nigger") || findtext(msg, "spic") || findtext(msg, "kike"))
 				troll_response = pick(list("racist","RAYCIS"))
-			else if(findtextEx(msg, "spar") || findtextEx(msg, "train?"))
+			else if(findtext(msg, "spar") || findtext(msg, "train?"))
 				troll_response = pick(list("too busy","sorry cant","sorry too busy","too afk","too busy watching anime"))
-			else if(findtextEx(msg, "anime"))
+			else if(findtext(msg, "anime"))
 				troll_response = pick(list("attack on titan","death note","boku no pico","rise of shield hero","one punch man","mob psycho 100","kimetsu no yaiba",\
 				"the promised neverland", "hunter x hunter"))
 				if(prob(50)) troll_response = pick(list("my favorite anime is [troll_response]", "you should watch [troll_response]", "[troll_response] was really good"))
-			else if(findtextEx(msg, "byond"))
+			else if(findtext(msg, "byond"))
 				troll_response = pick(list("byond lol"))
-			else if(findtextEx(msg, "hitler"))
+			else if(findtext(msg, "hitler"))
 				troll_response = "hitler did nothing wrong"
-			else if(findtextEx(msg, "thing?") || (findtextEx(msg, "what") && findtextEx(msg, "thing")))
+			else if(findtext(msg, "thing?") || (findtext(msg, "what") && findtext(msg, "thing")))
 				troll_response = pick(list("yes the thing","that thing","that thing over there","that thing you have","i saw you with the thing","the thing"))
-			else if(prob(50) && findtextEx(msg, "alex jones"))
+			else if(prob(50) && findtext(msg, "alex jones"))
 				troll_response = "THEYRE TURNING THE FRIGGEN FROGS GAY!"
-			else if(prob(50) && findtextEx(msg, "trump"))
+			else if(prob(50) && findtext(msg, "trump"))
 				troll_response = pick(list("trump is cheetoh hitler [TrollNickName(src)]", "trump is a kike puppet [TrollNickName(src)]"))
-			else if(findtextEx(msg,"npc"))
+			else if(findtext(msg,"npc"))
 				troll_response=pick(list("im not an npc im real","im a real player","im a real player not npc","im not an npc",\
 				"im not an npc you are npc"))
-			else if(findtextEx(msg,"where?"))
+			else if(findtext(msg,"where?"))
 				troll_response = pick(list("over there","at that place"))
-			else if(findtextEx(msg, "when?"))
+			else if(findtext(msg, "when?"))
 				troll_response = pick(list("soon"))
-			else if(findtextEx(msg, " cat"))
+			else if(findtext(msg, " cat"))
 				troll_response = pick(list("i love cats","k0t","kot","kayat"))
-			else if(findtextEx(msg, "what?"))
+			else if(findtext(msg, "what?"))
 				troll_response = pick(list("yeet!","nvm","idk","hello","hi"))
-			else if(findtextEx(msg, "really?"))
+			else if(findtext(msg, "really?"))
 				troll_response = pick(list("yes"))
 
 			//give a possible response even if nothing was found to specifically respond to

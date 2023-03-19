@@ -15,7 +15,7 @@ proc
 			var/icon/i = icon('Fireflies.dmi')
 			i.Scale(size,size)
 			var/image/i2 = image(icon = i, pixel_x = -((size - 32) * 0.5), pixel_y = -((size - 32) * 0.5))
-			firefly_icons?.Insert(1,i2)
+			firefly_icons.Insert(1,i2)
 			size = round(size * 0.78)
 
 		//generate set of rotations
@@ -53,16 +53,16 @@ proc
 		var/attempts = 0
 		while(1)
 			var/turf/t = locate(rand(1,world.maxx), rand(1,world.maxy), rand(1,world.maxz))
-			if(!IsWater(t) && !t.density)
+			if(!t.Water && !t.density)
 				var/area/a = t.get_area()
 				if(a && a.has_daynight_cycle && a.has_fireflies)
 					return t
 			attempts++
 			if(attempts >= 20) return
-			sleep(2)
 
 	ToggleAreaFireflies(area/a, tog = 0)
 		set waitfor=0
+		sleep(150) //delay makes it look more natural in this case
 		if(a.name in fireflies_area_sorted)
 			var/list/l = fireflies_area_sorted[a.name]
 			for(var/obj/Fireflies/f in l)
@@ -82,7 +82,7 @@ obj
 		New()
 			. = ..()
 			MakeImmovableIndestructable()
-			spawn GiveLightSource(size = 1, max_alpha = 33, light_color = rgb(255,250,190))
+			GiveLightSource(size = 1, max_alpha = 33, light_color = rgb(255,250,190))
 			GenerateFireflies()
 			AddFirefliesToList()
 			DecideOnOrOff()

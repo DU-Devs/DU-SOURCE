@@ -72,7 +72,7 @@ math
 		Tan(x)
 			return HandleOutput(tan(x))
 
-		Arctan(x, y)
+		arctanL(x, y)
 			return HandleOutput(y ? arctan(x,y) : arctan(x))
 
 		//Make num equal to the closest value of either a or b if not between them (inclusive)

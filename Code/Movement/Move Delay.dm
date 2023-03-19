@@ -6,7 +6,9 @@ and town would seem more legitimate instead of being able to reach anything in 1
 starters.
 */
 
-world/fps = 40
+world/fps = 20
+
+var/BASE_MOVE_DELAY = 1
 
 mob/var
 	tmp
@@ -18,7 +20,7 @@ var/epsilon = 0.0001
 
 mob/proc
 	GetInputMoveDelay(d = NORTH, raw_mult_only)
-		var/t = Limits.GetSettingValue("Base Move Delay")
+		var/t = BASE_MOVE_DELAY
 		if(!d) return t
 		//t += 0.25 * (Speed_delay_mult(severity = 0.2) - 1)
 
@@ -27,9 +29,12 @@ mob/proc
 			t += 0.35*/
 		//if(senzu_overload) t += 0.35
 		if(sight) t += 0.5
+		//if(fearful) t += FearSlowDown() //they just didnt like it
+		if(!Flying) for(var/obj/Injuries/Leg/i in injury_list) t += 0.5
 		if(stun_level) t += stun_level * 4
+		//t += HealthSlowdown() //people just didnt like how slow it made them so i turned it off
 
-		if(d && (d in list(NORTHEAST,NORTHWEST,SOUTHEAST,SOUTHWEST)))
+		if(d && !force_32_pix_movement) if(d in list(NORTHEAST,NORTHWEST,SOUTHEAST,SOUTHWEST))
 			t *= 1.15
 
 		if(!raw_mult_only)
@@ -45,8 +50,34 @@ mob/proc
 	CanInputMove()
 		if(input_disabled) return
 		if(in_dragon_rush) return
+		if(stun_level && stun_stops_movement) return
+		if(force_32_pix_movement)
+			if(world.time >= next_input_move_time) return 1
 		else return 1 //and remove this line if you enable the above line
 
 	AlterInputDisabled(n = 1)
 		input_disabled += n
 		if(input_disabled < 0) input_disabled = 0
+
+
+
+
+
+
+	//non-core stuff
+
+	FearSlowDown()
+
+		return 0 //disabled due to vote
+
+		var/fear_slow_down = 1
+		if(chaser && getdist(src, chaser) > 20) fear_slow_down += 0.5
+		return fear_slow_down
+
+	HealthSlowdown()
+		var/health_slowdown = 0
+		var/health_slowdown_start = 50
+		if(Health < health_slowdown_start && !undelayed && !Zombie_Power)
+			var/hp = Clamp(Health,0,100)
+			health_slowdown = (health_slowdown_start - hp) / 36
+		return health_slowdown
